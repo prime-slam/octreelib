@@ -8,12 +8,14 @@ from octreelib.internal import Voxel
 from octreelib.internal.typing import Point
 from octreelib.internal.typing import PointCloud
 from octreelib.octree import OcTree
+from octreelib.octree import OcTreeConfig
 
 
 class GridVoxel(Voxel):
     """
     This class stores octrees for different nodes
     """
+
     octrees: Dict[int, OcTree] = {}  # {pos: octree}
 
     def __init__(self):
@@ -37,11 +39,11 @@ class GridVoxel(Voxel):
         raise NotImplementedError
 
     def merge_trees_for_poses(
-            self,
-            pos1: int,
-            pos2: int,
-            merger: Callable[[PointCloud, PointCloud], PointCloud],
-            new_pos: Optional[int]
+        self,
+        pos1: int,
+        pos2: int,
+        merger: Callable[[PointCloud, PointCloud], PointCloud],
+        new_pos: Optional[int],
     ):
         """
         Merge octrees for two poses.
@@ -57,10 +59,12 @@ class Grid:
     """
     This class stores the grid of GridVoxels. Each GridVoxel contains one octree **for each** pos.
     """
+
     config: GridConfig
+    octree_config: OcTreeConfig
     data: List[List[List[GridVoxel]]]
 
-    def __init__(self, grid_config: GridConfig):
+    def __init__(self, grid_config: GridConfig, octree_config: OcTreeConfig):
         raise NotImplementedError
 
     def insert_points(self, pos: int, points: List[Point]):
@@ -78,7 +82,9 @@ class Grid:
         """
         raise NotImplementedError
 
-    def subdivide_pos(self, pos: int, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide_pos(
+        self, pos: int, subdivision_criteria: List[Callable[[PointCloud], bool]]
+    ):
         """
         Subdivides all octree nodes which store points for a specific pos
         :param subdivision_criteria: criteria for subdivision.
@@ -96,11 +102,11 @@ class Grid:
         raise NotImplementedError
 
     def merge_trees_for_poses(
-            self,
-            pos1: int,
-            pos2: int,
-            merger: Callable[[PointCloud, PointCloud], PointCloud],
-            new_pos: int
+        self,
+        pos1: int,
+        pos2: int,
+        merger: Callable[[PointCloud, PointCloud], PointCloud],
+        new_pos: int,
     ):
         """
         Merge octrees in all GridVoxels for two poses.

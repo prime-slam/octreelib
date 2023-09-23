@@ -26,6 +26,7 @@ class GridConfig:
 
     **theta:** vertical rotation of the grid
     """
+
     corner: Point
     voxel_edge_length: np.float_
     n_voxels_x: int

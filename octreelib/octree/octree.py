@@ -18,6 +18,7 @@ class OcTreeNode(Voxel):
     When subdivided, all points are **transferred** to children
     and are not stored in the parent node.
     """
+
     points: Optional[PointCloud]
     children: Optional[List["OcTreeNode"]]
     has_children: bool
@@ -75,7 +76,7 @@ class OcTree(Voxel):
     @property
     def n_leafs(self):
         """
-        :return: number of leafs a.k.a. number of nodes which have points 
+        :return: number of leafs a.k.a. number of nodes which have points
         """
         return
 
