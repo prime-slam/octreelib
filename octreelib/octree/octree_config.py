@@ -1,3 +1,4 @@
+import abc
 import dataclasses
 
 
@@ -11,4 +12,3 @@ class OctreeConfig:
     **max_depth:** max depth of an octree
     """
 
-    max_depth: int
