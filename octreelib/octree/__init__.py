@@ -1,2 +1,2 @@
-from .octree import OcTree
-from .octree_config import OcTreeConfig
+from .base_octree import OctreeBase
+from .octree_config import OctreeConfig

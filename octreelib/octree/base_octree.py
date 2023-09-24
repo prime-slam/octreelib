@@ -1,15 +1,15 @@
-import dataclasses
+import abc
 
-from typing import Callable
+from typing import Generic
 from typing import List
 from typing import Optional
+from typing import TypeVar
 
 from octreelib.internal import Voxel
 from octreelib.internal.typing import PointCloud
 
 
-@dataclasses.dataclass
-class OcTreeNode(Voxel):
+class OctreeNodeBase(Voxel, abc.ABC):
     """
     points: stores points of a node
 
@@ -20,33 +20,27 @@ class OcTreeNode(Voxel):
     """
 
     points: Optional[PointCloud]
-    children: Optional[List["OcTreeNode"]]
+    children: Optional[List["OctreeNodeBase"]]
     has_children: bool
 
-    def insert_points(self, points: PointCloud):
-        raise NotImplementedError
-
-    def get_points(self) -> PointCloud:
-        raise NotImplementedError
-
-    def subdivide(self):
-        raise NotImplementedError
-
     @property
+    @abc.abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
         """
-        raise NotImplementedError
+        pass
 
     @property
+    @abc.abstractmethod
     def n_leafs(self):
         """
         :return: number of leafs a.k.a. number of nodes which have points
         """
-        return
+        pass
 
     @property
+    @abc.abstractmethod
     def n_points(self):
         """
         :return: number of points in the octree
@@ -54,44 +48,39 @@ class OcTreeNode(Voxel):
         return
 
 
-class OcTree(Voxel):
+T = TypeVar("T")
+
+
+class OctreeBase(Voxel, abc.ABC, Generic[T]):
     """
-    Octree stores points of a **single** pos
+    Octree stores points of a **single** pos.
+    Generic[T] is used for specifying the class of OctreeNode used.
 
     root: root node of an octree
     """
 
-    root: OcTreeNode
-
-    def __init__(self):
-        raise NotImplementedError
+    root: T
 
     @property
+    @abc.abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
         """
-        raise NotImplementedError
+        pass
 
     @property
+    @abc.abstractmethod
     def n_leafs(self):
         """
         :return: number of leafs a.k.a. number of nodes which have points
         """
-        return
+        pass
 
     @property
+    @abc.abstractmethod
     def n_points(self):
         """
         :return: number of points in the octree
         """
-        return
-
-    def insert_points(self, points: PointCloud):
-        raise NotImplementedError
-
-    def get_points(self) -> PointCloud:
-        raise NotImplementedError
-
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
-        raise NotImplementedError
+        pass

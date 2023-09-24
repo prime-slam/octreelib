@@ -2,7 +2,7 @@ import dataclasses
 
 
 @dataclasses.dataclass
-class OcTreeConfig:
+class OctreeConfig:
     """
     Config for OcTree
 
