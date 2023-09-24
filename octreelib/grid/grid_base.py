@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 
 from typing import Any, Callable, Dict, Generic, List
 
-from octreelib.grid.grid_config import GridConfig
+from octreelib.grid.grid_config_base import GridConfigBase
 from octreelib.internal.typing import Point, PointCloud, T
+
+__all__ = ["GridBase"]
 
 
 class GridBase(ABC, Generic[T]):
@@ -16,7 +18,7 @@ class GridBase(ABC, Generic[T]):
 
     def __init__(
         self,
-        grid_config: GridConfig,
+        grid_config: GridConfigBase,
     ):
         """
         :param grid_config: config

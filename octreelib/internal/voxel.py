@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable
-from typing import List
+from typing import Callable,List
 
 import numpy as np
 
 from octreelib.internal.typing import Point, PointCloud
+
+__all__ = ["Voxel"]
 
 
 @dataclass

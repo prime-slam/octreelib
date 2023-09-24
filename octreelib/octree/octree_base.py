@@ -4,6 +4,8 @@ from typing import Generic, Callable, List, Optional
 from octreelib.internal import Voxel
 from octreelib.internal.typing import PointCloud, T
 
+__all__ = ["OctreeBase", "OctreeNodeBase"]
+
 
 class OctreeNodeBase(Voxel, ABC):
     """
