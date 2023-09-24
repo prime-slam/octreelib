@@ -1,18 +1,14 @@
-from typing import Callable
-from typing import Dict
-from typing import Generic
-from typing import List
-from typing import Optional
-from typing import TypeVar
+import abc
 
-from octreelib.internal.typing import Point
-from octreelib.internal.typing import PointCloud
-from octreelib.octree import OctreeConfig
+from typing import Any, Callable, Dict, Generic, List, TypeVar
+
+from octreelib.grid.grid_config import GridConfig
+from octreelib.internal.typing import Point, PointCloud
 
 T = TypeVar("T")
 
 
-class Grid(Generic[T]):
+class Grid(abc.ABC, Generic[T]):
     """
     This class stores octrees for different nodes
     Generic[T] is used for specifying the class of Octree used.
@@ -22,12 +18,12 @@ class Grid(Generic[T]):
 
     def __init__(
         self,
-        octree_config: OctreeConfig,
+        grid_config: GridConfig,
     ):
         """
-        :param octree_config: config which will be forwarded to constructed octrees
+        :param grid_config: config
         """
-        self.octree_config = octree_config
+        self.grid_config = grid_config
         raise NotImplementedError
 
     def insert_points(self, pos: int, points: List[Point]) -> None:
@@ -47,23 +43,10 @@ class Grid(Generic[T]):
         """
         raise NotImplementedError
 
-    def merge_trees_for_poses(
-        self,
-        pos1: int,
-        pos2: int,
-        merger: Callable[[PointCloud, PointCloud], PointCloud],
-        new_pos: Optional[int],
-    ):
-        """
-        Merge octrees for two poses.
-        :param pos1: pos 1
-        :param pos2: pos 2
-        :param merger: the function which merges two point clouds into one.
-        :param new_pos: if specified, the new octree is associated with this pos, defaults to pos1
-        """
-        raise NotImplementedError
+    def merge(self, merger: Any):
+        pass
 
-    def subdivide_pos(
+    def __subdivide_pos(
         self, pos: int, subdivision_criteria: List[Callable[[PointCloud], bool]]
     ):
         """
@@ -74,10 +57,13 @@ class Grid(Generic[T]):
         """
         raise NotImplementedError
 
-    def subdivide_all(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivides all octrees
         :param subdivision_criteria: criteria for subdivision.
         If any of the criteria returns **true**, the octree node is subdivided
         """
         raise NotImplementedError
+
+    def filter(self, finter_criterion: Callable[[PointCloud], bool]):
+        pass

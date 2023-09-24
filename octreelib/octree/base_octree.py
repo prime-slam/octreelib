@@ -1,9 +1,6 @@
 import abc
 
-from typing import Generic
-from typing import List
-from typing import Optional
-from typing import TypeVar
+from typing import Generic, Callable, List, Optional, TypeVar
 
 from octreelib.internal import Voxel
 from octreelib.internal.typing import PointCloud
@@ -47,6 +44,10 @@ class OctreeNodeBase(Voxel, abc.ABC):
         """
         return
 
+    @abc.abstractmethod
+    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+        pass
+
 
 T = TypeVar("T")
 
@@ -83,4 +84,8 @@ class OctreeBase(Voxel, abc.ABC, Generic[T]):
         """
         :return: number of points in the octree
         """
+        pass
+
+    @abc.abstractmethod
+    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
         pass
