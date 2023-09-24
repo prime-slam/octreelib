@@ -1,9 +1,9 @@
-import dataclasses
+from dataclasses import dataclass
 
 from octreelib.octree import OctreeConfig
 
 
-@dataclasses.dataclass
+@dataclass
 class GridConfig:
     octree_config: OctreeConfig
     debug: bool = False

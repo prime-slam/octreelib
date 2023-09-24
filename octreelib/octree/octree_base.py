@@ -1,12 +1,14 @@
-import abc
-
+from abc import ABC, abstractmethod
 from typing import Generic, Callable, List, Optional, TypeVar
 
 from octreelib.internal import Voxel
 from octreelib.internal.typing import PointCloud
 
 
-class OctreeNodeBase(Voxel, abc.ABC):
+T = TypeVar("T")
+
+
+class OctreeNodeBase(Voxel, ABC):
     """
     points: stores points of a node
 
@@ -21,7 +23,7 @@ class OctreeNodeBase(Voxel, abc.ABC):
     has_children: bool
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
@@ -29,7 +31,7 @@ class OctreeNodeBase(Voxel, abc.ABC):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def n_leafs(self):
         """
         :return: number of leafs a.k.a. number of nodes which have points
@@ -37,22 +39,19 @@ class OctreeNodeBase(Voxel, abc.ABC):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def n_points(self):
         """
         :return: number of points in the octree
         """
         return
 
-    @abc.abstractmethod
+    @abstractmethod
     def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
         pass
 
 
-T = TypeVar("T")
-
-
-class OctreeBase(Voxel, abc.ABC, Generic[T]):
+class OctreeBase(Voxel, ABC, Generic[T]):
     """
     Octree stores points of a **single** pos.
     Generic[T] is used for specifying the class of OctreeNode used.
@@ -63,7 +62,7 @@ class OctreeBase(Voxel, abc.ABC, Generic[T]):
     root: T
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
@@ -71,7 +70,7 @@ class OctreeBase(Voxel, abc.ABC, Generic[T]):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def n_leafs(self):
         """
         :return: number of leafs a.k.a. number of nodes which have points
@@ -79,13 +78,13 @@ class OctreeBase(Voxel, abc.ABC, Generic[T]):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def n_points(self):
         """
         :return: number of points in the octree
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
         pass

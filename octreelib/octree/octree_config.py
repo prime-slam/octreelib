@@ -1,14 +1,8 @@
-import abc
-import dataclasses
+from dataclasses import dataclass
 
 
-@dataclasses.dataclass
+@dataclass
 class OctreeConfig:
     """
     Config for OcTree
-
-    ____
-
-    **max_depth:** max depth of an octree
     """
-

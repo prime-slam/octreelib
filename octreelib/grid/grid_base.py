@@ -1,4 +1,4 @@
-import abc
+from abc import ABC, abstractmethod
 
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
@@ -8,7 +8,7 @@ from octreelib.internal.typing import Point, PointCloud
 T = TypeVar("T")
 
 
-class GridBase(abc.ABC, Generic[T]):
+class GridBase(ABC, Generic[T]):
     """
     This class stores octrees for different nodes
     Generic[T] is used for specifying the class of Octree used.
@@ -16,7 +16,6 @@ class GridBase(abc.ABC, Generic[T]):
 
     octrees: Dict[int, T] = {}  # {pos: octree}
 
-    @abc.abstractmethod
     def __init__(
         self,
         grid_config: GridConfig,
@@ -26,7 +25,7 @@ class GridBase(abc.ABC, Generic[T]):
         """
         self.grid_config = grid_config
 
-    @abc.abstractmethod
+    @abstractmethod
     def insert_points(self, pos: int, points: List[Point]) -> None:
         """
         Insert points to the according octree.
@@ -36,7 +35,7 @@ class GridBase(abc.ABC, Generic[T]):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_points(self, pos: int) -> List[Point]:
         """
         Returns points for a specific pos
@@ -45,11 +44,11 @@ class GridBase(abc.ABC, Generic[T]):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def merge(self, merger: Any):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def __subdivide_pos(
         self, pos: int, subdivision_criteria: List[Callable[[PointCloud], bool]]
     ):
@@ -61,7 +60,7 @@ class GridBase(abc.ABC, Generic[T]):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivides all octrees
@@ -70,6 +69,6 @@ class GridBase(abc.ABC, Generic[T]):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def filter(self, finter_criterion: Callable[[PointCloud], bool]):
         pass
