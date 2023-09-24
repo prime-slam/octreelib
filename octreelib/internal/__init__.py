@@ -1,2 +1,2 @@
 from .voxel import Voxel
-from .typing import Point, PointCloud
+from .typing import Point, PointCloud, T

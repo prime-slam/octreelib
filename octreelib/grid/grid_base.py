@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 
-from typing import Any, Callable, Dict, Generic, List, TypeVar
+from typing import Any, Callable, Dict, Generic, List
 
 from octreelib.grid.grid_config import GridConfig
-from octreelib.internal.typing import Point, PointCloud
-
-T = TypeVar("T")
+from octreelib.internal.typing import Point, PointCloud, T
 
 
 class GridBase(ABC, Generic[T]):

@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Callable, List, Optional, TypeVar
+from typing import Generic, Callable, List, Optional
 
 from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud
-
-
-T = TypeVar("T")
+from octreelib.internal.typing import PointCloud, T
 
 
 class OctreeNodeBase(Voxel, ABC):
