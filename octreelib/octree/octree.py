@@ -1,17 +1,18 @@
 import itertools
 
+from typing import Callable, List, Generic
+
 import numpy as np
 
-from typing import Callable, List
-from internal import PointCloud, Point
+from internal import PointCloud, Point, T
 from .octree_base import OctreeBase, OctreeNodeBase
 
 
 class OctreeNode(OctreeNodeBase):
     def _point_is_inside(self, point: Point) -> bool:
-        return (
-            bool((self.corner <= point).all())
-            and bool((point <= (self.corner + self.edge_length)).all()))
+        return bool((self.corner <= point).all()) and bool(
+            (point <= (self.corner + self.edge_length)).all()
+        )
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         if any([criterion(self.points) for criterion in subdivision_criteria]):
@@ -47,6 +48,9 @@ class OctreeNode(OctreeNodeBase):
         if self.has_children:
             for child in self.children:
                 child.filter(filtering_criterion)
+            if not any([child.points for child in self.children]):
+                self.children = []
+                self.has_children = False
         elif not filtering_criterion(self.points.copy()):
             self.points = []
 
@@ -67,3 +71,29 @@ class OctreeNode(OctreeNodeBase):
             if self.has_children
             else len(self.points)
         )
+
+
+class Octree(OctreeBase, Generic[T]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+        self.root.subdivide(subdivision_criteria)
+
+    def get_points(self) -> PointCloud:
+        return self.root.get_points()
+
+    def insert_points(self, points: PointCloud):
+        self.root.insert_points(points)
+
+    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+        self.root.filter(filtering_criterion)
+
+    @property
+    def n_points(self):
+        return self.root.n_points
+
+    @property
+    def n_leafs(self):
+        return self.root.n_leafs()
+
+    @property
+    def n_nodes(self):
+        return self.root.n_nodes()
