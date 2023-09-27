@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, Callable, List, Optional
 
 from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud, T
+from octreelib.internal.typing import PointCloud, T, Point
 
 __all__ = ["OctreeBase", "OctreeNodeBase"]
 
@@ -27,6 +27,10 @@ class OctreeNodeBase(Voxel, ABC):
         """
         :return: number of nodes
         """
+        pass
+
+    @abstractmethod
+    def _point_is_inside(self, point: Point) -> bool:
         pass
 
     @property
