@@ -25,8 +25,10 @@ class OctreeNode(OctreeNodeBase):
                 for offset in children_corners_offsets
             ]
             self.has_children = True
-        self.insert_points(self.points.copy())
-        self.points = []
+            self.insert_points(self.points.copy())
+            self.points = []
+            for child in self.children:
+                child.subdivide(subdivision_criteria)
 
     def get_points(self) -> PointCloud:
         return (
@@ -48,7 +50,7 @@ class OctreeNode(OctreeNodeBase):
         if self.has_children:
             for child in self.children:
                 child.filter(filtering_criterion)
-            if not any([child.points for child in self.children]):
+            if all([child.n_points == 0 for child in self.children]):
                 self.children = []
                 self.has_children = False
         elif not filtering_criterion(self.points.copy()):
