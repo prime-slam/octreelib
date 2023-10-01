@@ -31,9 +31,8 @@ def test_octree_node():
 
 
 def test_octree():
-    octree_config = OctreeConfigBase()
+    octree_config = OctreeConfigBase(OctreeNode)
     octree = Octree(
-        OctreeNode,
         octree_config,
         np.array([0, 0, 0]),
         np.float_(10),

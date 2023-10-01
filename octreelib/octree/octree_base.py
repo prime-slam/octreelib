@@ -63,26 +63,22 @@ class OctreeNodeBase(Voxel, ABC):
         pass
 
 
-class OctreeBase(Voxel, ABC, Generic[T]):
+class OctreeBase(Voxel, ABC):
     """
     Octree stores points of a **single** pos.
-    Generic[T] is used for specifying the class of OctreeNode used.
 
     root: root node of an octree
     """
 
-    root: T
-
     def __init__(
         self,
-        node_type: Type[T],
         octree_config: OctreeConfigBase,
         corner: Point,
         edge_length: np.float_,
     ):
         super().__init__(corner, edge_length)
-        self.root = node_type(corner, edge_length)
         self.config = octree_config
+        self.root = self.config.node_type(corner, edge_length)
 
     @property
     @abstractmethod

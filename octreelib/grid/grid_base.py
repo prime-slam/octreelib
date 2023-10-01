@@ -18,8 +18,6 @@ class GridBase(ABC, Generic[T]):
 
     def __init__(
         self,
-        octree_type: Type[T],
-        octree_node_type: Type[T],
         grid_config: GridConfigBase,
     ):
         """
@@ -27,8 +25,6 @@ class GridBase(ABC, Generic[T]):
         :param octree_node_type: class OctreeNode
         :param grid_config: config
         """
-        self.octree_type = octree_type
-        self.octree_node_type = octree_node_type
         self.grid_config = grid_config
 
     @abstractmethod

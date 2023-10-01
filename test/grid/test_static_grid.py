@@ -9,7 +9,7 @@ __all__ = ["test_basic_flow"]
 
 
 def test_basic_flow():
-    grid = StaticGrid(Octree, OctreeNode, GridConfigBase(OctreeConfigBase()))
+    grid = StaticGrid(GridConfigBase(Octree, OctreeConfigBase(OctreeNode)))
     points_0 = [
         np.array([0, 0, 1]),
         np.array([0, 0, 2]),

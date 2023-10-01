@@ -38,9 +38,7 @@ class StaticGrid(GridBase, Generic[T]):
         edge_length = max(
             [float(max_x - min_x), float(max_y - min_y), float(max_z - min_z)]
         )
-        return self.octree_type(
-            self.octree_node_type, self.grid_config.octree_config, corner, edge_length
-        )
+        return self.grid_config.octree_type(self.grid_config.octree_config, corner, edge_length)
 
     def insert_points(self, pos: int, points: List[Point]) -> None:
         if pos in self.octrees:
