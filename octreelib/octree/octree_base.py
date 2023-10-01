@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Callable, List, Optional
+from typing import Generic, Callable, List, Optional, Type
 
 import numpy as np
 
+from octreelib.octree.octree_config_base import OctreeConfigBase
 from octreelib.internal import Voxel
 from octreelib.internal.typing import PointCloud, T, Point
 
@@ -28,7 +29,6 @@ class OctreeNodeBase(Voxel, ABC):
         self.points = []
         self.children = []
         self.has_children = False
-
 
     @property
     @abstractmethod
@@ -73,9 +73,12 @@ class OctreeBase(Voxel, ABC, Generic[T]):
 
     root: T
 
-    def __init__(self, corner: Point, edge_length: np.float_):
+    def __init__(
+        self, node_type: Type[T], octree_config: OctreeConfigBase, corner: Point, edge_length: np.float_
+    ):
         super().__init__(corner, edge_length)
-        self.root = T(corner, edge_length)
+        self.root = node_type(corner, edge_length)
+        self.config = octree_config
 
     @property
     @abstractmethod
