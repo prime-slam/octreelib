@@ -10,4 +10,8 @@ from octreelib.octree.octree import *
 from octreelib.octree.octree_base import *
 from octreelib.octree.octree_config_base import *
 
-__all__ = octree_config_base_module.__all__ + octree_base_module.__all__ + octree_module.__all__
+__all__ = (
+    octree_config_base_module.__all__
+    + octree_base_module.__all__
+    + octree_module.__all__
+)

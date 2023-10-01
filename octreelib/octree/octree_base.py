@@ -74,7 +74,11 @@ class OctreeBase(Voxel, ABC, Generic[T]):
     root: T
 
     def __init__(
-        self, node_type: Type[T], octree_config: OctreeConfigBase, corner: Point, edge_length: np.float_
+        self,
+        node_type: Type[T],
+        octree_config: OctreeConfigBase,
+        corner: Point,
+        edge_length: np.float_,
     ):
         super().__init__(corner, edge_length)
         self.root = node_type(corner, edge_length)

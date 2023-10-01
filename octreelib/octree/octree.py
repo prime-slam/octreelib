@@ -80,7 +80,6 @@ class OctreeNode(OctreeNodeBase):
 
 
 class Octree(OctreeBase, Generic[T]):
-
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         self.root.subdivide(subdivision_criteria)
 
