@@ -6,14 +6,15 @@ from . import GridConfigBase
 from .grid_base import GridBase
 
 from internal import Point, T, PointCloud
-from octree import OctreeBase
 from typing import List, Generic, Any, Callable
+
+
+__all__ = ["StaticGrid", "StaticGridConfig"]
 
 
 @dataclass
 class StaticGridConfig(GridConfigBase):
     pass
-
 
 
 class StaticGrid(GridBase, Generic[T]):
@@ -31,7 +32,7 @@ class StaticGrid(GridBase, Generic[T]):
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         for octree in self.octrees.values():
-            octree.subdivide(subdivision_criteria)  # works?
+            octree.subdivide(subdivision_criteria)
 
     def get_points(self, pos: int) -> List[Point]:
         return self.octrees[pos].get_points()
@@ -47,7 +48,9 @@ class StaticGrid(GridBase, Generic[T]):
         edge_length = max(
             [float(max_x - min_x), float(max_y - min_y), float(max_z - min_z)]
         )
-        return self.grid_config.octree_type(self.grid_config.octree_config, corner, edge_length)
+        return self.grid_config.octree_type(
+            self.grid_config.octree_config, corner, edge_length
+        )
 
     def insert_points(self, pos: int, points: List[Point]) -> None:
         if pos in self.octrees:
