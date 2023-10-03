@@ -1,20 +1,22 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Generic, Callable, List, Optional, Type
+from typing import Callable, List, Optional
 
 import numpy as np
 
 from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud, T, Point
+from octreelib.internal.typing import PointCloud, Point
 
-__all__ = ["OctreeBase", "OctreeNodeBase"]
+__all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
 
 @dataclass
-class OctreeConfigBase:
+class OctreeConfigBase(ABC):
     """
     Config for OcTree
     """
+
+    debug: bool = True
 
 
 class OctreeNodeBase(Voxel, ABC):
@@ -22,6 +24,8 @@ class OctreeNodeBase(Voxel, ABC):
     points: stores points of a node
 
     children: stores children of a node
+
+    has_children: node stores children instead of points
 
     When subdivided, all points are **transferred** to children
     and are not stored in the parent node.
@@ -85,7 +89,7 @@ class OctreeBase(Voxel, ABC):
     root: root node of an octree
     """
 
-    node_type = OctreeNodeBase
+    _node_type = OctreeNodeBase
 
     def __init__(
         self,
@@ -95,7 +99,7 @@ class OctreeBase(Voxel, ABC):
     ):
         super().__init__(corner, edge_length)
         self.config = octree_config
-        self.root = self.node_type(self.corner, self.edge_length)
+        self.root = self._node_type(self.corner, self.edge_length)
 
     @property
     @abstractmethod

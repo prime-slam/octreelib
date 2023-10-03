@@ -1,5 +1,5 @@
 """
-This module contains base classes for Octree, OctreeNode and OctreeConfig
+This module contains classes for Octree, OctreeNode and OctreeConfig
 """
 
 import octreelib.octree.octree as octree_module

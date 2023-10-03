@@ -13,9 +13,7 @@ __all__ = ["OctreeNode", "Octree"]
 
 @dataclass
 class OctreeConfig(OctreeConfigBase):
-    """
-    Config for OcTree
-    """
+    pass
 
 
 class OctreeNode(OctreeNodeBase):
@@ -86,7 +84,7 @@ class OctreeNode(OctreeNodeBase):
 
 
 class Octree(OctreeBase, Generic[T]):
-    node_type = OctreeNode
+    _node_type = OctreeNode
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         self.root.subdivide(subdivision_criteria)
