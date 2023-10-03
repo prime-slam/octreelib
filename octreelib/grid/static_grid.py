@@ -1,10 +1,19 @@
+from dataclasses import dataclass
+
 import numpy as np
 
+from . import GridConfigBase
 from .grid_base import GridBase
 
 from internal import Point, T, PointCloud
 from octree import OctreeBase
 from typing import List, Generic, Any, Callable
+
+
+@dataclass
+class StaticGridConfig(GridConfigBase):
+    pass
+
 
 
 class StaticGrid(GridBase, Generic[T]):

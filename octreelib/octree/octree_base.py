@@ -1,13 +1,20 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Generic, Callable, List, Optional, Type
 
 import numpy as np
 
-from octreelib.octree.octree_config_base import OctreeConfigBase
 from octreelib.internal import Voxel
 from octreelib.internal.typing import PointCloud, T, Point
 
 __all__ = ["OctreeBase", "OctreeNodeBase"]
+
+
+@dataclass
+class OctreeConfigBase:
+    """
+    Config for OcTree
+    """
 
 
 class OctreeNodeBase(Voxel, ABC):
@@ -40,6 +47,10 @@ class OctreeNodeBase(Voxel, ABC):
 
     @abstractmethod
     def _point_is_inside(self, point: Point) -> bool:
+        """
+        :param point: point
+        :return: the given point is inside the
+        """
         pass
 
     @property
@@ -60,6 +71,10 @@ class OctreeNodeBase(Voxel, ABC):
 
     @abstractmethod
     def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+        """
+        filter nodes with points by criterion
+        :param filtering_criterion:
+        """
         pass
 
 
@@ -70,6 +85,8 @@ class OctreeBase(Voxel, ABC):
     root: root node of an octree
     """
 
+    node_type = OctreeNodeBase
+
     def __init__(
         self,
         octree_config: OctreeConfigBase,
@@ -78,7 +95,7 @@ class OctreeBase(Voxel, ABC):
     ):
         super().__init__(corner, edge_length)
         self.config = octree_config
-        self.root = self.config.node_type(corner, edge_length)
+        self.root = self.node_type(self.corner, self.edge_length)
 
     @property
     @abstractmethod
@@ -106,4 +123,8 @@ class OctreeBase(Voxel, ABC):
 
     @abstractmethod
     def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+        """
+        filter nodes with points by criterion
+        :param filtering_criterion:
+        """
         pass

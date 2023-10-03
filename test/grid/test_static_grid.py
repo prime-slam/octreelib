@@ -2,14 +2,13 @@ import numpy as np
 
 from octreelib.grid.static_grid import StaticGrid
 from octreelib.grid.grid_config_base import GridConfigBase
-from octreelib.octree.octree import OctreeNode, Octree
-from octreelib.octree.octree_config_base import OctreeConfigBase
+from octreelib.octree.octree import OctreeNode, Octree, OctreeConfig
 
 __all__ = ["test_basic_flow"]
 
 
 def test_basic_flow():
-    grid = StaticGrid(GridConfigBase(Octree, OctreeConfigBase(OctreeNode)))
+    grid = StaticGrid(GridConfigBase(Octree, OctreeConfig()))
     points_0 = [
         np.array([0, 0, 1]),
         np.array([0, 0, 2]),

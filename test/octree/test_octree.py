@@ -1,7 +1,6 @@
 import numpy as np
 
-from octreelib.octree.octree import OctreeNode, Octree
-from octreelib.octree.octree_config_base import OctreeConfigBase
+from octreelib.octree.octree import OctreeNode, Octree, OctreeConfig
 
 
 __all__ = ["test_octree", "test_octree_node"]
@@ -31,7 +30,7 @@ def test_octree_node():
 
 
 def test_octree():
-    octree_config = OctreeConfigBase(OctreeNode)
+    octree_config = OctreeConfig()
     octree = Octree(
         octree_config,
         np.array([0, 0, 0]),

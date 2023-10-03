@@ -1,15 +1,21 @@
 import itertools
+from dataclasses import dataclass
 
 from typing import Callable, List, Generic, Type
 
 import numpy as np
 
 from internal import PointCloud, Point, T
-from .octree_config_base import OctreeConfigBase
-from .octree_base import OctreeBase, OctreeNodeBase
-
+from .octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree"]
+
+
+@dataclass
+class OctreeConfig(OctreeConfigBase):
+    """
+    Config for OcTree
+    """
 
 
 class OctreeNode(OctreeNodeBase):
@@ -80,6 +86,8 @@ class OctreeNode(OctreeNodeBase):
 
 
 class Octree(OctreeBase, Generic[T]):
+    node_type = OctreeNode
+
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         self.root.subdivide(subdivision_criteria)
 
