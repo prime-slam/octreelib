@@ -1,14 +1,13 @@
 import itertools
 from dataclasses import dataclass
-
-from typing import Callable, List, Generic, Type
+from typing import Callable, List, Generic
 
 import numpy as np
 
 from internal import PointCloud, Point, T
 from .octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
-__all__ = ["OctreeNode", "Octree"]
+__all__ = ["OctreeNode", "Octree", "OctreeConfig"]
 
 
 @dataclass

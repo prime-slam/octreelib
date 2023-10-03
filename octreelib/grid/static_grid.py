@@ -1,12 +1,10 @@
-from dataclasses import dataclass
-
 import numpy as np
 
-from . import GridConfigBase
-from .grid_base import GridBase
-
-from internal import Point, T, PointCloud
+from dataclasses import dataclass
 from typing import List, Generic, Any, Callable
+
+from .grid_base import GridBase, GridConfigBase
+from internal import Point, T, PointCloud
 
 
 __all__ = ["StaticGrid", "StaticGridConfig"]

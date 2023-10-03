@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Generic, List, Type
 
 from octree import OctreeConfigBase
-from octreelib.internal.typing import Point, PointCloud, T
+from internal.typing import Point, PointCloud, T
 
 __all__ = ["GridConfigBase", "GridBase"]
 

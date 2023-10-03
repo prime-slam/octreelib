@@ -1,6 +1,6 @@
 import numpy as np
 
-from octreelib.octree.octree import OctreeNode, Octree, OctreeConfig
+from octreelib.octree import OctreeNode, Octree, OctreeConfig
 
 
 __all__ = ["test_octree", "test_octree_node"]

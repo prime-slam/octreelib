@@ -7,8 +7,4 @@ import octreelib.grid.static_grid as static_grid_module
 from octreelib.grid.grid_base import *
 from octreelib.grid.static_grid import *
 
-__all__ = (
-    grid_config_base_module.__all__
-    + grid_base_module.__all__
-    + static_grid_module.__all__
-)
+__all__ = grid_base_module.__all__ + static_grid_module.__all__
