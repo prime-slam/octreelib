@@ -23,17 +23,17 @@ class StaticGrid(GridBase, Generic[T]):
         raise NotImplementedError
 
     def filter(self, finter_criterion: Callable[[PointCloud], bool]):
-        for pos in self.octrees:
-            self.octrees[pos].filter()
-            if self.octrees[pos].n_points == 0:
-                self.octrees.pop(pos)
+        for pos_n in self.octrees:
+            self.octrees[pos_n].filter()
+            if self.octrees[pos_n].n_points == 0:
+                self.octrees.pop(pos_n)
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         for octree in self.octrees.values():
             octree.subdivide(subdivision_criteria)
 
-    def get_points(self, pos: int) -> List[Point]:
-        return self.octrees[pos].get_points()
+    def get_points(self, pose_number: int) -> List[Point]:
+        return self.octrees[pose_number].get_points()
 
     def _make_octree(self, points: List[Point]):
         min_x = min(points, key=lambda point: point[0])[0]
@@ -50,10 +50,10 @@ class StaticGrid(GridBase, Generic[T]):
             self.grid_config.octree_config, corner, edge_length
         )
 
-    def insert_points(self, pos: int, points: List[Point]) -> None:
-        if pos in self.octrees:
+    def insert_points(self, pose_number: int, points: List[Point]) -> None:
+        if pose_number in self.octrees:
             raise ValueError(
-                f"The pose {pos} is already in the grid. You must insert into a different pose."
+                f"The pose number {pose_number} is already in the grid. You must insert into a different pose number."
             )
-        self.octrees[pos] = self._make_octree(points)
-        self.octrees[pos].insert_points(points)
+        self.octrees[pose_number] = self._make_octree(points)
+        self.octrees[pose_number].insert_points(points)

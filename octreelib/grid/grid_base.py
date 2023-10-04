@@ -40,20 +40,20 @@ class GridBase(ABC, Generic[T]):
         self.grid_config = grid_config
 
     @abstractmethod
-    def insert_points(self, pos: int, points: List[Point]) -> None:
+    def insert_points(self, pose_number: int, points: List[Point]) -> None:
         """
         Insert points to the according octree.
         If an octree for this pos does not exist, a new octree is created
-        :param pos: pos to which the cloud is inserted
+        :param pose_number: pos to which the cloud is inserted
         :param points: point cloud
         """
         pass
 
     @abstractmethod
-    def get_points(self, pos: int) -> List[Point]:
+    def get_points(self, pose_number: int) -> List[Point]:
         """
         Returns points for a specific pos
-        :param pos: the desired pos
+        :param pose_number: the desired pos
         :return: point cloud
         """
         pass
