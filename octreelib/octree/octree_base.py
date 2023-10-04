@@ -4,8 +4,8 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from internal import Voxel
-from internal.typing import PointCloud, Point
+from octreelib.internal import Voxel
+from octreelib.internal.typing import PointCloud, Point
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -14,6 +14,8 @@ __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 class OctreeConfigBase(ABC):
     """
     Config for OcTree
+
+    debug: debug mode is enabled
     """
 
     debug: bool = True
@@ -53,7 +55,7 @@ class OctreeNodeBase(Voxel, ABC):
     def _point_is_inside(self, point: Point) -> bool:
         """
         :param point: point
-        :return: the given point is inside the
+        :return: the given point is inside the node
         """
         pass
 

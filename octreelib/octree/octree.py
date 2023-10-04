@@ -6,7 +6,7 @@ from typing import Callable, List, Generic
 import numpy as np
 
 from octreelib.internal import PointCloud, Point, T
-from octreelib.octree import OctreeBase, OctreeNodeBase, OctreeConfigBase
+from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
 

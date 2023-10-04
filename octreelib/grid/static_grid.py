@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List, Generic, Any, Callable
 
 from octreelib.internal import Point, T, PointCloud
-from octreelib.grid import GridBase, GridConfigBase
+from octreelib.grid.grid_base import GridBase, GridConfigBase
 
 
 __all__ = ["StaticGrid", "StaticGridConfig"]

@@ -25,7 +25,7 @@ def test_octree_node():
     node.subdivide([lambda points: len(points) > 2])
     assert node.n_leafs == 15
     assert node.n_points == 5
-    node.filter(lambda points: len(points) >= 2)
+    node.filter([lambda points: len(points) >= 2])
     assert node.n_points == 4
 
 
@@ -54,5 +54,5 @@ def test_octree():
     octree.subdivide([lambda points: len(points) > 2])
     assert octree.n_leafs == 15
     assert octree.n_points == 5
-    octree.filter(lambda points: len(points) >= 2)
+    octree.filter([lambda points: len(points) >= 2])
     assert octree.n_points == 4
