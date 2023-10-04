@@ -3,8 +3,8 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Generic, Any, Callable
 
-from .grid_base import GridBase, GridConfigBase
-from internal import Point, T, PointCloud
+from octreelib.internal import Point, T, PointCloud
+from octreelib.grid import GridBase, GridConfigBase
 
 
 __all__ = ["StaticGrid", "StaticGridConfig"]

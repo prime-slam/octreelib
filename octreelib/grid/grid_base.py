@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Generic, List, Type
 
-from octree import OctreeConfigBase
-from internal.typing import Point, PointCloud, T
+from octreelib.internal.typing import Point, PointCloud, T
+from octreelib.octree import OctreeConfigBase
 
 __all__ = ["GridConfigBase", "GridBase"]
 
@@ -17,6 +17,7 @@ class GridConfigBase(ABC):
     octree_config: config to be forwarded to the octrees
     debug: debug mode
     """
+
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
