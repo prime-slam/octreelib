@@ -22,9 +22,9 @@ class StaticGrid(GridBase, Generic[T]):
         print(1)
         raise NotImplementedError
 
-    def filter(self, finter_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         for pos_n in self.octrees:
-            self.octrees[pos_n].filter()
+            self.octrees[pos_n].filter(filtering_criteria)
             if self.octrees[pos_n].n_points == 0:
                 self.octrees.pop(pos_n)
 

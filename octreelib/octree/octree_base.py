@@ -74,10 +74,10 @@ class OctreeNodeBase(Voxel, ABC):
         return
 
     @abstractmethod
-    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         filter nodes with points by criterion
-        :param filtering_criterion:
+        :param filtering_criteria:
         """
         pass
 
@@ -126,9 +126,9 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         filter nodes with points by criterion
-        :param filtering_criterion:
+        :param filtering_criteria:
         """
         pass

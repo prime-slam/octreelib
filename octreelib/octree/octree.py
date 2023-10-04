@@ -54,14 +54,14 @@ class OctreeNode(OctreeNodeBase):
         else:
             self.points.extend(points)
 
-    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         if self.has_children:
             for child in self.children:
-                child.filter(filtering_criterion)
+                child.filter(filtering_criteria)
             if all([child.n_points == 0 for child in self.children]):
                 self.children = []
                 self.has_children = False
-        elif not filtering_criterion(self.points.copy()):
+        elif not all([criterion(self.points) for criterion in filtering_criteria]):
             self.points = []
 
     @property
@@ -95,8 +95,8 @@ class Octree(OctreeBase, Generic[T]):
     def insert_points(self, points: PointCloud):
         self.root.insert_points(points)
 
-    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
-        self.root.filter(filtering_criterion)
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+        self.root.filter(filtering_criteria)
 
     @property
     def n_points(self):

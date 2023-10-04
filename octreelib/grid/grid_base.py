@@ -73,5 +73,5 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def filter(self, finter_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         pass
