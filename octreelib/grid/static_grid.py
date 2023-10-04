@@ -25,7 +25,7 @@ class StaticGrid(GridBase, Generic[T]):
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         for pos_n in self.octrees:
             self.octrees[pos_n].filter(filtering_criteria)
-            if self.octrees[pos_n].n_points == 0:
+            if not all([criterion(self.octrees[pos_n].get_points) for criterion in filtering_criteria]):
                 self.octrees.pop(pos_n)
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
