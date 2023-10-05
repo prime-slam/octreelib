@@ -1,7 +1,7 @@
 import numpy as np
 
 from dataclasses import dataclass
-from typing import List, Generic, Any, Callable
+from typing import List, Generic, Any, Callable, Type
 
 from octreelib.internal import Point, T, PointCloud
 from octreelib.grid.grid_base import GridBase, GridConfigBase
@@ -15,12 +15,12 @@ class StaticGridConfig(GridConfigBase):
     pass
 
 
-class StaticGrid(GridBase, Generic[T]):
+class StaticGrid(GridBase):
+    merged_octrees = None
+
     def merge(self, merger: Any):
-        # 💀 ahh... fell kinda clueless. gonna do some research
-        # meanwhile
-        print(1)
-        raise NotImplementedError
+        points = sum([octree.get_points() for octree in self.octrees.values()], [])
+        self.merged_octrees = [self._make_octree(points)]
 
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         for pose_number in self.octrees:
