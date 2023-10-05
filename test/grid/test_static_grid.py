@@ -25,7 +25,13 @@ def test_basic_flow():
     ]
     grid.insert_points(1, points_1)
 
+    assert 1 == grid.octrees[0].n_leafs
+    assert 1 == grid.octrees[1].n_leafs
+
     grid.subdivide([lambda points: len(points) > 2])
+
+    assert 22 == grid.octrees[0].n_leafs
+    assert 15 == grid.octrees[1].n_leafs
 
     p0 = grid.get_points(0)
     p1 = grid.get_points(1)

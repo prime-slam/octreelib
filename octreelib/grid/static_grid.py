@@ -34,8 +34,8 @@ class StaticGrid(GridBase):
                 self.octrees.pop(pose_number)
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
-        for octree in self.octrees.values():
-            octree.subdivide(subdivision_criteria)
+        for pose_number in self.octrees:
+            self.octrees[pose_number].subdivide(subdivision_criteria)
 
     def get_points(self, pose_number: int) -> List[Point]:
         return self.octrees[pose_number].get_points()
