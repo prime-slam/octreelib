@@ -1,10 +1,24 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Callable, List, Optional
+from dataclasses import dataclass
+from typing import Callable, List, Optional
+
+import numpy as np
 
 from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud, T
+from octreelib.internal.typing import PointCloud, Point
 
-__all__ = ["OctreeBase", "OctreeNodeBase"]
+__all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
+
+
+@dataclass
+class OctreeConfigBase(ABC):
+    """
+    Config for OcTree
+
+    debug: debug mode is enabled
+    """
+
+    debug: bool = True
 
 
 class OctreeNodeBase(Voxel, ABC):
@@ -12,6 +26,8 @@ class OctreeNodeBase(Voxel, ABC):
     points: stores points of a node
 
     children: stores children of a node
+
+    has_children: node stores children instead of points
 
     When subdivided, all points are **transferred** to children
     and are not stored in the parent node.
@@ -21,11 +37,25 @@ class OctreeNodeBase(Voxel, ABC):
     children: Optional[List["OctreeNodeBase"]]
     has_children: bool
 
+    def __init__(self, corner: Point, edge_length: np.float_):
+        super().__init__(corner, edge_length)
+        self.points = []
+        self.children = []
+        self.has_children = False
+
     @property
     @abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
+        """
+        pass
+
+    @abstractmethod
+    def _point_is_inside(self, point: Point) -> bool:
+        """
+        :param point: point
+        :return: the given point is inside the node
         """
         pass
 
@@ -46,19 +76,32 @@ class OctreeNodeBase(Voxel, ABC):
         return
 
     @abstractmethod
-    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+        """
+        filter nodes with points by filtering criteria
+        :param filtering_criteria: list of filtering criteria functions
+        """
         pass
 
 
-class OctreeBase(Voxel, ABC, Generic[T]):
+class OctreeBase(Voxel, ABC):
     """
     Octree stores points of a **single** pos.
-    Generic[T] is used for specifying the class of OctreeNode used.
 
     root: root node of an octree
     """
 
-    root: T
+    _node_type = OctreeNodeBase
+
+    def __init__(
+        self,
+        octree_config: OctreeConfigBase,
+        corner: Point,
+        edge_length: np.float_,
+    ):
+        super().__init__(corner, edge_length)
+        self.config = octree_config
+        self.root = self._node_type(self.corner, self.edge_length)
 
     @property
     @abstractmethod
@@ -85,5 +128,9 @@ class OctreeBase(Voxel, ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criterion: Callable[[PointCloud], bool]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+        """
+        filter nodes with points by criterion
+        :param filtering_criteria:
+        """
         pass
