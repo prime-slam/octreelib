@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Generic, List, Type
 
+import numpy as np
+
 from octreelib.internal.typing import Point, PointCloud, T
 from octreelib.octree import OctreeConfigBase
 
@@ -13,11 +15,15 @@ class GridConfigBase(ABC):
     """
     Config for Grid
 
+    min_voxel_size: size of a minimal possible voxel, the octree will be able to subdivide to
+    corner: corner of a grid
     octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
     debug: debug mode
     """
 
+    min_voxel_size = 1
+    corner = np.array(([0.0, 0.0, 0.0]))
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False

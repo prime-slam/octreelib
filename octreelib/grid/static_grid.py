@@ -1,7 +1,7 @@
 import numpy as np
 
 from dataclasses import dataclass
-from typing import List, Generic, Any, Callable, Type
+from typing import List, Generic, Any, Callable, Type, Tuple
 
 from octreelib.internal import Point, T, PointCloud
 from octreelib.grid.grid_base import GridBase, GridConfigBase
@@ -40,19 +40,44 @@ class StaticGrid(GridBase):
     def get_points(self, pose_number: int) -> List[Point]:
         return self.octrees[pose_number].get_points()
 
-    def _make_octree(self, points: List[Point]):
-        min_x = min(points, key=lambda point: point[0])[0]
-        min_y = min(points, key=lambda point: point[1])[1]
-        min_z = min(points, key=lambda point: point[2])[2]
-        max_x = max(points, key=lambda point: point[0])[0]
-        max_y = max(points, key=lambda point: point[1])[1]
-        max_z = max(points, key=lambda point: point[2])[2]
-        corner = np.array([min_x, min_y, min_z])
-        edge_length = max(
-            [float(max_x - min_x), float(max_y - min_y), float(max_z - min_z)]
+    def _floor_point(self, x: Point) -> Point:
+        min_voxel_size = self.grid_config.min_voxel_size
+        return x // min_voxel_size * min_voxel_size
+
+    def _ceil_point(self, x: Point) -> Point:
+        return self._floor_point(x) + 1
+
+    def _grid_voxel_index_for_point(self, x: Point) -> Point:
+        return (
+            (x - self.grid_config.corner)
+            // self.grid_config.min_voxel_size
+            * np.ones(3)
         )
+
+    def _extend_coordinates_to_a_voxel(
+        self, point_1: Point, point_2: Point
+    ) -> Tuple[Point, Point]:
+        return self._floor_point(point_1), self._ceil_point(point_2)
+
+    def _make_octree(self, points: List[Point]):
+        min_point = np.array(
+            [
+                min(points, key=lambda point: point[0])[0],
+                min(points, key=lambda point: point[1])[1],
+                min(points, key=lambda point: point[2])[2],
+            ]
+        )
+        max_point = np.array(
+            [
+                max(points, key=lambda point: point[0])[0],
+                max(points, key=lambda point: point[1])[1],
+                max(points, key=lambda point: point[2])[2],
+            ]
+        )
+        min_point, max_point = self._extend_coordinates_to_a_voxel(min_point, max_point)
+        edge_length = max_point[0] - min_point[0]
         return self.grid_config.octree_type(
-            self.grid_config.octree_config, corner, edge_length
+            self.grid_config.octree_config, min_point, edge_length
         )
 
     def insert_points(self, pose_number: int, points: List[Point]) -> None:
