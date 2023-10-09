@@ -142,6 +142,7 @@ class OctreeBase(Voxel, ABC):
         """
         pass
 
+    @abstractmethod
     def transform_point_clouds(self, function: Callable[[PointCloud], PointCloud]):
         """
         transform point cloud in each node using the function
