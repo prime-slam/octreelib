@@ -64,6 +64,13 @@ class OctreeNode(OctreeNodeBase):
         elif not all([criterion(self.points) for criterion in filtering_criteria]):
             self.points = []
 
+    def transform_point_cloud(self, function: Callable[[PointCloud], PointCloud]):
+        if self.has_children:
+            for child in self.children:
+                child.transform_point_cloud(function)
+        elif self.points:
+            self.points = function(self.points.copy())
+
     @property
     def n_leafs(self):
         return (
@@ -97,6 +104,9 @@ class Octree(OctreeBase, Generic[T]):
 
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         self.root.filter(filtering_criteria)
+
+    def transform_point_clouds(self, function: Callable[[PointCloud], PointCloud]):
+        self.root.transform_point_clouds(function)
 
     @property
     def n_points(self):

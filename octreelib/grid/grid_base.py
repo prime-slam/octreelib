@@ -80,4 +80,15 @@ class GridBase(ABC, Generic[T]):
 
     @abstractmethod
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+        """
+        Filters nodes of each octree with points by criterion
+        :param filtering_criteria:
+        """
+        pass
+
+    def transform_point_clouds(self, function: Callable[[PointCloud], PointCloud]):
+        """
+        Transform point cloud in each node of each octree using the function
+        :param function: transformation function PointCloud -> PointCloud
+        """
         pass

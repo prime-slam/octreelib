@@ -83,6 +83,13 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
+    def transform_point_cloud(self, function: Callable[[PointCloud], PointCloud]):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        """
+        pass
+
 
 class OctreeBase(Voxel, ABC):
     """
@@ -132,5 +139,12 @@ class OctreeBase(Voxel, ABC):
         """
         filter nodes with points by criterion
         :param filtering_criteria:
+        """
+        pass
+
+    def transform_point_clouds(self, function: Callable[[PointCloud], PointCloud]):
+        """
+        transform point cloud in each node using the function
+        :param function: transformation function PointCloud -> PointCloud
         """
         pass
