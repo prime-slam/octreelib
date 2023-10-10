@@ -87,7 +87,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def transform_point_clouds(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         Transform point cloud in each node of each octree using the function
         :param function: transformation function PointCloud -> PointCloud
