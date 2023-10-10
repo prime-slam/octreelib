@@ -5,7 +5,9 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
+from octreelib.internal.geometry import point_is_inside_box
 from octreelib.internal import PointCloud, Point, T
+from octreelib.internal.typing import Box
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -17,10 +19,15 @@ class OctreeConfig(OctreeConfigBase):
 
 
 class OctreeNode(OctreeNodeBase):
-    def _point_is_inside(self, point: Point) -> bool:
-        return bool((self.corner <= point).all()) and bool(
-            (point <= (self.corner + self.edge_length)).all()
-        )
+    def get_points_inside_box(self, box: Box) -> PointCloud:
+
+
+        if self.has_children:
+            return sum(
+                [child.get_points_inside_box(box) for child in self.children], []
+            )
+
+        return list(filter(lambda point: point_is_inside_box(point, box), self.points))
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         if any([criterion(self.points) for criterion in subdivision_criteria]):
@@ -49,7 +56,7 @@ class OctreeNode(OctreeNodeBase):
         if self.has_children:
             for point in points:
                 for child in self.children:
-                    if child._point_is_inside(point):
+                    if point_is_inside_box(point, child.bounding_box):
                         child.insert_points([point])
         else:
             self.points.extend(points)
@@ -72,6 +79,10 @@ class OctreeNode(OctreeNodeBase):
             self.points = function(self.points.copy())
 
     @property
+    def bounding_box(self):
+        return self.corner, self.corner + np.ones(3) * self.edge_length
+
+    @property
     def n_leafs(self):
         return (
             sum([child.n_leafs for child in self.children]) if self.has_children else 1
@@ -92,6 +103,9 @@ class OctreeNode(OctreeNodeBase):
 
 class Octree(OctreeBase, Generic[T]):
     _node_type = OctreeNode
+
+    def get_points_in_box(self, box: Box) -> PointCloud:
+        return self.root.get_points_inside_box(box)
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         self.root.subdivide(subdivision_criteria)

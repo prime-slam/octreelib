@@ -5,7 +5,7 @@ from typing import Callable, List, Optional
 import numpy as np
 
 from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud, Point
+from octreelib.internal.typing import PointCloud, Point, Box
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -45,17 +45,17 @@ class OctreeNodeBase(Voxel, ABC):
 
     @property
     @abstractmethod
-    def n_nodes(self):
+    def bounding_box(self):
         """
-        :return: number of nodes
+        :return: bounding box
         """
         pass
 
+    @property
     @abstractmethod
-    def _point_is_inside(self, point: Point) -> bool:
+    def n_nodes(self):
         """
-        :param point: point
-        :return: the given point is inside the node
+        :return: number of nodes
         """
         pass
 
@@ -83,12 +83,21 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
+    @abstractmethod
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         transform point cloud in the node using the function
         :param function: transformation function PointCloud -> PointCloud
         """
         pass
+
+    @abstractmethod
+    def get_points_inside_box(self, box: Box) -> PointCloud:
+        """
+        Returns points that occupy the given box
+        :param box: tuple of two points representing min and max points of the box
+        :return: PointCloud
+        """
 
 
 class OctreeBase(Voxel, ABC):
@@ -147,5 +156,14 @@ class OctreeBase(Voxel, ABC):
         """
         transform point cloud in each node using the function
         :param function: transformation function PointCloud -> PointCloud
+        """
+        pass
+
+    @abstractmethod
+    def get_points_in_box(self, box: Box) -> PointCloud:
+        """
+        Returns points that occupy the given box
+        :param box: tuple of two points representing min and max points of the box
+        :return: PointCloud
         """
         pass

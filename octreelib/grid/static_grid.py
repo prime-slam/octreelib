@@ -3,8 +3,9 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Generic, Any, Callable, Type, Tuple
 
-from octreelib.internal import Point, T, PointCloud
 from octreelib.grid.grid_base import GridBase, GridConfigBase
+from octreelib.internal import Point, T, PointCloud
+from octreelib.internal.geometry import boxes_intersection
 
 
 __all__ = ["StaticGrid", "StaticGridConfig"]
@@ -91,3 +92,17 @@ class StaticGrid(GridBase):
             )
         self.octrees[pose_number] = self._make_octree(points)
         self.octrees[pose_number].insert_points(points)
+
+    def _intersect_octree_pair(
+        self, pos_number_1: int, pos_number_2: int
+    ) -> PointCloud:
+        octree_1 = self.octrees[pos_number_1]
+        octree_2 = self.octrees[pos_number_2]
+
+        intersection_box = boxes_intersection(
+            octree_1.bounding_box,
+            octree_2.bounding_box,
+        )
+        return octree_1.get_points_inside_box(
+            intersection_box
+        ) + octree_2.get_points_inside_box(intersection_box)
