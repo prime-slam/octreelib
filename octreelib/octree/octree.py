@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Callable, List, Generic
 
 import numpy as np
+import vtk
 
 from octreelib.internal.geometry import point_is_inside_box
 from octreelib.internal import PointCloud, Point, T
@@ -20,8 +21,6 @@ class OctreeConfig(OctreeConfigBase):
 
 class OctreeNode(OctreeNodeBase):
     def get_points_inside_box(self, box: Box) -> PointCloud:
-
-
         if self.has_children:
             return sum(
                 [child.get_points_inside_box(box) for child in self.children], []
@@ -121,6 +120,10 @@ class Octree(OctreeBase, Generic[T]):
 
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         self.root.map_leaf_points(function)
+
+    @property
+    def bounding_box(self):
+        return self.root.bounding_box
 
     @property
     def n_points(self):

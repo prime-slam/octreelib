@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 import numpy as np
 
@@ -24,4 +24,12 @@ class Voxel(ABC):
 
     @abstractmethod
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+        pass
+
+    @property
+    @abstractmethod
+    def bounding_box(self) -> Tuple[Point, Point]:
+        """
+        :return: bounding box
+        """
         pass

@@ -45,14 +45,6 @@ class OctreeNodeBase(Voxel, ABC):
 
     @property
     @abstractmethod
-    def bounding_box(self):
-        """
-        :return: bounding box
-        """
-        pass
-
-    @property
-    @abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
