@@ -4,10 +4,9 @@ from dataclasses import dataclass
 from typing import Callable, List, Generic
 
 import numpy as np
-import vtk
 
 from octreelib.internal.geometry import point_is_inside_box
-from octreelib.internal import PointCloud, Point, T
+from octreelib.internal import PointCloud, T
 from octreelib.internal.typing import Box
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
