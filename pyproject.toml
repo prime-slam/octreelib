@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "octreelib"
+dependencies = [
+    "numpy",
+    "vtk",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["sepal_ui*"]
+exclude = ["docs*", "tests*"]
