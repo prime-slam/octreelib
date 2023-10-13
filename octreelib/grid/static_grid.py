@@ -80,7 +80,11 @@ class StaticGrid(GridBase):
             ]
         )
         min_point, max_point = self._extend_coordinates_to_a_voxel(min_point, max_point)
-        edge_length = max_point[0] - min_point[0]
+        edge_length = max([
+            float(max_point[0] - min_point[0]),
+            float(max_point[1] - min_point[1]),
+            float(max_point[2] - min_point[2]),
+        ])
         return self.grid_config.octree_type(
             self.grid_config.octree_config, min_point, edge_length
         )
@@ -106,3 +110,6 @@ class StaticGrid(GridBase):
         return octree_1.get_points_inside_box(
             intersection_box
         ) + octree_2.get_points_inside_box(intersection_box)
+
+    def get_leaf_points(self, pos_number: int):
+        return self.octrees[pos_number].get_leaf_points()

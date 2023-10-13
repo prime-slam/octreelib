@@ -76,10 +76,10 @@ class OctreeNode(OctreeNodeBase):
         elif self.points:
             self.points = function(self.points.copy())
 
-    def get_leaf_node_points(self) -> List[PointCloud]:
+    def get_leaf_points(self) -> List[PointCloud]:
         if self.has_children:
-            return [child.get_leaf_node_points() for child in self.children]
-        return [self.get_points()]
+            return sum([child.get_leaf_points() for child in self.children], [])
+        return [self.get_points()] if self.points else []
 
     @property
     def bounding_box(self):
@@ -125,8 +125,8 @@ class Octree(OctreeBase, Generic[T]):
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         self.root.map_leaf_points(function)
 
-    def get_leaf_node_points(self) -> List[PointCloud]:
-        return self.root.get_leaf_node_points
+    def get_leaf_points(self) -> List[PointCloud]:
+        return self.root.get_leaf_points()
 
     @property
     def n_points(self):
