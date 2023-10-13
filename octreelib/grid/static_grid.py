@@ -111,5 +111,5 @@ class StaticGrid(GridBase):
             intersection_box
         ) + octree_2.get_points_inside_box(intersection_box)
 
-    def get_leaf_points(self, pos_number: int) -> List[PointCloud]:
-        return self.octrees[pos_number].get_leaf_points()
+    def get_leaf_points(self, pose_number: int) -> List[PointCloud]:
+        return self.octrees[pose_number].get_leaf_points()
