@@ -138,4 +138,4 @@ class Octree(OctreeBase, Generic[T]):
 
     @property
     def n_nodes(self):
-        return self.root.n_node
+        return self.root.n_nodes
