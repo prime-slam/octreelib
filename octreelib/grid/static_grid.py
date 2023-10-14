@@ -19,6 +19,9 @@ class StaticGridConfig(GridConfigBase):
 class StaticGrid(GridBase):
     merged_octrees = None
 
+    def n_leafs(self, pose_number: int):
+        return self.octrees[pose_number].n_leafs
+
     def merge(self, merger: Any):
         points = sum([octree.get_points() for octree in self.octrees.values()], [])
         self.merged_octrees = [self._make_octree(points)]
