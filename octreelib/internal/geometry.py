@@ -1,6 +1,6 @@
 from typing import Optional
 
-from internal import Point, Box
+from octreelib.internal import Point, Box
 
 
 def point_is_inside_box(point: Point, box: Box) -> bool:
