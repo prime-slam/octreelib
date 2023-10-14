@@ -93,3 +93,19 @@ class GridBase(ABC, Generic[T]):
         :param function: transformation function PointCloud -> PointCloud
         """
         pass
+
+    @abstractmethod
+    def n_leafs(self, pose_number: int):
+        """
+        :param pose_number: the desired pose number
+        :return: number of leaf nodes in the octree for this pos
+        """
+        pass
+
+    @abstractmethod
+    def get_leaf_points(self, pose_number: int) -> List[PointCloud]:
+        """
+        :param pose_number: the desired pose number
+        :return: List of
+        """
+        pass

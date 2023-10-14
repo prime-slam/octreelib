@@ -99,6 +99,14 @@ class OctreeNodeBase(Voxel, ABC):
         :return: PointCloud
         """
 
+    @abstractmethod
+    def get_leaf_points(self) -> List[PointCloud]:
+        """
+        :return: List of PointClouds where each PointCloud
+        represents points in a separate leaf node
+        """
+        pass
+
 
 class OctreeBase(Voxel, ABC):
     """
@@ -165,5 +173,13 @@ class OctreeBase(Voxel, ABC):
         Returns points that occupy the given box
         :param box: tuple of two points representing min and max points of the box
         :return: PointCloud
+        """
+        pass
+
+    @abstractmethod
+    def get_leaf_points(self) -> List[PointCloud]:
+        """
+        :return: List of PointClouds where each PointCloud
+        represents points in a separate leaf node
         """
         pass
