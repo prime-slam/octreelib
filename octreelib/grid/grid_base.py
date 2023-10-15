@@ -95,10 +95,26 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
+    def n_nodes(self, pose_number: int):
+        """
+        :param pose_number: desired pose number.
+        :return: number of nodes of an octree for given pose number
+        """
+        pass
+
+    @abstractmethod
+    def n_points(self, pose_number: int):
+        """
+        :param pose_number: desired pose number.
+        :return: number of points of an octree for given pose number
+        """
+        pass
+
+    @abstractmethod
     def n_leafs(self, pose_number: int):
         """
-        :param pose_number: the desired pose number
-        :return: number of leaf nodes in the octree for this pos
+        :param pose_number: the desired pose number.
+        :return: number of leaf nodes in the octree for given pose number
         """
         pass
 

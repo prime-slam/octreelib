@@ -93,7 +93,11 @@ class OctreeNode(OctreeNodeBase):
 
     @property
     def n_nodes(self):
-        return len(self.children) if self.has_children else 0
+        return (
+            len(self.children) + sum([child.n_nodes for child in self.children])
+            if self.has_children
+            else 1
+        )
 
     @property
     def n_points(self):
