@@ -35,8 +35,6 @@ class GridBase(ABC, Generic[T]):
     Generic[T] is used for specifying the class of Octree used.
     """
 
-    octrees: Dict[int, T] = {}  # {pos: octree}
-
     def __init__(
         self,
         grid_config: GridConfigBase,
@@ -45,6 +43,8 @@ class GridBase(ABC, Generic[T]):
         :param grid_config: config
         """
         self.grid_config = grid_config
+        self.octrees: Dict[int, T] = {}
+
 
     @abstractmethod
     def insert_points(self, pose_number: int, points: List[Point]) -> None:
