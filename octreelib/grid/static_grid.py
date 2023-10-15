@@ -1,7 +1,7 @@
 import numpy as np
 
 from dataclasses import dataclass
-from typing import List, Generic, Any, Callable, Type, Tuple
+from typing import List, Generic, Any, Callable, Type, Tuple, Dict
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
 from octreelib.internal import Point, T, PointCloud
@@ -18,6 +18,10 @@ class StaticGridConfig(GridConfigBase):
 
 class StaticGrid(GridBase):
     merged_octrees = None
+
+    def __init__(self, grid_config: StaticGridConfig):
+        super().__init__(grid_config)
+        self.octrees: Dict[int, T] = {}
 
     def n_leafs(self, pose_number: int):
         return self.octrees[pose_number].n_leafs
@@ -121,8 +125,6 @@ class StaticGrid(GridBase):
         return octree_1.get_points_inside_box(
             intersection_box
         ) + octree_2.get_points_inside_box(intersection_box)
-
-
 
     def get_leaf_points(self, pose_number: int) -> List[PointCloud]:
         return self.octrees[pose_number].get_leaf_points()

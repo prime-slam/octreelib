@@ -43,8 +43,6 @@ class GridBase(ABC, Generic[T]):
         :param grid_config: config
         """
         self.grid_config = grid_config
-        self.octrees: Dict[int, T] = {}
-
 
     @abstractmethod
     def insert_points(self, pose_number: int, points: List[Point]) -> None:
