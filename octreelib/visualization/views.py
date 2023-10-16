@@ -5,6 +5,8 @@ import vtk
 from grid import GridBase
 from octree import OctreeNodeBase, OctreeBase
 
+from vtkmodules.vtkCommonColor import vtkNamedColors
+
 __all__ = ["visualize_grid", "visualize_octree"]
 
 
@@ -66,7 +68,30 @@ def octree_actors(octree: OctreeBase):
         cube_actor.GetProperty().SetRepresentationToWireframe()
         cube_actor.GetProperty().SetLineWidth(2.0)
 
-        return [cube_actor]
+        points = vtk.vtkPoints()
+        cells = vtk.vtkCellArray()
+        for point in node.points:
+            point_id = points.InsertNextPoint(point[:])
+            cells.InsertNextCell(1)
+            cells.InsertCellPoint(point_id)
+
+            points.Modified()
+            cells.Modified()
+
+        input_data = vtk.vtkPolyData()
+        input_data.SetPoints(points)
+        input_data.SetVerts(cells)
+
+        points_mapper = vtk.vtkPolyDataMapper()
+        points_mapper.SetInputData(input_data)
+
+        colors = vtkNamedColors()
+        points_actor = vtk.vtkActor()
+        points_actor.SetMapper(points_mapper)
+        points_actor.GetProperty().SetColor(colors.GetColor3d("Green"))
+        points_actor.GetProperty().SetPointSize(3)
+
+        return [cube_actor, points_actor]
 
     return octree_node_actors(octree.root)
 
