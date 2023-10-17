@@ -113,18 +113,18 @@ class StaticGrid(GridBase):
         self.octrees[pose_number].insert_points(points)
 
     def _intersect_octree_pair(
-        self, pos_number_1: int, pos_number_2: int
+        self, first_pos_number: int, second_pos_number: int
     ) -> PointCloud:
-        octree_1 = self.octrees[pos_number_1]
-        octree_2 = self.octrees[pos_number_2]
+        first_octree = self.octrees[first_pos_number]
+        second_octree = self.octrees[second_pos_number]
 
         intersection_box = boxes_intersection(
-            octree_1.bounding_box,
-            octree_2.bounding_box,
+            first_octree.bounding_box,
+            second_octree.bounding_box,
         )
-        return octree_1.get_points_inside_box(
+        return first_octree.get_points_inside_box(
             intersection_box
-        ) + octree_2.get_points_inside_box(intersection_box)
+        ) + second_octree.get_points_inside_box(intersection_box)
 
     def get_leaf_points(self, pose_number: int) -> List[PointCloud]:
         return self.octrees[pose_number].get_leaf_points()
