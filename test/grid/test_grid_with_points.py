@@ -39,32 +39,38 @@ def generated_grid():
 def test_n_leafs(generated_grid):
     grid, pose_points = generated_grid
 
-    assert 3 == grid.n_leafs()
+    assert 2 == grid.n_leafs(0)
+    assert 3 == grid.n_leafs(1)
     grid.subdivide([lambda points: len(points) > 2])
-    assert 24 == grid.n_leafs()
+    assert 9 == grid.n_leafs(0)
+    assert 10 == grid.n_leafs(1)
 
 
 def test_n_points(generated_grid):
     grid, pose_points = generated_grid
 
-    assert sum([len(points) for points in pose_points]) == grid.n_points()
+    assert 5 == grid.n_points(0)
+    assert 5 == grid.n_points(1)
     grid.subdivide([lambda points: len(points) > 2])
-    assert sum([len(points) for points in pose_points]) == grid.n_points()
+    assert 5 == grid.n_points(0)
+    assert 5 == grid.n_points(1)
 
 
 def test_n_nodes(generated_grid):
     grid, pose_points = generated_grid
 
-    assert 3 == grid.n_nodes()
+    assert 2 == grid.n_nodes(0)
+    assert 3 == grid.n_nodes(1)
     grid.subdivide([lambda points: len(points) > 2])
-    assert 48 == grid.n_nodes()
+    assert 17 == grid.n_nodes(0)
+    assert 18 == grid.n_nodes(1)
 
 
 @pytest.mark.parametrize(
     "subdivision_criteria, nodes_expected, leafs_expected",
     [
-        ([lambda points: len(points) > 2], 48, 24),
-        ([lambda points: len(points) > 3], 18, 10),
+        ([lambda points: len(points) > 2], [17, 18], [9, 10]),
+        ([lambda points: len(points) > 3], [2, 3], [2, 3]),
     ],
 )
 def test_subdivide(
@@ -73,13 +79,15 @@ def test_subdivide(
     grid, pose_points = generated_grid
 
     grid.subdivide(subdivision_criteria)
-    assert nodes_expected == grid.n_nodes()
-    assert leafs_expected == grid.n_leafs()
+    assert nodes_expected == [grid.n_nodes(0), grid.n_nodes(1)]
+    assert leafs_expected == [grid.n_leafs(0), grid.n_leafs(1)]
 
 
 def test_map_leaf_points(generated_grid):
     grid, pose_points = generated_grid
 
-    assert grid.n_points() > grid.n_leafs()
+    assert grid.n_points(0) > grid.n_leafs(0)
+    assert grid.n_points(1) > grid.n_leafs(1)
     grid.map_leaf_points(lambda cloud: [cloud[0]])
-    assert grid.n_points() == grid.n_leafs()
+    assert grid.n_points(0) == grid.n_leafs(0)
+    assert grid.n_points(1) == grid.n_leafs(1)
