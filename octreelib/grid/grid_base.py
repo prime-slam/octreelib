@@ -15,18 +15,18 @@ class GridConfigBase(ABC):
     """
     Config for Grid
 
-    min_voxel_size: size of a minimal possible voxel, the octree will be able to subdivide to
-    corner: corner of a grid
     octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
+    min_voxel_size: size of a minimal possible voxel, the octree will be able to subdivide to
+    corner: corner of a grid
     debug: debug mode
     """
 
-    min_voxel_size = 1
-    corner = np.array(([0.0, 0.0, 0.0]))
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
+    min_voxel_size: int = 1
+    corner: Point = np.array(([0.0, 0.0, 0.0]))
 
 
 class GridBase(ABC, Generic[T]):
