@@ -1,8 +1,8 @@
 import numpy as np
 
-import views
-from grid import StaticGrid, StaticGridConfig
-from octree import OctreeConfig, Octree
+from octreelib.grid import StaticGrid, StaticGridConfig
+from octreelib.octree import OctreeConfig, Octree
+from octreelib.visualization.views import visualize_grid
 
 grid = StaticGrid(StaticGridConfig(Octree, OctreeConfig()))
 points_0 = [
@@ -24,4 +24,4 @@ grid.insert_points(1, points_1)
 
 grid.subdivide([lambda points: len(points) > 2])
 
-views.visualize_grid(grid)
+visualize_grid(grid)
