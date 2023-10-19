@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Generic, List, Type
 
 import numpy as np
 
-from octreelib.internal.typing import Point, PointCloud, T
+from octreelib.internal import Point, PointCloud, T, StoringVoxel
 from octreelib.octree import OctreeConfigBase
 
 __all__ = ["GridConfigBase", "GridBase"]
@@ -117,7 +117,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_leaf_points(self, pose_number: int) -> List[PointCloud]:
+    def get_leaf_points(self, pose_number: int) -> List[StoringVoxel]:
         """
         :param pose_number: the desired pose number
         :return: List of

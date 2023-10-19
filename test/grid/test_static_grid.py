@@ -55,25 +55,30 @@ def test_get_leaf_points():
 
     grid.subdivide([lambda points: len(points) > 1])
 
-    assert set(map(str, list(grid.get_leaf_points(0)))) == set(
-        map(
-            str,
-            list(
-                [
-                    [np.array([0, 0, 1])],
-                    [np.array([9, 9, 9])],
-                ]
-            ),
+    leaf_points_pos_0 = grid.get_leaf_points(0)
+    leaf_points_pos_1 = grid.get_leaf_points(1)
+
+    assert (
+        len(
+            {
+                leaf_points_pos_0[0].id,
+                leaf_points_pos_0[1].id,
+                leaf_points_pos_1[0].id,
+                leaf_points_pos_1[1].id,
+            }
         )
+        == 4
     )
-    assert set(map(str, list(grid.get_leaf_points(1)))) == set(
-        map(
-            str,
-            list(
-                [
-                    [np.array([1, 0, 1])],
-                    [np.array([5, 9, 9])],
-                ]
-            ),
-        )
+
+    assert set(map(str, leaf_points_pos_0[0].get_points())) == set(
+        map(str, [np.array([0, 0, 1])])
+    )
+    assert set(map(str, leaf_points_pos_0[1].get_points())) == set(
+        map(str, [np.array([9, 9, 9])])
+    )
+    assert set(map(str, leaf_points_pos_1[0].get_points())) == set(
+        map(str, [np.array([1, 0, 1])])
+    )
+    assert set(map(str, leaf_points_pos_1[1].get_points())) == set(
+        map(str, [np.array([5, 9, 9])])
     )
