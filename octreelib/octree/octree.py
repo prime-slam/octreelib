@@ -6,7 +6,7 @@ from typing import Callable, List, Generic
 import numpy as np
 
 from octreelib.internal.geometry import point_is_inside_box
-from octreelib.internal import PointCloud, Point, T
+from octreelib.internal import PointCloud, Point, T, StoringVoxel
 from octreelib.internal.typing import Box
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
@@ -76,10 +76,10 @@ class OctreeNode(OctreeNodeBase):
         elif self.points:
             self.points = function(self.points.copy())
 
-    def get_leaf_points(self) -> List[PointCloud]:
+    def get_leaf_points(self) -> List[StoringVoxel]:
         if self.has_children:
             return sum([child.get_leaf_points() for child in self.children], [])
-        return [self.get_points()] if self.points else []
+        return [self] if self.points else []
 
     @property
     def bounding_box(self):
@@ -129,7 +129,7 @@ class Octree(OctreeBase, Generic[T]):
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         self.root.map_leaf_points(function)
 
-    def get_leaf_points(self) -> List[PointCloud]:
+    def get_leaf_points(self) -> List[StoringVoxel]:
         return self.root.get_leaf_points()
 
     @property

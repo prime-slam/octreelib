@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal import Voxel
+from octreelib.internal import StoringVoxel
 from octreelib.internal.typing import PointCloud, Point, Box
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
@@ -21,7 +21,7 @@ class OctreeConfigBase(ABC):
     debug: bool = True
 
 
-class OctreeNodeBase(Voxel, ABC):
+class OctreeNodeBase(StoringVoxel, ABC):
     """
     points: stores points of a node
 
@@ -100,7 +100,7 @@ class OctreeNodeBase(Voxel, ABC):
         """
 
     @abstractmethod
-    def get_leaf_points(self) -> List[PointCloud]:
+    def get_leaf_points(self) -> List[StoringVoxel]:
         """
         :return: List of PointClouds where each PointCloud
         represents points in a separate leaf node
@@ -108,7 +108,7 @@ class OctreeNodeBase(Voxel, ABC):
         pass
 
 
-class OctreeBase(Voxel, ABC):
+class OctreeBase(StoringVoxel, ABC):
     """
     Octree stores points of a **single** pos.
 
@@ -177,7 +177,7 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def get_leaf_points(self) -> List[PointCloud]:
+    def get_leaf_points(self) -> List[StoringVoxel]:
         """
         :return: List of PointClouds where each PointCloud
         represents points in a separate leaf node

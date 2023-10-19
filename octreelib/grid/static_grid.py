@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List, Generic, Any, Callable, Type, Tuple, Dict
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
-from octreelib.internal import Point, T, PointCloud
+from octreelib.internal import Point, T, PointCloud, StoringVoxel
 from octreelib.internal.geometry import boxes_intersection
 
 
@@ -126,5 +126,5 @@ class StaticGrid(GridBase):
             intersection_box
         ) + second_octree.get_points_inside_box(intersection_box)
 
-    def get_leaf_points(self, pose_number: int) -> List[PointCloud]:
+    def get_leaf_points(self, pose_number: int) -> List[StoringVoxel]:
         return self.octrees[pose_number].get_leaf_points()
