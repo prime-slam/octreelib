@@ -79,7 +79,17 @@ class GridWithPoints(GridBase):
             self.octrees[voxel_coordinates].map_leaf_points(function)
 
     def get_points(self, pose_number: int) -> List[Point]:
-        return sum()
+        """
+        :param pose_number: Pose number.
+        :return: All points inside the grid.
+        """
+        return sum(
+            [
+                octree.get_points_for_pose(pose_number)
+                for octree in self.octrees.values()
+            ],
+            [],
+        )
 
     def merge(self, merger: Any):
         raise NotImplementedError("This method is Not Supported")

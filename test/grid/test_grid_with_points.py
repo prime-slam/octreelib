@@ -45,9 +45,7 @@ def test_n_leafs(generated_grid):
     assert 3 == grid.n_leafs(1)
     grid.subdivide([lambda points: len(points) > 2])
     assert 4 == grid.n_leafs(0)
-    # assert 9 == grid.n_leafs(0)
     assert 5 == grid.n_leafs(1)
-    # assert 10 == grid.n_leafs(1)
 
 
 def test_n_points(generated_grid):
@@ -60,13 +58,23 @@ def test_n_points(generated_grid):
     assert 5 == grid.n_points(1)
 
 
-# def test_n_nodes(generated_grid):
-#     grid, pose_points = generated_grid
-#
-#     assert 3 == grid.n_nodes()
-#     grid.subdivide([lambda points: len(points) > 2])
-#     assert 17 == grid.n_nodes(0)
-#     assert 18 == grid.n_nodes(1)
+def test_n_nodes(generated_grid):
+    grid, pose_points = generated_grid
+
+    assert 2 == grid.n_nodes(0)
+    assert 3 == grid.n_nodes(1)
+    grid.subdivide([lambda points: len(points) > 2])
+    assert 7 == grid.n_nodes(0)
+    assert 8 == grid.n_nodes(1)
+
+
+def test_get_points(generated_grid):
+    grid, pose_points = generated_grid
+    assert set(map(str, grid.get_points(0))) == set(map(str, pose_points[0]))
+    assert set(map(str, grid.get_points(1))) == set(map(str, pose_points[1]))
+    grid.subdivide([lambda points: len(points) > 2])
+    assert set(map(str, grid.get_points(0))) == set(map(str, pose_points[0]))
+    assert set(map(str, grid.get_points(1))) == set(map(str, pose_points[1]))
 
 
 @pytest.mark.parametrize(

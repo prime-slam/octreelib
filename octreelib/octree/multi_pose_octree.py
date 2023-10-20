@@ -42,10 +42,7 @@ class MultiPoseOctreeNode(OctreeNode):
     def get_points_for_pose(self, pose_number: int) -> PointCloud:
         return (
             sum(
-                [
-                    child.get_points_by_pose_number(pose_number)
-                    for child in self.children
-                ],
+                [child.get_points_for_pose(pose_number) for child in self.children],
                 [],
             )
             if self.has_children
