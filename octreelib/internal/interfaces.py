@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from octreelib.internal.typing import Point, PointCloud
 
-__all__ = ["WithID"]
+__all__ = ["WithID", "WithPoints"]
 
 
 class WithID(ABC):
@@ -12,3 +12,8 @@ class WithID(ABC):
     def __init__(self):
         self.id = WithID._id_static_counter
         WithID._id_static_counter += 1
+
+
+class WithPoints(ABC):
+    def __init__(self, points: Optional[PointCloud] = None):
+        self.points: List[Point] = points or []

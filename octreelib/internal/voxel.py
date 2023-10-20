@@ -5,14 +5,14 @@ from typing import Callable, List, Optional
 import numpy as np
 
 from octreelib.internal.typing import Point, PointCloud
-from octreelib.internal.interfaces import WithID
+from octreelib.internal.interfaces import WithID, WithPoints
 
-__all__ = ["Voxel", "StoringVoxel"]
+__all__ = ["StaticStoringVoxel", "StoringVoxel", "Voxel"]
 
 
-class Voxel(WithID, ABC):
+class Voxel(WithID):
     def __init__(self, corner: Point, edge_length: np.float_):
-        super().__init__()
+        WithID.__init__(self)
         self.corner = corner
         self.edge_length = edge_length
 
@@ -22,6 +22,23 @@ class Voxel(WithID, ABC):
             self.corner + offset
             for offset in itertools.product([0, self.edge_length], repeat=3)
         ]
+
+
+class StaticStoringVoxel(Voxel, WithPoints):
+    def __init__(
+        self, corner: Point, edge_length: np.float_, points: Optional[PointCloud] = None
+    ):
+        Voxel.__init__(self, corner, edge_length)
+        WithPoints.__init__(self, points)
+
+    def get_points(self) -> PointCloud:
+        return self.points.copy()
+
+
+class StoringVoxel(Voxel, WithPoints, ABC):
+    def __init__(self, corner: Point, edge_length: np.float_):
+        Voxel.__init__(self, corner, edge_length)
+        WithPoints.__init__(self)
 
     @abstractmethod
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
@@ -34,14 +51,3 @@ class Voxel(WithID, ABC):
     @abstractmethod
     def get_points(self) -> PointCloud:
         pass
-
-
-class StoringVoxel(Voxel, WithID, ABC):
-    def __init__(
-        self,
-        corner: Point,
-        edge_length: np.float_,
-        points: Optional[List[Point]] = None,
-    ):
-        super().__init__(corner, edge_length)
-        self.points: List[Point] = points or []
