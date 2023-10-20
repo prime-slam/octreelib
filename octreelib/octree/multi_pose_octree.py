@@ -15,12 +15,12 @@ class MultiPoseOctreeConfig(OctreeConfig):
     pass
 
 
-def _filter_by_pose_number(pose_number: int, points: List[PointWithPose]):
+def _filter_by_pose_number(pose_number: int, points: List[PointWithPose]) -> PointCloud:
     return list(filter(lambda point: point.pose_number == pose_number, points))
 
 
 class MultiPoseOctreeNode(OctreeNode):
-    def get_leaf_points_for_pose(self, pose_number: int):
+    def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
         return (
             sum(
                 [
@@ -30,14 +30,16 @@ class MultiPoseOctreeNode(OctreeNode):
                 [],
             )
             if self.has_children
-            else [StaticStoringVoxel(
-                self.corner,
-                self.edge_length,
-                _filter_by_pose_number(pose_number, self.points),
-            )]
+            else [
+                StaticStoringVoxel(
+                    self.corner,
+                    self.edge_length,
+                    _filter_by_pose_number(pose_number, self.points),
+                )
+            ]
         )
 
-    def get_points_for_pose(self, pose_number: int):
+    def get_points_for_pose(self, pose_number: int) -> PointCloud:
         return (
             sum(
                 [
@@ -50,17 +52,32 @@ class MultiPoseOctreeNode(OctreeNode):
             else _filter_by_pose_number(pose_number, self.points)
         )
 
-    def n_points_for_pose(self, pose_number: int):
+    def n_points_for_pose(self, pose_number: int) -> int:
         return (
             sum([child.n_points_for_pose(pose_number) for child in self.children])
             if self.has_children
             else len(_filter_by_pose_number(pose_number, self.points))
         )
 
-    def n_leafs_for_pose(self, pose_number: int):
+    def n_leafs_for_pose(self, pose_number: int) -> int:
         return (
             sum([child.n_leafs_for_pose(pose_number) for child in self.children])
             if self.has_children
+            else len(_filter_by_pose_number(pose_number, self.points)) != 0
+        )
+
+    def n_nodes_for_pose(self, pose_number: int) -> int:
+        n_nodes = (
+            sum([child.n_nodes_for_pose(pose_number) for child in self.children])
+            if self.has_children
+            else None
+        )
+        if n_nodes:
+            n_nodes += 1
+
+        return (
+            n_nodes
+            if n_nodes is not None
             else len(_filter_by_pose_number(pose_number, self.points)) != 0
         )
 
@@ -84,14 +101,17 @@ class MultiPoseOctreeNode(OctreeNode):
 class MultiPoseOctree(Octree):
     _node_type = MultiPoseOctreeNode
 
-    def get_leaf_points_for_pose(self, pose_number: int):
+    def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
         return self.root.get_leaf_points_for_pose(pose_number)
 
-    def get_points_for_pose(self, pose_number: int):
+    def get_points_for_pose(self, pose_number: int) -> PointCloud:
         return self.root.get_points_for_pose(pose_number)
 
-    def n_points_for_pose(self, pose_number: int):
+    def n_points_for_pose(self, pose_number: int) -> int:
         return self.root.n_points_for_pose(pose_number)
 
-    def n_leafs_for_pose(self, pose_number: int):
+    def n_leafs_for_pose(self, pose_number: int) -> int:
         return self.root.n_leafs_for_pose(pose_number)
+
+    def n_nodes_for_pose(self, pose_number: int) -> int:
+        return self.root.n_nodes_for_pose(pose_number)

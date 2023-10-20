@@ -72,8 +72,8 @@ def test_n_points(generated_grid):
 @pytest.mark.parametrize(
     "subdivision_criteria, nodes_expected, leafs_expected",
     [
-        ([lambda points: len(points) > 2], [17, 18], [4, 5]),
-        ([lambda points: len(points) > 3], [2, 3], [3, 5]),
+        ([lambda points: len(points) > 2], [7, 8], [4, 5]),
+        ([lambda points: len(points) > 3], [4, 6], [3, 5]),
     ],
 )
 def test_subdivide(
@@ -82,18 +82,18 @@ def test_subdivide(
     grid, pose_points = generated_grid
 
     grid.subdivide(subdivision_criteria)
-    # assert nodes_expected == [grid.n_nodes(0), grid.n_nodes(1)]
+    assert nodes_expected == [grid.n_nodes(0), grid.n_nodes(1)]
     assert leafs_expected == [grid.n_leafs(0), grid.n_leafs(1)]
 
 
-# def test_map_leaf_points(generated_grid):
-#     grid, pose_points = generated_grid
-#
-#     assert grid.n_points(0) > grid.n_leafs(0)
-#     assert grid.n_points(1) > grid.n_leafs(1)
-#     grid.map_leaf_points(lambda cloud: [cloud[0]])
-#     assert grid.n_points(0) == grid.n_leafs(0)
-#     assert grid.n_points(1) == grid.n_leafs(1)
+def test_map_leaf_points(generated_grid):
+    grid, pose_points = generated_grid
+
+    assert grid.n_points(0) > grid.n_leafs(0)
+    assert grid.n_points(1) > grid.n_leafs(1)
+    grid.map_leaf_points(lambda cloud: [cloud[0]])
+    assert grid.n_points(0) == grid.n_leafs(0)
+    assert grid.n_points(1) == grid.n_leafs(1)
 
 
 def test_get_leaf_points(generated_grid):
