@@ -92,9 +92,11 @@ class GridWithPoints(GridBase):
         )
 
     def merge(self, merger: Any):
+        """
+        This method does not make sense because all poses are already merged.
+        """
         raise NotImplementedError("This method is Not Supported")
 
-    # method to get coordinates of a voxel where the given point would be
     def _get_voxel_for_point(self, point: Point) -> Point:
         """
         Method to get coordinates of a voxel where the given point would be stored.
@@ -109,6 +111,7 @@ class GridWithPoints(GridBase):
         if pose_number not in self.pose_voxel_coordinates:
             self.pose_voxel_coordinates[pose_number] = []
 
+        # convert points to PointsWithPose, which is a subclass of np.ndarray
         points = [PointWithPose(point, pose_number) for point in points]
 
         for point in points:
@@ -119,10 +122,6 @@ class GridWithPoints(GridBase):
                 int(voxel_coordinates[1]),
                 int(voxel_coordinates[2]),
             )
-
-            # create Dict[coordinates, octree] if it does not exist yes
-            # if pose_number not in self.octrees:
-            #     self.octrees = {}
 
             # create octree in the voxel if it does not exist yet
             if voxel_coordinates_hashable not in self.octrees:
