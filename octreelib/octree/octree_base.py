@@ -33,13 +33,13 @@ class OctreeNodeBase(StoringVoxel, ABC):
     and are not stored in the parent node.
     """
 
-    points: Optional[PointCloud]
+    points: PointCloud
     children: Optional[List["OctreeNodeBase"]]
     has_children: bool
 
     def __init__(self, corner: Point, edge_length: np.float_):
         super().__init__(corner, edge_length)
-        self.points = []
+        self.points: PointCloud = self._empty_point_cloud
         self.children = []
         self.has_children = False
 

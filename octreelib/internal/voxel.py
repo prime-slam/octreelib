@@ -37,11 +37,15 @@ class Voxel(WithID, ABC):
 
 
 class StoringVoxel(Voxel, WithID, ABC):
+    @property
+    def _empty_point_cloud(self):
+        return np.empty((0, 3), dtype=float)
+
     def __init__(
         self,
         corner: Point,
         edge_length: np.float_,
-        points: Optional[List[Point]] = None,
+        points: Optional[PointCloud] = None,
     ):
         super().__init__(corner, edge_length)
-        self.points: List[Point] = points or []
+        self.points: PointCloud = points or self._empty_point_cloud
