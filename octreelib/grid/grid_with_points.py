@@ -2,6 +2,7 @@ from typing import List, Dict, Callable, Any, Tuple
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
 from octreelib.internal import Point, PointCloud, StaticStoringVoxel, PointWithPose
+from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
 __all__ = ["GridWithPoints", "GridWithPointsConfig"]
 
@@ -135,6 +136,9 @@ class GridWithPoints(GridBase):
 
     def __init__(self, grid_config: GridWithPointsConfig):
         super().__init__(grid_config)
+
+        # workaround for restricting the type of octree for this grid
+        self.grid_config.octree_type = MultiPoseOctree
 
         # {pose -> list of voxel coordinates}
         self.pose_voxel_coordinates: Dict[int, List[Point]] = {}

@@ -89,6 +89,20 @@ class MultiPoseOctreeNode(OctreeNode):
             else len(_filter_by_pose_number(pose_number, self.points)) != 0
         )
 
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+        if self.has_children:
+            for child in self.children:
+                child.map_leaf_points(function)
+        elif self.points:
+            pose_numbers = {point.pose_number for point in self.points}
+            for pose_number in pose_numbers:
+                points = _filter_by_pose_number(pose_number, self.points)
+                if points:
+                    points = function(points.copy())
+                    self.points = [
+                        PointWithPose(point, pose_number) for point in points
+                    ]
+
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         if any([criterion(self.points) for criterion in subdivision_criteria]):
             # calculate child edge length and offsets for each child node
