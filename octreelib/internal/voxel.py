@@ -36,7 +36,7 @@ class Voxel(WithID, ABC):
         pass
 
 
-class StoringVoxel(Voxel, WithID, ABC):
+class StoringVoxel(Voxel, ABC):
     @property
     def _empty_point_cloud(self):
         return np.empty((0, 3), dtype=float)
