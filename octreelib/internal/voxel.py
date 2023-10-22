@@ -36,7 +36,7 @@ class Voxel(WithID, ABC):
         pass
 
 
-class StoringVoxel(Voxel, WithID, ABC):
+class StoringVoxel(Voxel, ABC):
     def __init__(
         self,
         corner: Point,
