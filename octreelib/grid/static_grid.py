@@ -59,7 +59,7 @@ class StaticGrid(GridBase):
         return self.octrees[pose_number].get_points()
 
     def _floor_point(self, x: Point) -> Point:
-        min_voxel_size = self.grid_config.min_voxel_size
+        min_voxel_size = self.grid_config.grid_voxel_edge_length
         return x // min_voxel_size * min_voxel_size
 
     def _ceil_point(self, x: Point) -> Point:
@@ -68,7 +68,7 @@ class StaticGrid(GridBase):
     def _grid_voxel_index_for_point(self, x: Point) -> Point:
         return (
             (x - self.grid_config.corner)
-            // self.grid_config.min_voxel_size
+            // self.grid_config.grid_voxel_edge_length
             * np.ones(3)
         )
 
