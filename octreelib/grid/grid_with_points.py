@@ -119,9 +119,9 @@ class GridWithPoints(GridBase):
             # get coords of voxel into which the point is inserted
             voxel_coordinates = self._get_voxel_for_point(point)
             voxel_coordinates_hashable = (
-                int(voxel_coordinates[0]),
-                int(voxel_coordinates[1]),
-                int(voxel_coordinates[2]),
+                float(voxel_coordinates[0]),
+                float(voxel_coordinates[1]),
+                float(voxel_coordinates[2]),
             )
 
             # create octree in the voxel if it does not exist yet
@@ -144,4 +144,4 @@ class GridWithPoints(GridBase):
         self.pose_voxel_coordinates: Dict[int, List[Point]] = {}
 
         # {voxel coordinates -> octree}
-        self.octrees: Dict[Tuple[int, int, int], grid_config.octree_type] = {}
+        self.octrees: Dict[Tuple[float, float, float], grid_config.octree_type] = {}

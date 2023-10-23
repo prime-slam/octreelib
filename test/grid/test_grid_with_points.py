@@ -117,9 +117,10 @@ def test_get_leaf_points(generated_grid):
                 leaf_points_pos_0[1].id,
                 leaf_points_pos_1[0].id,
                 leaf_points_pos_1[1].id,
+                leaf_points_pos_1[2].id,
             }
         )
-        == 4
+        == 5
     )
 
     assert set(map(str, leaf_points_pos_0[0].get_points())) == set(
