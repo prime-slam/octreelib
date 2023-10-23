@@ -17,7 +17,7 @@ class GridConfigBase(ABC):
 
     octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
-    min_voxel_size: size of a minimal possible voxel, the octree will be able to subdivide to
+    grid_voxel_edge_length: size of a minimal possible voxel, the octree will be able to subdivide to
     corner: corner of a grid
     debug: debug mode
     """

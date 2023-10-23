@@ -104,8 +104,8 @@ class GridWithPoints(GridBase):
         :param point: Point.
         :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
         """
-        min_voxel_size = self.grid_config.min_voxel_size
-        return point // min_voxel_size * min_voxel_size
+        grid_voxel_edge_length = self.grid_config.grid_voxel_edge_length
+        return point // grid_voxel_edge_length * grid_voxel_edge_length
 
     def insert_points(self, pose_number: int, points: List[Point]):
         # register pose if it is not registered yet
@@ -129,7 +129,7 @@ class GridWithPoints(GridBase):
                 self.octrees[voxel_coordinates_hashable] = self.grid_config.octree_type(
                     self.grid_config.octree_config,
                     voxel_coordinates,
-                    self.grid_config.min_voxel_size,
+                    self.grid_config.grid_voxel_edge_length,
                 )
 
             self.octrees[voxel_coordinates_hashable].insert_points([point])

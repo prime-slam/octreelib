@@ -15,7 +15,7 @@ def generated_grid():
         GridWithPointsConfig(
             octree_type=MultiPoseOctree,
             octree_config=MultiPoseOctreeConfig(),
-            min_voxel_size=5,
+            grid_voxel_edge_length=5,
         )
     )
     points_0 = [
