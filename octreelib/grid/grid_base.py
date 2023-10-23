@@ -25,7 +25,7 @@ class GridConfigBase(ABC):
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
-    min_voxel_size: int = 1
+    grid_voxel_edge_length: int = 1
     corner: Point = np.array(([0.0, 0.0, 0.0]))
 
 
