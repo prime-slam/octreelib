@@ -13,16 +13,19 @@ __all__ = ["StaticStoringVoxel", "StoringVoxel", "Voxel"]
 def _point_to_hashable(point: Point):
     return float(point[0]), float(point[1]), float(point[2])
 
+
 _static_voxel_id_map = {}
 
-class Voxel(WithID):
 
+class Voxel(WithID):
     def __init__(self, corner: Point, edge_length: np.float_):
         corner_hashable = _point_to_hashable(corner)
         other_hashable = _point_to_hashable(corner + edge_length)
 
         if (corner_hashable, other_hashable) not in _static_voxel_id_map:
-            _static_voxel_id_map[(corner_hashable, other_hashable)] = len(_static_voxel_id_map)
+            _static_voxel_id_map[(corner_hashable, other_hashable)] = len(
+                _static_voxel_id_map
+            )
 
         WithID.__init__(self, _static_voxel_id_map[(corner_hashable, other_hashable)])
         self.corner = corner
