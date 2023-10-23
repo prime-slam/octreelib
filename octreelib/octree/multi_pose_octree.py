@@ -95,14 +95,16 @@ class MultiPoseOctreeNode(OctreeNode):
             for child in self.children:
                 child.map_leaf_points(function)
         elif self.points:
+            new_points = []
             pose_numbers = {point.pose_number for point in self.points}
             for pose_number in pose_numbers:
                 points = _filter_by_pose_number(pose_number, self.points)
                 if points:
                     points = function(points.copy())
-                    self.points = [
+                    new_points += [
                         PointWithPose(point, pose_number) for point in points
                     ]
+            self.points = new_points
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         if any([criterion(self.points) for criterion in subdivision_criteria]):
