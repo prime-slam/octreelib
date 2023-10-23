@@ -23,23 +23,24 @@ class MultiPoseOctreeNode(OctreeNode):
     def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
         # if has children, return sum of children leaf voxels
         # else return voxel with points for this node
-        return (
-            sum(
+        if self.has_children:
+            return sum(
                 [
                     child.get_leaf_points_for_pose(pose_number)
                     for child in self.children
                 ],
                 [],
             )
-            if self.has_children
-            else [
+        filtered_points = _filter_by_pose_number(pose_number, self.points)
+        if filtered_points:
+            return [
                 StaticStoringVoxel(
                     self.corner,
                     self.edge_length,
-                    _filter_by_pose_number(pose_number, self.points),
+                    filtered_points,
                 )
             ]
-        )
+        return []
 
     def get_points_for_pose(self, pose_number: int) -> PointCloud:
         # if has children, return sum of points in children
