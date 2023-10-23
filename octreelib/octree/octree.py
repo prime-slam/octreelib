@@ -24,8 +24,11 @@ class OctreeNode(OctreeNodeBase):
             return sum(
                 [child.get_points_inside_box(box) for child in self.children], []
             )
-
-        return list(filter(lambda point: point_is_inside_box(point, box), self.points))
+        points_inside = np.empty((0, 3), dtype=float)
+        for point in self.points:
+            if point_is_inside_box(point, box):
+                points_inside = np.vstack((points_inside, point))
+        return points_inside
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         if any([criterion(self.points) for criterion in subdivision_criteria]):
@@ -39,25 +42,27 @@ class OctreeNode(OctreeNodeBase):
             ]
             self.has_children = True
             self.insert_points(self.points.copy())
-            self.points = []
+            self.points = self._empty_point_cloud
             for child in self.children:
                 child.subdivide(subdivision_criteria)
 
     def get_points(self) -> PointCloud:
-        return (
-            sum([child.get_points() for child in self.children], [])
-            if self.has_children
-            else self.points
-        )
+        if not self.has_children:
+            return self.points.copy()
+
+        points = self._empty_point_cloud
+        for child in self.children:
+            points = np.vstack((points, child.get_points()))
+        return points
 
     def insert_points(self, points: PointCloud):
         if self.has_children:
             for point in points:
                 for child in self.children:
                     if point_is_inside_box(point, child.bounding_box):
-                        child.insert_points([point])
+                        child.insert_points(point)
         else:
-            self.points.extend(points)
+            self.points = np.vstack((self.points, points))
 
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         if self.has_children:
@@ -67,7 +72,7 @@ class OctreeNode(OctreeNodeBase):
                 self.children = []
                 self.has_children = False
         elif not all([criterion(self.points) for criterion in filtering_criteria]):
-            self.points = []
+            self.points = self._empty_point_cloud
 
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         if self.has_children:
@@ -79,7 +84,7 @@ class OctreeNode(OctreeNodeBase):
     def get_leaf_points(self) -> List[StoringVoxel]:
         if self.has_children:
             return sum([child.get_leaf_points() for child in self.children], [])
-        return [self] if self.points else []
+        return [self] if len(self.points) else []
 
     @property
     def bounding_box(self):

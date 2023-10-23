@@ -104,7 +104,7 @@ class StaticGrid(GridBase):
             self.grid_config.octree_config, min_point, edge_length
         )
 
-    def insert_points(self, pose_number: int, points: List[Point]) -> None:
+    def insert_points(self, pose_number: int, points: PointCloud) -> None:
         if pose_number in self.octrees:
             raise ValueError(
                 f"The pose number {pose_number} is already in the grid. You must insert into a different pose number."
