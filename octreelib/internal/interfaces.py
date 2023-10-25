@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+import numpy as np
+
 from octreelib.internal.typing import Point, PointCloud
 
 __all__ = ["WithID", "WithPoints"]
@@ -22,5 +24,9 @@ class WithID(ABC):
 
 
 class WithPoints(ABC):
+    @property
+    def _empty_point_cloud(self):
+        return np.empty((0, 3), dtype=float)
+
     def __init__(self, points: Optional[PointCloud] = None):
         self.points: List[Point] = points or []
