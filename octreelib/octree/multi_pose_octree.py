@@ -3,10 +3,15 @@ from typing import List, Callable
 
 import numpy as np
 
+from internal.geometry import point_is_inside_box
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
-from octreelib.internal.typing import PointCloud
-from octreelib.internal.point import PointWithPose
+from octreelib.internal.point import (
+    PointCloud,
+    PosePointCloud,
+    add_pose_to_point_cloud,
+    remove_pose_from_point,
+)
 
 __all__ = ["MultiPoseOctreeNode", "MultiPoseOctree", "MultiPoseOctreeConfig"]
 
@@ -15,8 +20,8 @@ class MultiPoseOctreeConfig(OctreeConfig):
     pass
 
 
-def _filter_by_pose_number(pose_number: int, points: List[PointWithPose]) -> PointCloud:
-    return list(filter(lambda point: point.pose_number == pose_number, points))
+def _filter_by_pose_number(pose_number: int, points: PosePointCloud) -> PosePointCloud:
+    return points[points[:, 3] == pose_number]
 
 
 class MultiPoseOctreeNode(OctreeNode):
@@ -32,12 +37,12 @@ class MultiPoseOctreeNode(OctreeNode):
                 [],
             )
         filtered_points = _filter_by_pose_number(pose_number, self.points)
-        if filtered_points:
+        if len(filtered_points):
             return [
                 StaticStoringVoxel(
                     self.corner,
                     self.edge_length,
-                    filtered_points,
+                    filtered_points[:, :3],
                 )
             ]
         return []
@@ -46,13 +51,12 @@ class MultiPoseOctreeNode(OctreeNode):
         # if has children, return sum of points in children
         # else return self.points
         return (
-            sum(
+            np.vstack(
                 [child.get_points_for_pose(pose_number) for child in self.children],
-                [],
             )
             if self.has_children
             else _filter_by_pose_number(pose_number, self.points)
-        )
+        )[:, :3]
 
     def n_points_for_pose(self, pose_number: int) -> int:
         # if has children return sum of n_points_for_pose in children
@@ -94,16 +98,17 @@ class MultiPoseOctreeNode(OctreeNode):
         if self.has_children:
             for child in self.children:
                 child.map_leaf_points(function)
-        elif self.points:
-            new_points = []
-            pose_numbers = {point.pose_number for point in self.points}
+        elif len(self.points):
+            new_points = self._empty_point_cloud
+            pose_numbers = set(self.points[:, 3])
             for pose_number in pose_numbers:
                 points = _filter_by_pose_number(pose_number, self.points)
-                if points:
-                    points = function(points.copy())
-                    new_points += [
-                        PointWithPose(point, pose_number) for point in points
-                    ]
+                if len(points):
+                    points = np.array(function(points.copy()))
+                    new_points = np.vstack(
+                        [new_points, points]
+                    )
+
             self.points = new_points
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
@@ -123,11 +128,26 @@ class MultiPoseOctreeNode(OctreeNode):
 
             # reinsert points so that they are inserted into the child nodes
             self.insert_points(self.points.copy())
-            self.points = []
+            self.points = self._empty_point_cloud
 
             # subdivide children
             for child in self.children:
                 child.subdivide(subdivision_criteria)
+
+    def insert_points(self, points: PointCloud):
+        if self.has_children:
+            for point in points:
+                for child in self.children:
+                    if point_is_inside_box(
+                        remove_pose_from_point(point), child.bounding_box
+                    ):
+                        child.insert_points(point)
+        else:
+            self.points = np.vstack((self.points, points))
+
+    @property
+    def _empty_point_cloud(self):
+        return np.empty((0, 4), dtype=float)
 
 
 class MultiPoseOctree(Octree):

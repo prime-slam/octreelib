@@ -1,7 +1,10 @@
 from typing import List, Dict, Callable, Any, Tuple
 
+import numpy as np
+
+from internal import add_pose_to_point_cloud
 from octreelib.grid.grid_base import GridBase, GridConfigBase
-from octreelib.internal import Point, PointCloud, StaticStoringVoxel, PointWithPose
+from octreelib.internal import Point, PointCloud, StaticStoringVoxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
 __all__ = ["GridWithPoints", "GridWithPointsConfig"]
@@ -79,17 +82,16 @@ class GridWithPoints(GridBase):
         for voxel_coordinates in self.octrees:
             self.octrees[voxel_coordinates].map_leaf_points(function)
 
-    def get_points(self, pose_number: int) -> List[Point]:
+    def get_points(self, pose_number: int) -> PointCloud:
         """
         :param pose_number: Pose number.
         :return: All points inside the grid.
         """
-        return sum(
+        return np.vstack(
             [
                 octree.get_points_for_pose(pose_number)
                 for octree in self.octrees.values()
-            ],
-            [],
+            ]
         )
 
     def merge(self, merger: Any):
@@ -104,16 +106,17 @@ class GridWithPoints(GridBase):
         :param point: Point.
         :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
         """
+        point = point[:3]
         grid_voxel_edge_length = self.grid_config.grid_voxel_edge_length
         return point // grid_voxel_edge_length * grid_voxel_edge_length
 
-    def insert_points(self, pose_number: int, points: List[Point]):
+    def insert_points(self, pose_number: int, points: PointCloud):
         # register pose if it is not registered yet
         if pose_number not in self.pose_voxel_coordinates:
             self.pose_voxel_coordinates[pose_number] = []
 
         # convert points to PointsWithPose, which is a subclass of np.ndarray
-        points = [PointWithPose(point, pose_number) for point in points]
+        points = add_pose_to_point_cloud(points, pose_number)
 
         for point in points:
             # get coords of voxel into which the point is inserted

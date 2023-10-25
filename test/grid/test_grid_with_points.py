@@ -1,12 +1,13 @@
 import numpy as np
 import pytest
 
+from octreelib.internal import PointCloud
 from octreelib.grid import GridWithPoints, GridWithPointsConfig
 from octreelib.octree import MultiPoseOctree, MultiPoseOctreeConfig
 
 
-def points_are_same(points_a, points_b):
-    return set(map(str, list(points_a))) == set(map(str, list(points_b)))
+def points_are_same(points_a: PointCloud, points_b: PointCloud):
+    return set(map(str, points_a.tolist())) == set(map(str, points_b.tolist()))
 
 
 @pytest.fixture()
@@ -18,21 +19,21 @@ def generated_grid():
             grid_voxel_edge_length=5,
         )
     )
-    points_0 = [
-        np.array([0, 0, 1]),  # voxel 0,0,0
-        np.array([0, 0, 2]),  # voxel 0,0,0
-        np.array([0, 0, 3]),  # voxel 0,0,0
-        np.array([9, 9, 8]),  # voxel 5,5,5
-        np.array([9, 9, 9]),  # voxel 5,5,5
-    ]
+    points_0 = np.array([
+        [0, 0, 1],  # voxel 0,0,0
+        [0, 0, 2],  # voxel 0,0,0
+        [0, 0, 3],  # voxel 0,0,0
+        [9, 9, 8],  # voxel 5,5,5
+        [9, 9, 9],  # voxel 5,5,5
+    ], dtype=float)
     grid.insert_points(0, points_0)
-    points_1 = [
-        np.array([1, 0, 1]),  # voxel 0,0,0
-        np.array([4, 0, 2]),  # voxel 0,0,0
-        np.array([0, 2, 3]),  # voxel 0,0,0
-        np.array([5, 9, 9]),  # voxel 5,5,5
-        np.array([9, 3, 8]),  # voxel 5,0,5
-    ]
+    points_1 = np.array([
+        [1, 0, 1],  # voxel 0,0,0
+        [4, 0, 2],  # voxel 0,0,0
+        [0, 2, 3],  # voxel 0,0,0
+        [5, 9, 9],  # voxel 5,5,5
+        [9, 3, 8],  # voxel 5,0,5
+    ], dtype=float)
     grid.insert_points(1, points_1)
 
     return grid, [points_0, points_1]

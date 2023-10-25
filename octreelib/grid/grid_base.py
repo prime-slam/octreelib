@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Generic, List, Type
 
 import numpy as np
 
-from octreelib.internal import Point, PointCloud, T, StoringVoxel
+from octreelib.internal import Point, PointCloud, T, StoringVoxel, WithPoints
 from octreelib.octree import OctreeConfigBase
 
 __all__ = ["GridConfigBase", "GridBase"]
@@ -29,7 +29,7 @@ class GridConfigBase(ABC):
     corner: Point = np.array(([0.0, 0.0, 0.0]))
 
 
-class GridBase(ABC, Generic[T]):
+class GridBase(WithPoints, ABC, Generic[T]):
     """
     This class stores octrees for different nodes
     Generic[T] is used for specifying the class of Octree used.

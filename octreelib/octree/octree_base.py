@@ -5,7 +5,8 @@ from typing import Callable, List, Optional
 import numpy as np
 
 from octreelib.internal import StoringVoxel
-from octreelib.internal.typing import PointCloud, Point, Box
+from octreelib.internal.typing import Box
+from octreelib.internal.point import Point, PointCloud
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 

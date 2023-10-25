@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal.typing import Point, PointCloud
+from octreelib.internal.point import Point, PointCloud
 from octreelib.internal.interfaces import WithID, WithPoints
 
 __all__ = ["StaticStoringVoxel", "StoringVoxel", "Voxel"]

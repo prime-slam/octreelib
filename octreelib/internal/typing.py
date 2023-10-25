@@ -1,11 +1,8 @@
-from typing import List, TypeVar, Tuple
+from typing import TypeVar, Tuple
 
-import numpy as np
-import numpy.typing as npt
+from octreelib.internal.point import Point
 
-__all__ = ["Box", "Point", "PointCloud", "T"]
+__all__ = ["Box", "T"]
 
-Point = npt.NDArray[np.float_]  # 3x1
-PointCloud = npt.NDArray[np.float_]  # 3xN
 Box = Tuple[Point, Point]
 T = TypeVar("T")
