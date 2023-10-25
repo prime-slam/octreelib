@@ -19,21 +19,27 @@ def generated_grid():
             grid_voxel_edge_length=5,
         )
     )
-    points_0 = np.array([
-        [0, 0, 1],  # voxel 0,0,0
-        [0, 0, 2],  # voxel 0,0,0
-        [0, 0, 3],  # voxel 0,0,0
-        [9, 9, 8],  # voxel 5,5,5
-        [9, 9, 9],  # voxel 5,5,5
-    ], dtype=float)
+    points_0 = np.array(
+        [
+            [0, 0, 1],  # voxel 0,0,0
+            [0, 0, 2],  # voxel 0,0,0
+            [0, 0, 3],  # voxel 0,0,0
+            [9, 9, 8],  # voxel 5,5,5
+            [9, 9, 9],  # voxel 5,5,5
+        ],
+        dtype=float,
+    )
     grid.insert_points(0, points_0)
-    points_1 = np.array([
-        [1, 0, 1],  # voxel 0,0,0
-        [4, 0, 2],  # voxel 0,0,0
-        [0, 2, 3],  # voxel 0,0,0
-        [5, 9, 9],  # voxel 5,5,5
-        [9, 3, 8],  # voxel 5,0,5
-    ], dtype=float)
+    points_1 = np.array(
+        [
+            [1, 0, 1],  # voxel 0,0,0
+            [4, 0, 2],  # voxel 0,0,0
+            [0, 2, 3],  # voxel 0,0,0
+            [5, 9, 9],  # voxel 5,5,5
+            [9, 3, 8],  # voxel 5,0,5
+        ],
+        dtype=float,
+    )
     grid.insert_points(1, points_1)
 
     return grid, [points_0, points_1]

@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal import StoringVoxel
+from octreelib.internal.voxel import StoringVoxel
 from octreelib.internal.typing import Box
 from octreelib.internal.point import Point, PointCloud
 

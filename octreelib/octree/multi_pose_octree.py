@@ -3,13 +3,12 @@ from typing import List, Callable
 
 import numpy as np
 
-from internal.geometry import point_is_inside_box
+from octreelib.internal.geometry import point_is_inside_box
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
 from octreelib.internal.point import (
     PointCloud,
     PosePointCloud,
-    add_pose_to_point_cloud,
     remove_pose_from_point,
 )
 
@@ -105,9 +104,7 @@ class MultiPoseOctreeNode(OctreeNode):
                 points = _filter_by_pose_number(pose_number, self.points)
                 if len(points):
                     points = np.array(function(points.copy()))
-                    new_points = np.vstack(
-                        [new_points, points]
-                    )
+                    new_points = np.vstack([new_points, points])
 
             self.points = new_points
 

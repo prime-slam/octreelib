@@ -2,9 +2,9 @@ from typing import List, Dict, Callable, Any, Tuple
 
 import numpy as np
 
-from internal import add_pose_to_point_cloud
 from octreelib.grid.grid_base import GridBase, GridConfigBase
-from octreelib.internal import Point, PointCloud, StaticStoringVoxel
+from octreelib.internal.point import Point, PointCloud, add_pose_to_point_cloud
+from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
 __all__ = ["GridWithPoints", "GridWithPointsConfig"]
