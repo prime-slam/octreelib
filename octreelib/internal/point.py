@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Iterable
 
 import numpy as np
 import numpy.typing as npt
@@ -14,6 +14,10 @@ __all__ = [
     "remove_pose_from_point",
     "remove_pose_from_point_cloud",
     # "PointWithPose",
+    "CPoint",
+    "CPointCloud",
+    "CPosePoint",
+    "CPosePointCloud",
 ]
 
 
@@ -49,28 +53,81 @@ def remove_pose_from_point(point: PosePoint) -> Point:
     return point[:3]
 
 
-# def ensure_no_pose(point: Union[Point, PosePoint]) -> Point:
-#     return point if len(point) == 3 else remove_pose_from_point(point)
+"""
+These classes are subclasses of np.ndarray
+https://numpy.org/doc/stable/user/basics.subclassing.html
+"""
 
 
-# class PointWithPose(np.ndarray):
-#     """
-#     This class is a subclass of np.ndarray which has one additional field: pose_number: int
-#     https://numpy.org/doc/stable/user/basics.subclassing.html
-#     """
-#
-#     def __new__(cls, input_array, pose_number: int):
-#         obj = np.asarray(input_array).view(cls)
-#         obj.pose_number = pose_number
-#         return obj
-#
-#     def __array_finalize__(self, obj):
-#         if obj is None:
-#             return
-#         self.pose_number = getattr(obj, "pose_number", None)
-#
-#
-# def add_clouds(point_cloud_a: PointWithPose, point_cloud_b: PointWithPose):
-#     if point_cloud_a.pose_number != point_cloud_b.pose_number:
-#         raise ValueError("pose numbers of the point clouds must be the same")
-#     return np.vstack([point_cloud_a, point_cloud_b])
+class CPoint(np.ndarray):
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+    def with_pose(self, pose_number: int):
+        new_array = np.hstack([self, np.array([pose_number])])
+        return CPosePoint(new_array)
+
+    def to_hashable(self):
+        return self.tolist()
+
+
+class CPointCloud(np.ndarray):
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+    def with_pose(self, pose_numbers: int):
+        new_array = np.hstack([self, np.array([[pose_numbers]] * len(self))])
+        return CPosePointCloud(new_array)
+
+    def with_poses(self, pose_numbers: Iterable[int]):
+        new_array = np.hstack([self, np.array(np.array(pose_numbers))])
+        return CPosePointCloud(new_array)
+
+    def __iter__(self) -> CPoint:
+        for value in super().__iter__():
+            yield CPoint(value)
+
+    def __getitem__(self, item) -> CPoint:
+        return CPoint(super().__getitem__(item))
+
+    def extend(self, other):
+        return CPointCloud(np.vstack((self, other)))
+
+
+class CPosePoint(np.ndarray):
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+    def without_pose(self):
+        return CPoint(self[:3])
+
+    def pose(self):
+        return self[3]
+
+
+class CPosePointCloud(np.ndarray):
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+    def without_poses(self):
+        return CPointCloud(self[:, :3])
+
+    def poses(self):
+        return self[:, 3]
+
+    def __iter__(self):
+        for value in super().__iter__():
+            yield CPosePoint(value)
+
+    def __getitem__(self, item):
+        return CPosePoint(super().__getitem__(item))
+
+    def copy(self):
+        return CPosePointCloud(super().copy())
+
+    def extend(self, other):
+        return CPosePointCloud(np.vstack((self, other)))

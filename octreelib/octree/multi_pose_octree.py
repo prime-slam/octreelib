@@ -7,9 +7,10 @@ from octreelib.internal.geometry import point_is_inside_box
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
 from octreelib.internal.point import (
+    CPosePointCloud,
+    CPointCloud,
+    CPosePoint,
     PointCloud,
-    PosePointCloud,
-    remove_pose_from_point,
 )
 
 __all__ = ["MultiPoseOctreeNode", "MultiPoseOctree", "MultiPoseOctreeConfig"]
@@ -19,13 +20,15 @@ class MultiPoseOctreeConfig(OctreeConfig):
     pass
 
 
-def _filter_by_pose_number(pose_number: int, points: PosePointCloud) -> PosePointCloud:
-    return points[points[:, 3] == pose_number]
+def _filter_by_pose_number(
+    pose_number: int, points: CPosePointCloud
+) -> CPosePointCloud:
+    return CPosePointCloud(points[points[:, 3] == pose_number])
 
 
 class MultiPoseOctreeNode(OctreeNode):
     def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
-        # if has children, return sum of children leaf voxels
+        # if node has children, return sum of children leaf voxels
         # else return voxel with points for this node
         if self.has_children:
             return sum(
@@ -47,7 +50,7 @@ class MultiPoseOctreeNode(OctreeNode):
         return []
 
     def get_points_for_pose(self, pose_number: int) -> PointCloud:
-        # if has children, return sum of points in children
+        # if node has children, return sum of points in children
         # else return self.points
         return (
             np.vstack(
@@ -58,7 +61,7 @@ class MultiPoseOctreeNode(OctreeNode):
         )[:, :3]
 
     def n_points_for_pose(self, pose_number: int) -> int:
-        # if has children return sum of n_points_for_pose in children
+        # if node has children return sum of n_points_for_pose in children
         # else return number of points for this pose in self
         return (
             sum([child.n_points_for_pose(pose_number) for child in self.children])
@@ -67,7 +70,7 @@ class MultiPoseOctreeNode(OctreeNode):
         )
 
     def n_leafs_for_pose(self, pose_number: int) -> int:
-        # if has children return sum of n_leafs_for_pose in children
+        # if node has children return sum of n_leafs_for_pose in children
         # else return 1 if this leaf has points for this pose else 0
         return (
             sum([child.n_leafs_for_pose(pose_number) for child in self.children])
@@ -76,7 +79,7 @@ class MultiPoseOctreeNode(OctreeNode):
         )
 
     def n_nodes_for_pose(self, pose_number: int) -> int:
-        # if has children and any of the children has points for this pose
+        # if node has children and any of the children has points for this pose
         #     return sum of n_nodes_for_pose for children + 1 (because this voxel also counts)
         # else return 1 if this leaf has points for this pose else 0
         n_nodes = (
@@ -99,17 +102,24 @@ class MultiPoseOctreeNode(OctreeNode):
                 child.map_leaf_points(function)
         elif len(self.points):
             new_points = self._empty_point_cloud
-            pose_numbers = set(self.points[:, 3])
+            pose_numbers = set(self.points.poses())
             for pose_number in pose_numbers:
                 points = _filter_by_pose_number(pose_number, self.points)
                 if len(points):
-                    points = np.array(function(points.copy()))
-                    new_points = np.vstack([new_points, points])
+                    points = CPointCloud(function(points.without_poses())).with_pose(
+                        pose_number
+                    )
+                    new_points = new_points.extend(points)
 
             self.points = new_points
 
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
-        if any([criterion(self.points) for criterion in subdivision_criteria]):
+        if any(
+            [
+                criterion(self.points.without_poses())
+                for criterion in subdivision_criteria
+            ]
+        ):
             # calculate child edge length and offsets for each child node
             child_edge_length = self.edge_length / np.float_(2)
             children_corners_offsets = itertools.product(
@@ -131,20 +141,24 @@ class MultiPoseOctreeNode(OctreeNode):
             for child in self.children:
                 child.subdivide(subdivision_criteria)
 
-    def insert_points(self, points: PointCloud):
+    def insert_point(self, point: CPosePoint):
+        if self.has_children:
+            for child in self.children:
+                if point_is_inside_box(point.without_pose(), child.bounding_box):
+                    child.insert_points(point)
+        else:
+            self.points = self.points.extend(point)
+
+    def insert_points(self, points: CPosePointCloud):
         if self.has_children:
             for point in points:
-                for child in self.children:
-                    if point_is_inside_box(
-                        remove_pose_from_point(point), child.bounding_box
-                    ):
-                        child.insert_points(point)
+                self.insert_point(point)
         else:
-            self.points = np.vstack((self.points, points))
+            self.points = self.points.extend(points)
 
     @property
-    def _empty_point_cloud(self):
-        return np.empty((0, 4), dtype=float)
+    def _empty_point_cloud(self) -> CPosePointCloud:
+        return CPosePointCloud(np.empty((0, 4), dtype=float))
 
 
 class MultiPoseOctree(Octree):
