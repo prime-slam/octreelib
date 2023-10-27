@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-from octreelib.internal.point import PointCloud
+from octreelib.internal.point import RawPointCloud
 
 __all__ = ["WithID", "WithPoints"]
 
@@ -28,7 +28,7 @@ class WithPoints(ABC):
     def _empty_point_cloud(self):
         return np.empty((0, 3), dtype=float)
 
-    def __init__(self, points: Optional[PointCloud] = None):
-        self.points: PointCloud = (
+    def __init__(self, points: Optional[RawPointCloud] = None):
+        self.points: RawPointCloud = (
             points if points is not None else self._empty_point_cloud
         )

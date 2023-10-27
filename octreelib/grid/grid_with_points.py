@@ -4,7 +4,7 @@ import numpy as np
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
 
-from octreelib.internal.point import PointCloud, Point, CPointCloud
+from octreelib.internal.point import RawPointCloud, RawPoint, PointCloud
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
@@ -44,7 +44,7 @@ class GridWithPoints(GridBase):
             [octree.n_nodes_for_pose(pose_number) for octree in self.octrees.values()]
         )
 
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         Subdivides all octrees based on all points and given filtering criteria.
         :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
@@ -53,7 +53,7 @@ class GridWithPoints(GridBase):
         for voxel_coordinates in self.octrees:
             self.octrees[voxel_coordinates].subdivide(subdivision_criteria)
 
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         Filters nodes of each octree with points by criteria
         :param filtering_criteria: Filtering Criteria
@@ -75,7 +75,7 @@ class GridWithPoints(GridBase):
             [],
         )
 
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
         Transforms point cloud in each leaf node of each octree using the function
         :param function: transformation function PointCloud -> PointCloud
@@ -83,7 +83,7 @@ class GridWithPoints(GridBase):
         for voxel_coordinates in self.octrees:
             self.octrees[voxel_coordinates].map_leaf_points(function)
 
-    def get_points(self, pose_number: int) -> PointCloud:
+    def get_points(self, pose_number: int) -> RawPointCloud:
         """
         :param pose_number: Pose number.
         :return: All points inside the grid.
@@ -101,7 +101,7 @@ class GridWithPoints(GridBase):
         """
         raise NotImplementedError("This method is Not Supported")
 
-    def _get_voxel_for_point(self, point: Point) -> Point:
+    def _get_voxel_for_point(self, point: RawPoint) -> RawPoint:
         """
         Method to get coordinates of a voxel where the given point would be stored.
         :param point: Point.
@@ -111,13 +111,13 @@ class GridWithPoints(GridBase):
         grid_voxel_edge_length = self.grid_config.grid_voxel_edge_length
         return point // grid_voxel_edge_length * grid_voxel_edge_length
 
-    def insert_points(self, pose_number: int, points: PointCloud):
+    def insert_points(self, pose_number: int, points: RawPointCloud):
         # register pose if it is not registered yet
         if pose_number not in self.pose_voxel_coordinates:
             self.pose_voxel_coordinates[pose_number] = []
 
         # convert points to PointsWithPose, which is a subclass of np.ndarray
-        points = CPointCloud(points)
+        points = PointCloud(points)
 
         for point in points:
             # get coords of voxel into which the point is inserted
@@ -148,7 +148,7 @@ class GridWithPoints(GridBase):
         self.grid_config.octree_type = MultiPoseOctree
 
         # {pose -> list of voxel coordinates}
-        self.pose_voxel_coordinates: Dict[int, List[Point]] = {}
+        self.pose_voxel_coordinates: Dict[int, List[RawPoint]] = {}
 
         # {voxel coordinates -> octree}
         self.octrees: Dict[Tuple[float, float, float], grid_config.octree_type] = {}

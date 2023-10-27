@@ -9,10 +9,10 @@ from octreelib.internal.geometry import point_is_inside_box
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
 from octreelib.internal.point import (
-    CPosePointCloud,
-    CPointCloud,
-    CPosePoint,
+    PosePointCloud,
     PointCloud,
+    PosePoint,
+    RawPointCloud,
 )
 
 __all__ = ["MultiPoseOctreeNode", "MultiPoseOctree", "MultiPoseOctreeConfig"]
@@ -23,9 +23,9 @@ class MultiPoseOctreeConfig(OctreeConfig):
 
 
 def _filter_by_pose_number(
-    pose_number: int, points: CPosePointCloud
-) -> CPosePointCloud:
-    return CPosePointCloud(points[points[:, 3] == pose_number])
+    pose_number: int, points: PosePointCloud
+) -> PosePointCloud:
+    return PosePointCloud(points[points[:, 3] == pose_number])
 
 
 class MultiPoseOctreeNode(OctreeNode):
@@ -51,7 +51,7 @@ class MultiPoseOctreeNode(OctreeNode):
             ]
         return []
 
-    def get_points_for_pose(self, pose_number: int) -> PointCloud:
+    def get_points_for_pose(self, pose_number: int) -> RawPointCloud:
         # if node has children, return sum of points in children
         # else return self.points
         return (
@@ -99,7 +99,7 @@ class MultiPoseOctreeNode(OctreeNode):
             else len(_filter_by_pose_number(pose_number, self.points)) != 0
         )
 
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         if self.has_children:
             for child in self.children:
                 child.map_leaf_points(function)
@@ -109,14 +109,14 @@ class MultiPoseOctreeNode(OctreeNode):
             for pose_number in pose_numbers:
                 points = _filter_by_pose_number(pose_number, self.points)
                 if len(points):
-                    points = CPointCloud(function(points.without_poses())).with_pose(
+                    points = PointCloud(function(points.without_poses())).with_pose(
                         pose_number
                     )
                     new_points = new_points.extend(points)
 
             self.points = new_points
 
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         if any(
             [
                 criterion(self.points.without_poses())
@@ -144,7 +144,7 @@ class MultiPoseOctreeNode(OctreeNode):
             for child in self.children:
                 child.subdivide(subdivision_criteria)
 
-    def insert_point(self, point: CPosePoint):
+    def insert_point(self, point: PosePoint):
         if self.has_children:
             for child in self.children:
                 if point_is_inside_box(point.without_pose(), child.bounding_box):
@@ -152,7 +152,7 @@ class MultiPoseOctreeNode(OctreeNode):
         else:
             self.points = self.points.extend(point)
 
-    def insert_points(self, points: CPosePointCloud):
+    def insert_points(self, points: PosePointCloud):
         if self.has_children:
             for point in points:
                 self.insert_point(point)
@@ -160,8 +160,8 @@ class MultiPoseOctreeNode(OctreeNode):
             self.points = self.points.extend(points)
 
     @property
-    def _empty_point_cloud(self) -> CPosePointCloud:
-        return CPosePointCloud(np.empty((0, 4), dtype=float))
+    def _empty_point_cloud(self) -> PosePointCloud:
+        return PosePointCloud(np.empty((0, 4), dtype=float))
 
 
 class MultiPoseOctree(Octree):
@@ -170,7 +170,7 @@ class MultiPoseOctree(Octree):
     def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
         return self.root.get_leaf_points_for_pose(pose_number)
 
-    def get_points_for_pose(self, pose_number: int) -> PointCloud:
+    def get_points_for_pose(self, pose_number: int) -> RawPointCloud:
         return self.root.get_points_for_pose(pose_number)
 
     def n_points_for_pose(self, pose_number: int) -> int:

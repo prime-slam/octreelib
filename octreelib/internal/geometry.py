@@ -2,10 +2,10 @@ from typing import Optional
 
 import numpy as np
 
-from octreelib.internal import Point, Box
+from octreelib.internal import RawPoint, Box
 
 
-def point_is_inside_box(point: Point, box: Box) -> bool:
+def point_is_inside_box(point: RawPoint, box: Box) -> bool:
     return bool((box[0] <= point).all()) and bool((point <= box[1]).all())
 
 

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List, Generic, Any, Callable, Type, Tuple, Dict
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
-from octreelib.internal import Point, T, PointCloud, StoringVoxel
+from octreelib.internal import RawPoint, T, RawPointCloud, StoringVoxel
 from octreelib.internal.geometry import boxes_intersection
 
 
@@ -36,7 +36,7 @@ class StaticGrid(GridBase):
         points = sum([octree.get_points() for octree in self.octrees.values()], [])
         self.merged_octrees = [self._make_octree(points)]
 
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         for pose_number in self.octrees:
             self.octrees[pose_number].filter(filtering_criteria)
             if not all(
@@ -47,25 +47,25 @@ class StaticGrid(GridBase):
             ):
                 self.octrees.pop(pose_number)
 
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         for pose_number in self.octrees:
             self.octrees[pose_number].map_leaf_points(function)
 
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         for pose_number in self.octrees:
             self.octrees[pose_number].subdivide(subdivision_criteria)
 
-    def get_points(self, pose_number: int) -> List[Point]:
+    def get_points(self, pose_number: int) -> List[RawPoint]:
         return self.octrees[pose_number].get_points()
 
-    def _floor_point(self, x: Point) -> Point:
+    def _floor_point(self, x: RawPoint) -> RawPoint:
         grid_voxel_edge_length = self.grid_config.grid_voxel_edge_length
         return x // grid_voxel_edge_length * grid_voxel_edge_length
 
-    def _ceil_point(self, x: Point) -> Point:
+    def _ceil_point(self, x: RawPoint) -> RawPoint:
         return self._floor_point(x) + 1
 
-    def _grid_voxel_index_for_point(self, x: Point) -> Point:
+    def _grid_voxel_index_for_point(self, x: RawPoint) -> RawPoint:
         return (
             (x - self.grid_config.corner)
             // self.grid_config.grid_voxel_edge_length
@@ -73,11 +73,11 @@ class StaticGrid(GridBase):
         )
 
     def _extend_coordinates_to_a_voxel(
-        self, point_1: Point, point_2: Point
-    ) -> Tuple[Point, Point]:
+        self, point_1: RawPoint, point_2: RawPoint
+    ) -> Tuple[RawPoint, RawPoint]:
         return self._floor_point(point_1), self._ceil_point(point_2)
 
-    def _make_octree(self, points: List[Point]):
+    def _make_octree(self, points: List[RawPoint]):
         min_point = np.array(
             [
                 min(points, key=lambda point: point[0])[0],
@@ -104,7 +104,7 @@ class StaticGrid(GridBase):
             self.grid_config.octree_config, min_point, edge_length
         )
 
-    def insert_points(self, pose_number: int, points: PointCloud) -> None:
+    def insert_points(self, pose_number: int, points: RawPointCloud) -> None:
         if pose_number in self.octrees:
             raise ValueError(
                 f"The pose number {pose_number} is already in the grid. You must insert into a different pose number."
@@ -114,7 +114,7 @@ class StaticGrid(GridBase):
 
     def _intersect_octree_pair(
         self, first_pos_number: int, second_pos_number: int
-    ) -> PointCloud:
+    ) -> RawPointCloud:
         first_octree = self.octrees[first_pos_number]
         second_octree = self.octrees[second_pos_number]
 

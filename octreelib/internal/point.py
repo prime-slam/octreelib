@@ -5,97 +5,111 @@ import numpy.typing as npt
 
 
 __all__ = [
+    "RawPoint",
+    "RawPointCloud",
     "Point",
     "PointCloud",
     "PosePoint",
     "PosePointCloud",
-    "CPoint",
-    "CPointCloud",
-    "CPosePoint",
-    "CPosePointCloud",
 ]
 
-
-Point = Annotated[npt.NDArray[np.float_], Literal[3]]
-PointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
-PosePoint = Annotated[npt.NDArray[np.float_], Literal[4]]
-PosePointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 4]]
-
-
-"""
-These classes are subclasses of np.ndarray
-https://numpy.org/doc/stable/user/basics.subclassing.html
-"""
+# RawPoint is a numpy Array 1x3.
+RawPoint = Annotated[npt.NDArray[np.float_], Literal[3]]
+# RawPointCloud is a numpy array Nx3.
+RawPointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
 
 
-class CPoint(np.ndarray):
+# These classes are for internal use.
+# They are subclasses of np.ndarray, which add dichotomy
+# for having and not having information about pose number.
+
+class Point(np.ndarray):
     def __new__(cls, input_array):
+        # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
         return obj
 
     def with_pose(self, pose_number: int):
+        # Return the same point but with information about pose numbers.
         new_array = np.hstack([self, np.array([pose_number])])
-        return CPosePoint(new_array)
-
-    def to_hashable(self):
-        return self.tolist()
+        return PosePoint(new_array)
 
 
-class CPointCloud(np.ndarray):
+class PointCloud(np.ndarray):
     def __new__(cls, input_array):
+        # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
         return obj
 
     def with_poses(self, pose_numbers: Iterable[int]):
+        # Return the same point cloud but with information about pose numbers.
         new_array = np.hstack([self, np.array(pose_numbers).reshape((len(self), 1))])
-        return CPosePointCloud(new_array)
+        return PosePointCloud(new_array)
 
     def with_pose(self, pose_numbers: int):
+        # Return the same point cloud but with information about pose numbers.
         return self.with_poses([pose_numbers] * len(self))
 
-    def __iter__(self) -> CPoint:
+    def __iter__(self) -> Point:
+        # when iterating, return a Point class instead of a np.ndarray.
         for value in super().__iter__():
-            yield CPoint(value)
+            yield Point(value)
 
-    def __getitem__(self, item) -> CPoint:
-        return CPoint(super().__getitem__(item))
+    def __getitem__(self, index) -> Point:
+        # getting item by index, return a Point class instead of a np.ndarray.
+        return Point(super().__getitem__(index))
 
     def extend(self, other):
-        return CPointCloud(np.vstack((self, other)))
+        # Add two point clouds.
+        # Cannot override __add__ because it is used for different
+        # purposes in parent np.ndarray.
+        return PointCloud(np.vstack((self, other)))
 
 
-class CPosePoint(np.ndarray):
+class PosePoint(np.ndarray):
     def __new__(cls, input_array):
+        # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
         return obj
 
     def without_pose(self):
-        return CPoint(self[:3])
+        # Return the same point but without information about pose numbers.
+        return Point(self[:3])
 
     def pose(self):
+        # Return pose number.
         return self[3]
 
 
-class CPosePointCloud(np.ndarray):
+class PosePointCloud(np.ndarray):
     def __new__(cls, input_array):
+        # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
         return obj
 
     def without_poses(self):
-        return CPointCloud(self[:, :3])
+        # Return the same point cloud but without information about pose numbers.
+        return PointCloud(self[:, :3])
 
     def poses(self):
+        # Return poses for this cloud.
         return self[:, 3]
 
     def __iter__(self):
+        # When iterating, return a Point class instead of a np.ndarray.
         for value in super().__iter__():
-            yield CPosePoint(value)
+            yield PosePoint(value)
 
-    def __getitem__(self, item):
-        return CPosePoint(super().__getitem__(item))
+    def __getitem__(self, index):
+        # When getting item by index, return a Point class instead of a np.ndarray.
+        return PosePoint(super().__getitem__(index))
 
     def copy(self):
-        return CPosePointCloud(super().copy())
+        # When copying return PosePointCloud instead of np.ndarray.
+        return PosePointCloud(super().copy())
 
     def extend(self, other):
-        return CPosePointCloud(np.vstack((self, other)))
+        # Add two point clouds.
+        # Cannot override __add__ because it is used for different
+        # purposes in parent np.ndarray.
+        return PosePointCloud(np.vstack((self, other)))

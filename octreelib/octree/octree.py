@@ -6,7 +6,7 @@ from typing import Callable, List, Generic
 import numpy as np
 
 from octreelib.internal.geometry import point_is_inside_box
-from octreelib.internal import PointCloud, Point, T, StoringVoxel
+from octreelib.internal import RawPointCloud, RawPoint, T, StoringVoxel
 from octreelib.internal.typing import Box
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
@@ -19,7 +19,7 @@ class OctreeConfig(OctreeConfigBase):
 
 
 class OctreeNode(OctreeNodeBase):
-    def get_points_inside_box(self, box: Box) -> PointCloud:
+    def get_points_inside_box(self, box: Box) -> RawPointCloud:
         if self.has_children:
             return sum(
                 [child.get_points_inside_box(box) for child in self.children], []
@@ -30,7 +30,7 @@ class OctreeNode(OctreeNodeBase):
                 points_inside = np.vstack((points_inside, point))
         return points_inside
 
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         if any([criterion(self.points) for criterion in subdivision_criteria]):
             child_edge_length = self.edge_length / np.float_(2)
             children_corners_offsets = itertools.product(
@@ -46,7 +46,7 @@ class OctreeNode(OctreeNodeBase):
             for child in self.children:
                 child.subdivide(subdivision_criteria)
 
-    def get_points(self) -> PointCloud:
+    def get_points(self) -> RawPointCloud:
         if not self.has_children:
             return self.points.copy()
 
@@ -55,7 +55,7 @@ class OctreeNode(OctreeNodeBase):
             points = np.vstack((points, child.get_points()))
         return points
 
-    def insert_points(self, points: PointCloud):
+    def insert_points(self, points: RawPointCloud):
         if self.has_children:
             for point in points:
                 for child in self.children:
@@ -64,7 +64,7 @@ class OctreeNode(OctreeNodeBase):
         else:
             self.points = np.vstack((self.points, points))
 
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         if self.has_children:
             for child in self.children:
                 child.filter(filtering_criteria)
@@ -74,7 +74,7 @@ class OctreeNode(OctreeNodeBase):
         elif not all([criterion(self.points) for criterion in filtering_criteria]):
             self.points = self._empty_point_cloud
 
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         if self.has_children:
             for child in self.children:
                 child.map_leaf_points(function)
@@ -116,22 +116,22 @@ class OctreeNode(OctreeNodeBase):
 class Octree(OctreeBase, Generic[T]):
     _node_type = OctreeNode
 
-    def get_points_in_box(self, box: Box) -> PointCloud:
+    def get_points_in_box(self, box: Box) -> RawPointCloud:
         return self.root.get_points_inside_box(box)
 
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         self.root.subdivide(subdivision_criteria)
 
-    def get_points(self) -> PointCloud:
+    def get_points(self) -> RawPointCloud:
         return self.root.get_points()
 
-    def insert_points(self, points: PointCloud):
+    def insert_points(self, points: RawPointCloud):
         self.root.insert_points(points)
 
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         self.root.filter(filtering_criteria)
 
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         self.root.map_leaf_points(function)
 
     def get_leaf_points(self) -> List[StoringVoxel]:

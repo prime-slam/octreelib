@@ -1,8 +1,8 @@
 from typing import TypeVar, Tuple
 
-from octreelib.internal.point import Point
+from octreelib.internal.point import RawPoint
 
 __all__ = ["Box", "T"]
 
-Box = Tuple[Point, Point]
+Box = Tuple[RawPoint, RawPoint]
 T = TypeVar("T")

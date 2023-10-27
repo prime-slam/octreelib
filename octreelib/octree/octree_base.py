@@ -6,7 +6,7 @@ import numpy as np
 
 from octreelib.internal.voxel import StoringVoxel
 from octreelib.internal.typing import Box
-from octreelib.internal.point import Point, PointCloud
+from octreelib.internal.point import RawPoint, RawPointCloud
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -34,13 +34,13 @@ class OctreeNodeBase(StoringVoxel, ABC):
     and are not stored in the parent node.
     """
 
-    points: PointCloud
+    points: RawPointCloud
     children: Optional[List["OctreeNodeBase"]]
     has_children: bool
 
-    def __init__(self, corner: Point, edge_length: np.float_):
+    def __init__(self, corner: RawPoint, edge_length: np.float_):
         super().__init__(corner, edge_length)
-        self.points: PointCloud = self._empty_point_cloud
+        self.points: RawPointCloud = self._empty_point_cloud
         self.children = []
         self.has_children = False
 
@@ -77,7 +77,7 @@ class OctreeNodeBase(StoringVoxel, ABC):
         return
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         filter nodes with points by filtering criteria
         :param filtering_criteria: list of filtering criteria functions
@@ -85,7 +85,7 @@ class OctreeNodeBase(StoringVoxel, ABC):
         pass
 
     @abstractmethod
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
         transform point cloud in the node using the function
         :param function: transformation function PointCloud -> PointCloud
@@ -93,7 +93,7 @@ class OctreeNodeBase(StoringVoxel, ABC):
         pass
 
     @abstractmethod
-    def get_points_inside_box(self, box: Box) -> PointCloud:
+    def get_points_inside_box(self, box: Box) -> RawPointCloud:
         """
         Returns points that occupy the given box
         :param box: tuple of two points representing min and max points of the box
@@ -121,7 +121,7 @@ class OctreeBase(StoringVoxel, ABC):
     def __init__(
         self,
         octree_config: OctreeConfigBase,
-        corner: Point,
+        corner: RawPoint,
         edge_length: np.float_,
     ):
         super().__init__(corner, edge_length)
@@ -153,7 +153,7 @@ class OctreeBase(StoringVoxel, ABC):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         filter nodes with points by criterion
         :param filtering_criteria:
@@ -161,7 +161,7 @@ class OctreeBase(StoringVoxel, ABC):
         pass
 
     @abstractmethod
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
         transform point cloud in each node using the function
         :param function: transformation function PointCloud -> PointCloud
@@ -169,7 +169,7 @@ class OctreeBase(StoringVoxel, ABC):
         pass
 
     @abstractmethod
-    def get_points_in_box(self, box: Box) -> PointCloud:
+    def get_points_in_box(self, box: Box) -> RawPointCloud:
         """
         Returns points that occupy the given box
         :param box: tuple of two points representing min and max points of the box
