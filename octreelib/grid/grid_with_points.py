@@ -4,8 +4,7 @@ import numpy as np
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
 
-# from octreelib.internal.point import Point, PointCloud, add_pose_to_point_cloud
-from octreelib.internal.point import *
+from octreelib.internal.point import PointCloud, Point, CPointCloud
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
@@ -118,12 +117,11 @@ class GridWithPoints(GridBase):
             self.pose_voxel_coordinates[pose_number] = []
 
         # convert points to PointsWithPose, which is a subclass of np.ndarray
-        # points = add_pose_to_point_cloud(points, pose_number)
-        points_with_poses = CPointCloud(points).with_pose(pose_number)
+        points = CPointCloud(points)
 
-        for point in points_with_poses:
+        for point in points:
             # get coords of voxel into which the point is inserted
-            voxel_coordinates = self._get_voxel_for_point(point.without_pose())
+            voxel_coordinates = self._get_voxel_for_point(point)
             # voxel_coordinates_hashable = voxel_coordinates.tolist()
             voxel_coordinates_hashable = (
                 float(voxel_coordinates[0]),
@@ -139,7 +137,9 @@ class GridWithPoints(GridBase):
                     self.grid_config.grid_voxel_edge_length,
                 )
 
-            self.octrees[voxel_coordinates_hashable].insert_points([point])
+            self.octrees[voxel_coordinates_hashable].insert_points(
+                [point.with_pose(pose_number)]
+            )
 
     def __init__(self, grid_config: GridWithPointsConfig):
         super().__init__(grid_config)

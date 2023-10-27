@@ -1,4 +1,6 @@
 import itertools
+
+from functools import reduce
 from typing import List, Callable
 
 import numpy as np
@@ -44,7 +46,7 @@ class MultiPoseOctreeNode(OctreeNode):
                 StaticStoringVoxel(
                     self.corner,
                     self.edge_length,
-                    filtered_points[:, :3],
+                    filtered_points.without_poses(),
                 )
             ]
         return []
@@ -53,12 +55,13 @@ class MultiPoseOctreeNode(OctreeNode):
         # if node has children, return sum of points in children
         # else return self.points
         return (
-            np.vstack(
+            reduce(
+                lambda points_a, points_b: points_a.extend(points_b),
                 [child.get_points_for_pose(pose_number) for child in self.children],
             )
             if self.has_children
-            else _filter_by_pose_number(pose_number, self.points)
-        )[:, :3]
+            else _filter_by_pose_number(pose_number, self.points).without_poses()
+        )
 
     def n_points_for_pose(self, pose_number: int) -> int:
         # if node has children return sum of n_points_for_pose in children

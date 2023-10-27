@@ -9,11 +9,6 @@ __all__ = [
     "PointCloud",
     "PosePoint",
     "PosePointCloud",
-    "add_pose_to_point",
-    "add_pose_to_point_cloud",
-    "remove_pose_from_point",
-    "remove_pose_from_point_cloud",
-    # "PointWithPose",
     "CPoint",
     "CPointCloud",
     "CPosePoint",
@@ -25,32 +20,6 @@ Point = Annotated[npt.NDArray[np.float_], Literal[3]]
 PointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
 PosePoint = Annotated[npt.NDArray[np.float_], Literal[4]]
 PosePointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 4]]
-
-
-def add_pose_to_point_cloud(
-    point_cloud: PointCloud, pose_number: int
-) -> PosePointCloud:
-    if len(point_cloud.shape) < 2:
-        raise ValueError("use this method with point clouds (np.ndarray[Nx3])")
-    return np.hstack([point_cloud, np.array([[pose_number]] * point_cloud.shape[0])])
-
-
-def add_pose_to_point(point: Point, pose_number: int) -> PosePoint:
-    if len(point.shape) != 1:
-        raise ValueError("use this method with points (np.ndarray[3])")
-    return np.hstack([point, np.array([pose_number])])
-
-
-def remove_pose_from_point_cloud(point_cloud: PosePointCloud) -> PointCloud:
-    if len(point_cloud.shape) < 2:
-        raise ValueError("use this method with point clouds (np.ndarray[Nx3])")
-    return point_cloud[:, :3]
-
-
-def remove_pose_from_point(point: PosePoint) -> Point:
-    if len(point.shape) != 1:
-        raise ValueError("use this method with points (np.ndarray[3])")
-    return point[:3]
 
 
 """
@@ -77,13 +46,12 @@ class CPointCloud(np.ndarray):
         obj = np.asarray(input_array).view(cls)
         return obj
 
-    def with_pose(self, pose_numbers: int):
-        new_array = np.hstack([self, np.array([[pose_numbers]] * len(self))])
+    def with_poses(self, pose_numbers: Iterable[int]):
+        new_array = np.hstack([self, np.array(pose_numbers).reshape((len(self), 1))])
         return CPosePointCloud(new_array)
 
-    def with_poses(self, pose_numbers: Iterable[int]):
-        new_array = np.hstack([self, np.array(np.array(pose_numbers))])
-        return CPosePointCloud(new_array)
+    def with_pose(self, pose_numbers: int):
+        return self.with_poses([pose_numbers] * len(self))
 
     def __iter__(self) -> CPoint:
         for value in super().__iter__():
