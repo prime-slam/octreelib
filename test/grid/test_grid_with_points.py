@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from octreelib.internal import RawPointCloud
-from octreelib.grid import GridWithPoints, GridWithPointsConfig
+from octreelib.grid import Grid, GridConfig
 from octreelib.octree import MultiPoseOctree, MultiPoseOctreeConfig
 
 
@@ -12,8 +12,8 @@ def points_are_same(points_a: RawPointCloud, points_b: RawPointCloud):
 
 @pytest.fixture()
 def generated_grid():
-    grid = GridWithPoints(
-        GridWithPointsConfig(
+    grid = Grid(
+        GridConfig(
             octree_type=MultiPoseOctree,
             octree_config=MultiPoseOctreeConfig(),
             grid_voxel_edge_length=5,
