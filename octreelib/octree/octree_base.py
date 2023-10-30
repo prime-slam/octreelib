@@ -4,8 +4,9 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud, Point
+from octreelib.internal.voxel import StoringVoxel
+from octreelib.internal.typing import Box
+from octreelib.internal.point import RawPoint, RawPointCloud
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -21,7 +22,7 @@ class OctreeConfigBase(ABC):
     debug: bool = True
 
 
-class OctreeNodeBase(Voxel, ABC):
+class OctreeNodeBase(StoringVoxel, ABC):
     """
     points: stores points of a node
 
@@ -33,29 +34,29 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    points: Optional[PointCloud]
+    points: RawPointCloud
     children: Optional[List["OctreeNodeBase"]]
     has_children: bool
 
-    def __init__(self, corner: Point, edge_length: np.float_):
+    def __init__(self, corner: RawPoint, edge_length: np.float_):
         super().__init__(corner, edge_length)
-        self.points = []
+        self.points: RawPointCloud = self._empty_point_cloud
         self.children = []
         self.has_children = False
+
+    @property
+    @abstractmethod
+    def bounding_box(self):
+        """
+        :return: bounding box
+        """
+        pass
 
     @property
     @abstractmethod
     def n_nodes(self):
         """
         :return: number of nodes
-        """
-        pass
-
-    @abstractmethod
-    def _point_is_inside(self, point: Point) -> bool:
-        """
-        :param point: point
-        :return: the given point is inside the node
         """
         pass
 
@@ -76,15 +77,39 @@ class OctreeNodeBase(Voxel, ABC):
         return
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         filter nodes with points by filtering criteria
         :param filtering_criteria: list of filtering criteria functions
         """
         pass
 
+    @abstractmethod
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        """
+        pass
 
-class OctreeBase(Voxel, ABC):
+    @abstractmethod
+    def get_points_inside_box(self, box: Box) -> RawPointCloud:
+        """
+        Returns points that occupy the given box
+        :param box: tuple of two points representing min and max points of the box
+        :return: PointCloud
+        """
+
+    @abstractmethod
+    def get_leaf_points(self) -> List[StoringVoxel]:
+        """
+        :return: List of PointClouds where each PointCloud
+        represents points in a separate leaf node
+        """
+        pass
+
+
+class OctreeBase(StoringVoxel, ABC):
     """
     Octree stores points of a **single** pos.
 
@@ -96,7 +121,7 @@ class OctreeBase(Voxel, ABC):
     def __init__(
         self,
         octree_config: OctreeConfigBase,
-        corner: Point,
+        corner: RawPoint,
         edge_length: np.float_,
     ):
         super().__init__(corner, edge_length)
@@ -128,9 +153,34 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         filter nodes with points by criterion
         :param filtering_criteria:
+        """
+        pass
+
+    @abstractmethod
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+        """
+        transform point cloud in each node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        """
+        pass
+
+    @abstractmethod
+    def get_points_in_box(self, box: Box) -> RawPointCloud:
+        """
+        Returns points that occupy the given box
+        :param box: tuple of two points representing min and max points of the box
+        :return: PointCloud
+        """
+        pass
+
+    @abstractmethod
+    def get_leaf_points(self) -> List[StoringVoxel]:
+        """
+        :return: List of PointClouds where each PointCloud
+        represents points in a separate leaf node
         """
         pass
