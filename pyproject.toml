@@ -1,0 +1,13 @@
+[project]
+name = "octreelib"
+dependencies = [
+    "numpy",
+    "vtk",
+]
+version = "0.0.1"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ["test*"]
