@@ -8,14 +8,14 @@ from octreelib.internal.point import RawPointCloud, RawPoint, PointCloud
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
-__all__ = ["GridWithPoints", "GridWithPointsConfig"]
+__all__ = ["Grid", "GridConfig"]
 
 
-class GridWithPointsConfig(GridConfigBase):
+class GridConfig(GridConfigBase):
     pass
 
 
-class GridWithPoints(GridBase):
+class Grid(GridBase):
     def n_leafs(self, pose_number: int) -> int:
         """
         :param pose_number: Pose number.
@@ -141,7 +141,7 @@ class GridWithPoints(GridBase):
                 [point.with_pose(pose_number)]
             )
 
-    def __init__(self, grid_config: GridWithPointsConfig):
+    def __init__(self, grid_config: GridConfig):
         super().__init__(grid_config)
 
         # workaround for restricting the type of octree for this grid
