@@ -2,7 +2,6 @@
 name = "octreelib"
 dependencies = [
     "numpy",
-    "vtk",
 ]
 version = "0.0.1"
 
