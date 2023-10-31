@@ -72,15 +72,15 @@ class OctreeNodeBase(StoringVoxel, ABC):
     @abstractmethod
     def n_points(self):
         """
-        :return: number of points in the octree
+        :return: number of points in the octree node
         """
         return
 
     @abstractmethod
     def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
-        filter nodes with points by filtering criteria
-        :param filtering_criteria: list of filtering criteria functions
+        Filter nodes with points by filtering criteria
+        :param filtering_criteria: List of filtering criteria functions
         """
         pass
 
@@ -194,4 +194,8 @@ class OctreeBase(StoringVoxel, ABC):
 
     @abstractmethod
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+        """
+        Subdivide node based on the subdivision criteria.
+        :param subdivision_criteria: list of criteria for subdivision
+        """
         pass
