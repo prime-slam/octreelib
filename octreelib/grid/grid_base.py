@@ -66,10 +66,6 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def merge(self, merger: Any):
-        pass
-
-    @abstractmethod
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         Subdivides all octrees
@@ -111,7 +107,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def n_leafs(self, pose_number: int):
+    def n_leaves(self, pose_number: int):
         """
         :param pose_number: the desired pose number.
         :return: number of leaf nodes in the octree for given pose number

@@ -16,6 +16,12 @@ class GridConfig(GridConfigBase):
 
 
 class Grid(GridBase):
+    """
+    This class implements GridBase interface.
+    The space is divided into the grid of voxels with the given edge_size.
+    Each voxel in a grid stores points in the form of a MultiPoseOctree.
+    """
+
     def __init__(self, grid_config: GridConfig):
         super().__init__(grid_config)
 
@@ -29,6 +35,12 @@ class Grid(GridBase):
         self.octrees: Dict[Tuple[float, float, float], grid_config.octree_type] = {}
 
     def insert_points(self, pose_number: int, points: RawPointCloud):
+        """
+        Insert points to the according octree.
+        If an octree for this pos does not exist, a new octree is created
+        :param pose_number: pos to which the cloud is inserted
+        :param points: point cloud
+        """
         # register pose if it is not registered yet
         if pose_number not in self.pose_voxel_coordinates:
             self.pose_voxel_coordinates[pose_number] = []
@@ -119,13 +131,13 @@ class Grid(GridBase):
         for voxel_coordinates in self.octrees:
             self.octrees[voxel_coordinates].filter(filtering_criteria)
 
-    def n_leafs(self, pose_number: int) -> int:
+    def n_leaves(self, pose_number: int) -> int:
         """
         :param pose_number: Pose number.
-        :return: Number of leafs in all octrees, which store points for given pose.
+        :return: Number of leaves in all octrees, which store points for given pose.
         """
         return sum(
-            [octree.n_leafs_for_pose(pose_number) for octree in self.octrees.values()]
+            [octree.n_leaves_for_pose(pose_number) for octree in self.octrees.values()]
         )
 
     def n_points(self, pose_number: int) -> int:
@@ -146,9 +158,3 @@ class Grid(GridBase):
         return sum(
             [octree.n_nodes_for_pose(pose_number) for octree in self.octrees.values()]
         )
-
-    def merge(self, merger: Any):
-        """
-        This method does not make sense because all poses are already merged.
-        """
-        raise NotImplementedError("This method is Not Supported")

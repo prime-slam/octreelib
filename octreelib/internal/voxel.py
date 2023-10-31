@@ -41,7 +41,10 @@ class Voxel(WithID):
 
 class StaticStoringVoxel(Voxel, WithPoints):
     def __init__(
-        self, corner: RawPoint, edge_length: np.float_, points: Optional[RawPointCloud] = None
+        self,
+        corner: RawPoint,
+        edge_length: np.float_,
+        points: Optional[RawPointCloud] = None,
     ):
         Voxel.__init__(self, corner, edge_length)
         WithPoints.__init__(self, points)
@@ -54,10 +57,6 @@ class StoringVoxel(Voxel, WithPoints, ABC):
     def __init__(self, corner: RawPoint, edge_length: np.float_):
         Voxel.__init__(self, corner, edge_length)
         WithPoints.__init__(self)
-
-    @abstractmethod
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
-        pass
 
     @abstractmethod
     def insert_points(self, points: RawPointCloud):

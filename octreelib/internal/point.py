@@ -23,6 +23,7 @@ RawPointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
 # They are subclasses of np.ndarray, which add dichotomy
 # for having and not having information about pose number.
 
+
 class Point(np.ndarray):
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.

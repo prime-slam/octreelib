@@ -62,9 +62,9 @@ class OctreeNodeBase(StoringVoxel, ABC):
 
     @property
     @abstractmethod
-    def n_leafs(self):
+    def n_leaves(self):
         """
-        :return: number of leafs a.k.a. number of nodes which have points
+        :return: number of leaves a.k.a. number of nodes which have points
         """
         pass
 
@@ -88,7 +88,7 @@ class OctreeNodeBase(StoringVoxel, ABC):
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
         transform point cloud in the node using the function
-        :param function: transformation function PointCloud -> PointCloud
+        :param function: transformation function RawPointCloud -> RawPointCloud
         """
         pass
 
@@ -97,14 +97,21 @@ class OctreeNodeBase(StoringVoxel, ABC):
         """
         Returns points that occupy the given box
         :param box: tuple of two points representing min and max points of the box
-        :return: PointCloud
+        :return: points which are inside the box.
         """
 
     @abstractmethod
     def get_leaf_points(self) -> List[StoringVoxel]:
         """
-        :return: List of PointClouds where each PointCloud
-        represents points in a separate leaf node
+        :return: List of voxels where each voxel represents a leaf node with points.
+        """
+        pass
+
+    @abstractmethod
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+        """
+        Subdivide node based on the subdivision criteria.
+        :param subdivision_criteria: list of criteria for subdivision
         """
         pass
 
@@ -138,9 +145,9 @@ class OctreeBase(StoringVoxel, ABC):
 
     @property
     @abstractmethod
-    def n_leafs(self):
+    def n_leaves(self):
         """
-        :return: number of leafs a.k.a. number of nodes which have points
+        :return: number of leaves a.k.a. number of nodes which have points
         """
         pass
 
@@ -183,4 +190,8 @@ class OctreeBase(StoringVoxel, ABC):
         :return: List of PointClouds where each PointCloud
         represents points in a separate leaf node
         """
+        pass
+
+    @abstractmethod
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         pass
