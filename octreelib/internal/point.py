@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Annotated, Literal, Iterable
 
 import numpy as np
@@ -52,7 +54,7 @@ class PointCloud(np.ndarray):
         obj = np.asarray(input_array).view(cls)
         return obj
 
-    def with_poses(self, pose_numbers: Iterable[int]):
+    def with_poses(self, pose_numbers: Iterable[int]) -> PosePointCloud:
         """
         :param pose_numbers: New pose numbers.
         :return: The same point cloud but with information about pose numbers.
@@ -60,7 +62,7 @@ class PointCloud(np.ndarray):
         new_array = np.hstack([self, np.array(pose_numbers).reshape((len(self), 1))])
         return PosePointCloud(new_array)
 
-    def with_pose(self, pose_numbers: int):
+    def with_pose(self, pose_numbers: int) -> PosePointCloud:
         """
         :param pose_numbers: New pose number.
         :return: The same point cloud but with information about pose numbers.
@@ -76,13 +78,13 @@ class PointCloud(np.ndarray):
         # getting item by index, return a Point class instead of a np.ndarray.
         return Point(super().__getitem__(index))
 
-    def copy(self):
+    def copy(self) -> PointCloud:
         """
         :return: A copy of this object.
         """
         return PointCloud(super().copy())
 
-    def extend(self, other):
+    def extend(self, other: PointCloud) -> PointCloud:
         """
         Add two point clouds
         :param other: Other PosePointCloud
@@ -99,7 +101,7 @@ class PosePoint(np.ndarray):
         obj = np.asarray(input_array).view(cls)
         return obj
 
-    def without_pose(self):
+    def without_pose(self) -> Point:
         """
         :return: The same point but without information about pose numbers.
         """
@@ -118,7 +120,7 @@ class PosePointCloud(np.ndarray):
         obj = np.asarray(input_array).view(cls)
         return obj
 
-    def without_poses(self):
+    def without_poses(self) -> PointCloud:
         """
         :return: The same point cloud but without information about pose numbers.
         """
@@ -130,22 +132,22 @@ class PosePointCloud(np.ndarray):
         """
         return self[:, 3]
 
-    def __iter__(self):
+    def __iter__(self) -> PosePoint:
         # When iterating, return a Point class instead of a np.ndarray.
         for value in super().__iter__():
             yield PosePoint(value)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> PosePoint:
         # When getting item by index, return a Point class instead of a np.ndarray.
         return PosePoint(super().__getitem__(index))
 
-    def copy(self):
+    def copy(self) -> PosePointCloud:
         """
         :return: A copy of this object.
         """
         return PosePointCloud(super().copy())
 
-    def extend(self, other):
+    def extend(self, other: PosePointCloud) -> PosePointCloud:
         """
         Add two point clouds
         :param other: Other PosePointCloud
