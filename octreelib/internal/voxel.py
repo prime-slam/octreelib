@@ -33,6 +33,9 @@ class Voxel(WithID):
 
     @property
     def corners(self):
+        """
+        :return: 8 points, which represent the corners of the voxel
+        """
         return [
             self.corner + offset
             for offset in itertools.product([0, self.edge_length], repeat=3)
@@ -54,6 +57,9 @@ class StaticStoringVoxel(Voxel, WithPoints):
         WithPoints.__init__(self, points)
 
     def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the voxel.
+        """
         return self.points.copy()
 
 
@@ -68,8 +74,14 @@ class StoringVoxel(Voxel, WithPoints, ABC):
 
     @abstractmethod
     def insert_points(self, points: RawPointCloud):
+        """
+        :param points: Points to insert
+        """
         pass
 
     @abstractmethod
     def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the voxel.
+        """
         pass
