@@ -63,42 +63,6 @@ class MultiPoseOctreeNode(OctreeNode):
             else _filter_by_pose_number(pose_number, self.points).without_poses()
         )
 
-    def n_points_for_pose(self, pose_number: int) -> int:
-        # if node has children return sum of n_points_for_pose in children
-        # else return number of points for this pose in self
-        return (
-            sum([child.n_points_for_pose(pose_number) for child in self.children])
-            if self.has_children
-            else len(_filter_by_pose_number(pose_number, self.points))
-        )
-
-    def n_leafs_for_pose(self, pose_number: int) -> int:
-        # if node has children return sum of n_leafs_for_pose in children
-        # else return 1 if this leaf has points for this pose else 0
-        return (
-            sum([child.n_leafs_for_pose(pose_number) for child in self.children])
-            if self.has_children
-            else len(_filter_by_pose_number(pose_number, self.points)) != 0
-        )
-
-    def n_nodes_for_pose(self, pose_number: int) -> int:
-        # if node has children and any of the children has points for this pose
-        #     return sum of n_nodes_for_pose for children + 1 (because this voxel also counts)
-        # else return 1 if this leaf has points for this pose else 0
-        n_nodes = (
-            sum([child.n_nodes_for_pose(pose_number) for child in self.children])
-            if self.has_children
-            else None
-        )
-        if n_nodes:
-            n_nodes += 1
-
-        return (
-            n_nodes
-            if n_nodes is not None
-            else len(_filter_by_pose_number(pose_number, self.points)) != 0
-        )
-
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         if self.has_children:
             for child in self.children:
@@ -158,6 +122,42 @@ class MultiPoseOctreeNode(OctreeNode):
                 self.insert_point(point)
         else:
             self.points = self.points.extend(points)
+
+    def n_points_for_pose(self, pose_number: int) -> int:
+        # if node has children return sum of n_points_for_pose in children
+        # else return number of points for this pose in self
+        return (
+            sum([child.n_points_for_pose(pose_number) for child in self.children])
+            if self.has_children
+            else len(_filter_by_pose_number(pose_number, self.points))
+        )
+
+    def n_leafs_for_pose(self, pose_number: int) -> int:
+        # if node has children return sum of n_leafs_for_pose in children
+        # else return 1 if this leaf has points for this pose else 0
+        return (
+            sum([child.n_leafs_for_pose(pose_number) for child in self.children])
+            if self.has_children
+            else len(_filter_by_pose_number(pose_number, self.points)) != 0
+        )
+
+    def n_nodes_for_pose(self, pose_number: int) -> int:
+        # if node has children and any of the children has points for this pose
+        #     return sum of n_nodes_for_pose for children + 1 (because this voxel also counts)
+        # else return 1 if this leaf has points for this pose else 0
+        n_nodes = (
+            sum([child.n_nodes_for_pose(pose_number) for child in self.children])
+            if self.has_children
+            else None
+        )
+        if n_nodes:
+            n_nodes += 1
+
+        return (
+            n_nodes
+            if n_nodes is not None
+            else len(_filter_by_pose_number(pose_number, self.points)) != 0
+        )
 
     @property
     def _empty_point_cloud(self) -> PosePointCloud:
