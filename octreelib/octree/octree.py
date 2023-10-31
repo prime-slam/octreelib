@@ -5,9 +5,8 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
-from octreelib.internal.geometry import point_is_inside_box
+from octreelib.internal.geometry import Box
 from octreelib.internal import RawPointCloud, RawPoint, T, StoringVoxel
-from octreelib.internal.typing import Box
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -31,7 +30,7 @@ class OctreeNode(OctreeNodeBase):
             )
         points_inside = np.empty((0, 3), dtype=float)
         for point in self.points:
-            if point_is_inside_box(point, box):
+            if box.is_point_inside(point):
                 points_inside = np.vstack((points_inside, point))
         return points_inside
 
@@ -74,7 +73,7 @@ class OctreeNode(OctreeNodeBase):
         if self.has_children:
             for point in points:
                 for child in self.children:
-                    if point_is_inside_box(point, child.bounding_box):
+                    if child.bounding_box.is_point_inside(point):
                         child.insert_points(point)
         else:
             self.points = np.vstack((self.points, points))
@@ -111,13 +110,6 @@ class OctreeNode(OctreeNodeBase):
         if self.has_children:
             return sum([child.get_leaf_points() for child in self.children], [])
         return [self] if len(self.points) else []
-
-    @property
-    def bounding_box(self):
-        """
-        :return: bounding box
-        """
-        return self.corner, self.corner + np.ones(3) * self.edge_length
 
     @property
     def n_leaves(self):

@@ -1,11 +1,12 @@
 import itertools
 from abc import ABC, abstractmethod
-from typing import Callable, List, Optional
+from typing import Optional
 
 import numpy as np
 
-from octreelib.internal.point import RawPoint, RawPointCloud
+from octreelib.internal.geometry import Box
 from octreelib.internal.interfaces import WithID, WithPoints
+from octreelib.internal.point import RawPoint, RawPointCloud
 
 __all__ = ["StaticStoringVoxel", "StoringVoxel", "Voxel"]
 
@@ -30,6 +31,13 @@ class Voxel(WithID):
         WithID.__init__(self, _static_voxel_id_map[(corner_hashable, other_hashable)])
         self.corner = corner
         self.edge_length = edge_length
+
+    @property
+    def bounding_box(self):
+        """
+        :return: bounding box
+        """
+        return Box(self.corner, self.corner + self.edge_length)
 
     @property
     def corners(self):

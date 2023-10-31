@@ -5,7 +5,6 @@ from typing import List, Callable
 
 import numpy as np
 
-from octreelib.internal.geometry import point_is_inside_box
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
 from octreelib.internal.point import (
@@ -139,7 +138,7 @@ class MultiPoseOctreeNode(OctreeNode):
         """
         if self.has_children:
             for child in self.children:
-                if point_is_inside_box(point.without_pose(), child.bounding_box):
+                if child.bounding_box.is_point_inside(point.without_pose()):
                     child.insert_points(point)
         else:
             self.points = self.points.extend(point)

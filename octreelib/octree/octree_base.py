@@ -4,9 +4,9 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal.voxel import StoringVoxel
-from octreelib.internal.typing import Box
+from octreelib.internal.geometry import Box
 from octreelib.internal.point import RawPoint, RawPointCloud
+from octreelib.internal.voxel import StoringVoxel
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -43,14 +43,6 @@ class OctreeNodeBase(StoringVoxel, ABC):
         self.points: RawPointCloud = self._empty_point_cloud
         self.children = []
         self.has_children = False
-
-    @property
-    @abstractmethod
-    def bounding_box(self):
-        """
-        :return: bounding box
-        """
-        pass
 
     @property
     @abstractmethod
