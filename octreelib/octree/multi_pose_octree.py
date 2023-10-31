@@ -22,16 +22,28 @@ class MultiPoseOctreeConfig(OctreeConfig):
     pass
 
 
-def _filter_by_pose_number(
-    pose_number: int, points: PosePointCloud
-) -> PosePointCloud:
+def _filter_by_pose_number(pose_number: int, points: PosePointCloud) -> PosePointCloud:
+    """
+    :param pose_number: Pose number.
+    :param points: Points with arbitrary poses.
+    :return: Filtered points, where each point is related to the desired pose number.
+    """
     return PosePointCloud(points[points[:, 3] == pose_number])
 
 
 class MultiPoseOctreeNode(OctreeNode):
+    """
+    This class implements the same OctreeNode,
+    but which can store points from multiple poses.
+    """
+
     def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
-        # if node has children, return sum of children leaf voxels
-        # else return voxel with points for this node
+        """
+        :param pose_number: Desired pose number.
+        :return: List of leaf voxels with points for this pose.
+        """
+        # If node has children, return sum of children leaf voxels,
+        # else return voxel with points for this node.
         if self.has_children:
             return sum(
                 [
@@ -52,6 +64,10 @@ class MultiPoseOctreeNode(OctreeNode):
         return []
 
     def get_points_for_pose(self, pose_number: int) -> RawPointCloud:
+        """
+        :param pose_number: Desired pose number.
+        :return: Points for this pose which are stored inside the octree.
+        """
         # if node has children, return sum of points in children
         # else return self.points
         return (
@@ -64,6 +80,10 @@ class MultiPoseOctreeNode(OctreeNode):
         )
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+        """
+        Transform point cloud in the node using the function
+        :param function: Transformation function RawPointCloud -> RawPointCloud
+        """
         if self.has_children:
             for child in self.children:
                 child.map_leaf_points(function)
@@ -108,7 +128,11 @@ class MultiPoseOctreeNode(OctreeNode):
             for child in self.children:
                 child.subdivide(subdivision_criteria)
 
-    def insert_point(self, point: PosePoint):
+    def _insert_point(self, point: PosePoint):
+        """
+        Insert one point.
+        :param point: Point to insert.
+        """
         if self.has_children:
             for child in self.children:
                 if point_is_inside_box(point.without_pose(), child.bounding_box):
@@ -119,11 +143,15 @@ class MultiPoseOctreeNode(OctreeNode):
     def insert_points(self, points: PosePointCloud):
         if self.has_children:
             for point in points:
-                self.insert_point(point)
+                self._insert_point(point)
         else:
             self.points = self.points.extend(points)
 
     def n_points_for_pose(self, pose_number: int) -> int:
+        """
+        :param pose_number: Desired pose number.
+        :return: Number of points for this pose inside this node.
+        """
         # if node has children return sum of n_points_for_pose in children
         # else return number of points for this pose in self
         return (
@@ -132,16 +160,24 @@ class MultiPoseOctreeNode(OctreeNode):
             else len(_filter_by_pose_number(pose_number, self.points))
         )
 
-    def n_leafs_for_pose(self, pose_number: int) -> int:
-        # if node has children return sum of n_leafs_for_pose in children
+    def n_leaves_for_pose(self, pose_number: int) -> int:
+        """
+        :param pose_number: Desired pose number.
+        :return: Number of leaves which store points for this pose.
+        """
+        # if node has children return sum of n_leaves_for_pose in children
         # else return 1 if this leaf has points for this pose else 0
         return (
-            sum([child.n_leafs_for_pose(pose_number) for child in self.children])
+            sum([child.n_leaves_for_pose(pose_number) for child in self.children])
             if self.has_children
             else len(_filter_by_pose_number(pose_number, self.points)) != 0
         )
 
     def n_nodes_for_pose(self, pose_number: int) -> int:
+        """
+        :param pose_number: Desired pose number.
+        :return: Number of nodes (both leaves and not) which store points for this pose.
+        """
         # if node has children and any of the children has points for this pose
         #     return sum of n_nodes_for_pose for children + 1 (because this voxel also counts)
         # else return 1 if this leaf has points for this pose else 0
@@ -161,6 +197,9 @@ class MultiPoseOctreeNode(OctreeNode):
 
     @property
     def _empty_point_cloud(self) -> PosePointCloud:
+        """
+        Internal property which returns empty PosePointCloud.
+        """
         return PosePointCloud(np.empty((0, 4), dtype=float))
 
 
@@ -176,8 +215,8 @@ class MultiPoseOctree(Octree):
     def n_points_for_pose(self, pose_number: int) -> int:
         return self.root.n_points_for_pose(pose_number)
 
-    def n_leafs_for_pose(self, pose_number: int) -> int:
-        return self.root.n_leafs_for_pose(pose_number)
+    def n_leaves_for_pose(self, pose_number: int) -> int:
+        return self.root.n_leaves_for_pose(pose_number)
 
     def n_nodes_for_pose(self, pose_number: int) -> int:
         return self.root.n_nodes_for_pose(pose_number)

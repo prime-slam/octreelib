@@ -91,9 +91,9 @@ class OctreeNode(OctreeNodeBase):
         return self.corner, self.corner + np.ones(3) * self.edge_length
 
     @property
-    def n_leafs(self):
+    def n_leaves(self):
         return (
-            sum([child.n_leafs for child in self.children]) if self.has_children else 1
+            sum([child.n_leaves for child in self.children]) if self.has_children else 1
         )
 
     @property
@@ -142,8 +142,8 @@ class Octree(OctreeBase, Generic[T]):
         return self.root.n_points
 
     @property
-    def n_leafs(self):
-        return self.root.n_leafs
+    def n_leaves(self):
+        return self.root.n_leaves
 
     @property
     def n_nodes(self):
