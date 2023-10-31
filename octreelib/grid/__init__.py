@@ -1,5 +1,5 @@
 """
-This module contains base classes for Grid, GridConfig, GridWithPoints
+This module contains base classes and implementations for Grid, GridConfig, GridWithPoints
 """
 import octreelib.grid.grid_base as grid_base_module
 import octreelib.grid.grid_with_points as grid_with_points_module
