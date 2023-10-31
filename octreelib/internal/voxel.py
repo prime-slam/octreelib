@@ -40,6 +40,10 @@ class Voxel(WithID):
 
 
 class StaticStoringVoxel(Voxel, WithPoints):
+    """
+    Voxel with an immutable point cloud.
+    """
+
     def __init__(
         self,
         corner: RawPoint,
@@ -54,6 +58,10 @@ class StaticStoringVoxel(Voxel, WithPoints):
 
 
 class StoringVoxel(Voxel, WithPoints, ABC):
+    """
+    Voxel with a mutable point cloud.
+    """
+
     def __init__(self, corner: RawPoint, edge_length: np.float_):
         Voxel.__init__(self, corner, edge_length)
         WithPoints.__init__(self)

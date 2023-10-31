@@ -101,6 +101,10 @@ class MultiPoseOctreeNode(OctreeNode):
             self.points = new_points
 
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+        """
+        Subdivide node based on the subdivision criteria.
+        :param subdivision_criteria: list of criteria for subdivision
+        """
         if any(
             [
                 criterion(self.points.without_poses())
@@ -141,6 +145,11 @@ class MultiPoseOctreeNode(OctreeNode):
             self.points = self.points.extend(point)
 
     def insert_points(self, points: PosePointCloud):
+        """
+        Insert PosePointCloud into the node
+        :param points:
+        :return:
+        """
         if self.has_children:
             for point in points:
                 self._insert_point(point)
@@ -204,19 +213,44 @@ class MultiPoseOctreeNode(OctreeNode):
 
 
 class MultiPoseOctree(Octree):
+    """
+    An implementation of OctreeBase that can store points from
+    multiple poses in a single octree.
+    """
+
     _node_type = MultiPoseOctreeNode
 
     def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
+        """
+        :param pose_number: Desired pose number.
+        :return: List of leaf voxels with points for this pose.
+        """
         return self.root.get_leaf_points_for_pose(pose_number)
 
     def get_points_for_pose(self, pose_number: int) -> RawPointCloud:
+        """
+        :param pose_number: Desired pose number.
+        :return: Points for this pose which are stored inside the octree.
+        """
         return self.root.get_points_for_pose(pose_number)
 
     def n_points_for_pose(self, pose_number: int) -> int:
+        """
+        :param pose_number: Desired pose number.
+        :return: Number of points for this pose inside this node.
+        """
         return self.root.n_points_for_pose(pose_number)
 
     def n_leaves_for_pose(self, pose_number: int) -> int:
+        """
+        :param pose_number: Desired pose number.
+        :return: Number of leaves which store points for this pose.
+        """
         return self.root.n_leaves_for_pose(pose_number)
 
     def n_nodes_for_pose(self, pose_number: int) -> int:
+        """
+        :param pose_number: Desired pose number.
+        :return: Number of nodes (both leaves and not) which store points for this pose.
+        """
         return self.root.n_nodes_for_pose(pose_number)
