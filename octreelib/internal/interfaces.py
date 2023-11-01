@@ -1,3 +1,8 @@
+"""
+This file contains interface classes which represent
+certain features of the objects.
+"""
+
 from abc import ABC
 from typing import Optional
 
@@ -8,7 +13,14 @@ from octreelib.internal.point import RawPointCloud
 __all__ = ["WithID", "WithPoints"]
 
 
+# TODO: finish docs
 class WithID(ABC):
+    """
+    This class represents the fact that the object has an id.
+    When initialized, the class is assigned an id, which can
+    be retrieved later using .id property.
+    """
+
     _id_static_counter = 0
 
     @property
@@ -24,6 +36,10 @@ class WithID(ABC):
 
 
 class WithPoints(ABC):
+    """
+    This class represents the fact that the object contains points.
+    The points are stored in .points field. By default, the field is immutable.
+    """
     @property
     def _empty_point_cloud(self):
         return np.empty((0, 3), dtype=float)

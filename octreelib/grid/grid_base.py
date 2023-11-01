@@ -5,8 +5,8 @@ from typing import Any, Callable, Generic, List, Type
 import numpy as np
 
 from octreelib.internal.point import RawPoint, RawPointCloud
-from octreelib.internal.typing import T
 from octreelib.internal.voxel import StoringVoxel
+from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
 __all__ = ["GridConfigBase", "GridBase"]

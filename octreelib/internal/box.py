@@ -7,6 +7,9 @@ import numpy as np
 from octreelib.internal.point import RawPoint
 
 
+__all__ = ["Box"]
+
+
 @dataclass
 class Box:
     corner_a: RawPoint

@@ -6,13 +6,13 @@ from typing import List, Callable
 import numpy as np
 
 from octreelib.internal.voxel import StaticStoringVoxel
-from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
 from octreelib.internal.point import (
     PosePointCloud,
     PointCloud,
     PosePoint,
     RawPointCloud,
 )
+from octreelib.octree.octree import Octree, OctreeNode, OctreeConfig
 
 __all__ = ["MultiPoseOctreeNode", "MultiPoseOctree", "MultiPoseOctreeConfig"]
 
