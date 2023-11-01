@@ -34,15 +34,15 @@ class OctreeNodeBase(StoringVoxel, ABC):
     and are not stored in the parent node.
     """
 
-    points: RawPointCloud
-    children: Optional[List["OctreeNodeBase"]]
-    has_children: bool
+    _points: RawPointCloud
+    _children: Optional[List["OctreeNodeBase"]]
+    _has_children: bool
 
     def __init__(self, corner: RawPoint, edge_length: np.float_):
         super().__init__(corner, edge_length)
-        self.points: RawPointCloud = self._empty_point_cloud
-        self.children = []
-        self.has_children = False
+        self._points: RawPointCloud = self._empty_point_cloud
+        self._children = []
+        self._has_children = False
 
     @property
     @abstractmethod
@@ -124,8 +124,8 @@ class OctreeBase(StoringVoxel, ABC):
         edge_length: np.float_,
     ):
         super().__init__(corner, edge_length)
-        self.config = octree_config
-        self.root = self._node_type(self.corner, self.edge_length)
+        self._config = octree_config
+        self._root = self._node_type(self.corner, self.edge_length)
 
     @property
     @abstractmethod

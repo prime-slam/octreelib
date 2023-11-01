@@ -68,7 +68,7 @@ class StaticStoringVoxel(Voxel, WithPoints):
         """
         :return: Points, which are stored inside the voxel.
         """
-        return self.points.copy()
+        return self._points.copy()
 
 
 class StoringVoxel(Voxel, WithPoints, ABC):
