@@ -21,15 +21,6 @@ class MultiPoseOctreeConfig(OctreeConfig):
     pass
 
 
-def _filter_by_pose_number(pose_number: int, points: PosePointCloud) -> PosePointCloud:
-    """
-    :param pose_number: Pose number.
-    :param points: Points with arbitrary poses.
-    :return: Filtered points, where each point is related to the desired pose number.
-    """
-    return PosePointCloud(points[points[:, 3] == pose_number])
-
-
 class MultiPoseOctreeNode(OctreeNode):
     """
     This class implements the same OctreeNode,
@@ -51,7 +42,7 @@ class MultiPoseOctreeNode(OctreeNode):
                 ],
                 [],
             )
-        filtered_points = _filter_by_pose_number(pose_number, self._points)
+        filtered_points = self._points.filtered_by_pose(pose_number)
         if len(filtered_points):
             return [
                 StaticStoringVoxel(
@@ -75,7 +66,7 @@ class MultiPoseOctreeNode(OctreeNode):
                 [child.get_points_for_pose(pose_number) for child in self._children],
             )
             if self._has_children
-            else _filter_by_pose_number(pose_number, self._points).without_poses()
+            else self._points.filtered_by_pose(pose_number).without_poses()
         )
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
@@ -90,7 +81,7 @@ class MultiPoseOctreeNode(OctreeNode):
             new_points = self._empty_point_cloud
             pose_numbers = set(self._points.poses())
             for pose_number in pose_numbers:
-                points = _filter_by_pose_number(pose_number, self._points)
+                points = self._points.filtered_by_pose(pose_number)
                 if len(points):
                     points = PointCloud(function(points.without_poses())).with_pose(
                         pose_number
@@ -165,7 +156,7 @@ class MultiPoseOctreeNode(OctreeNode):
         return (
             sum([child.n_points_for_pose(pose_number) for child in self._children])
             if self._has_children
-            else len(_filter_by_pose_number(pose_number, self._points))
+            else len(self._points.filtered_by_pose(pose_number))
         )
 
     def n_leaves_for_pose(self, pose_number: int) -> int:
@@ -178,7 +169,7 @@ class MultiPoseOctreeNode(OctreeNode):
         return (
             sum([child.n_leaves_for_pose(pose_number) for child in self._children])
             if self._has_children
-            else len(_filter_by_pose_number(pose_number, self._points)) != 0
+            else len(self._points.filtered_by_pose(pose_number)) != 0
         )
 
     def n_nodes_for_pose(self, pose_number: int) -> int:
@@ -200,7 +191,7 @@ class MultiPoseOctreeNode(OctreeNode):
         return (
             n_nodes
             if n_nodes is not None
-            else len(_filter_by_pose_number(pose_number, self._points)) != 0
+            else len(self._points.filtered_by_pose(pose_number)) != 0
         )
 
     @property

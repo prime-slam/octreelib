@@ -168,3 +168,10 @@ class PosePointCloud(np.ndarray):
         # Cannot override __add__ because it is used for different
         # purposes in parent np.ndarray.
         return PosePointCloud(np.vstack((self, other)))
+
+    def filtered_by_pose(self, pose_number: int) -> PosePointCloud:
+        """
+        :param pose_number: Pose number.
+        :return: A point cloud, where each point is related to the desired pose number.
+        """
+        return PosePointCloud(self[self[:, 3] == pose_number])
