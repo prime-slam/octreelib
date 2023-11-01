@@ -1,6 +1,4 @@
-from typing import TypeVar, Tuple
-
-from octreelib.internal.point import RawPoint
+from typing import TypeVar
 
 __all__ = ["T"]
 
