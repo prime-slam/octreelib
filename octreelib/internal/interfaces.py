@@ -44,6 +44,6 @@ class WithPoints(ABC):
         return np.empty((0, 3), dtype=float)
 
     def __init__(self, points: Optional[RawPointCloud] = None):
-        self.points: RawPointCloud = (
+        self._points: RawPointCloud = (
             points if points is not None else self._empty_point_cloud
         )

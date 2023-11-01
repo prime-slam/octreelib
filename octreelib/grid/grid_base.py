@@ -44,7 +44,7 @@ class GridBase(ABC, Generic[T]):
         """
         :param grid_config: config
         """
-        self.grid_config = grid_config
+        self._grid_config = grid_config
 
     @abstractmethod
     def insert_points(self, pose_number: int, points: List[RawPoint]) -> None:
