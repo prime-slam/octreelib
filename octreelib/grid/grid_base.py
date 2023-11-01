@@ -118,6 +118,7 @@ class GridBase(ABC, Generic[T]):
     def get_leaf_points(self, pose_number: int) -> List[StoringVoxel]:
         """
         :param pose_number: the desired pose number
-        :return: List of
+        :return: List of voxels. Each voxel is a representation of a leaf node.
+        Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
         pass

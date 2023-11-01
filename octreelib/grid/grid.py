@@ -36,12 +36,11 @@ class Grid(GridBase):
 
     def insert_points(self, pose_number: int, points: RawPointCloud):
         """
-        Insert points to the according octree.
-        If an octree for this pos does not exist, a new octree is created
-        :param pose_number: pos to which the cloud is inserted
+        Insert points to the grid
+        :param pose_number: pose to which the cloud is inserted
         :param points: point cloud
         """
-        # register pose if it is not registered yet
+        # register pose if it has not been registered yet
         if pose_number not in self.__pose_voxel_coordinates:
             self.__pose_voxel_coordinates[pose_number] = []
 
@@ -116,7 +115,7 @@ class Grid(GridBase):
 
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         """
-        Subdivides all octrees based on all points and given filtering criteria.
+        Subdivides all octrees based on all points and given subdivision criteria.
         :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
         If any of the criteria returns **true**, the octree node is subdivided.
         """
