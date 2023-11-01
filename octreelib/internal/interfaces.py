@@ -13,7 +13,6 @@ from octreelib.internal.point import RawPointCloud
 __all__ = ["WithID", "WithPoints"]
 
 
-# TODO: finish docs
 class WithID(ABC):
     """
     This class represents the fact that the object has an id.
