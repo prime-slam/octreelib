@@ -15,20 +15,19 @@ def _point_to_hashable(point: RawPoint):
     return float(point[0]), float(point[1]), float(point[2])
 
 
-_static_voxel_id_map = {}
-
-
 class Voxel(WithID):
+    _static_voxel_id_map = {}
+
     def __init__(self, corner: RawPoint, edge_length: np.float_):
         corner_min_hashable = _point_to_hashable(corner)
         corner_max_hashable = _point_to_hashable(corner + edge_length)
 
-        if (corner_min_hashable, corner_max_hashable) not in _static_voxel_id_map:
-            _static_voxel_id_map[(corner_min_hashable, corner_max_hashable)] = len(
-                _static_voxel_id_map
+        if (corner_min_hashable, corner_max_hashable) not in self._static_voxel_id_map:
+            self._static_voxel_id_map[(corner_min_hashable, corner_max_hashable)] = len(
+                self._static_voxel_id_map
             )
 
-        WithID.__init__(self, _static_voxel_id_map[(corner_min_hashable, corner_max_hashable)])
+        WithID.__init__(self, self._static_voxel_id_map[(corner_min_hashable, corner_max_hashable)])
         self.corner = corner
         self.edge_length = edge_length
 
