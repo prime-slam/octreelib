@@ -18,7 +18,8 @@ class GridConfig(GridConfigBase):
 class Grid(GridBase):
     """
     This class implements GridBase interface.
-    The space is divided into the grid of voxels with the given edge_size.
+    The space is divided into the grid of voxels with the given edge size,
+    which is defined in the GridConfig.
     Each voxel in a grid stores points in the form of a MultiPoseOctree.
     """
 
