@@ -34,6 +34,9 @@ https://numpy.org/doc/stable/user/basics.subclassing.html
 
 
 class Point(np.ndarray):
+    """
+    Represents a point. Designed for internal use.
+    """
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
@@ -49,6 +52,9 @@ class Point(np.ndarray):
 
 
 class PointCloud(np.ndarray):
+    """
+    Represents a point cloud. Designed for internal use.
+    """
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
@@ -96,6 +102,9 @@ class PointCloud(np.ndarray):
 
 
 class PosePoint(np.ndarray):
+    """
+    Represents a point with pose. Designed for internal use.
+    """
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
@@ -115,6 +124,9 @@ class PosePoint(np.ndarray):
 
 
 class PosePointCloud(np.ndarray):
+    """
+    Represents a point cloud with poses. Designed for internal use.
+    """
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
