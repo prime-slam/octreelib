@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 
@@ -13,10 +14,10 @@ __all__ = ["Box"]
 @dataclass
 class Box:
     """
-    This class represents a box object.
+    This class represents a box in 3D space.
     The box is defined by two opposite points:
-    point_a has all minimal coordinates and
-    point_b has all maximal coordinates
+    corner_min has all minimal coordinates and
+    corner_min has all maximal coordinates
     """
     corner_min: RawPoint
     corner_max: RawPoint
@@ -25,15 +26,15 @@ class Box:
         # check that the coordinates are valid for a box
         assert (self.corner_min <= self.corner_max).all()
 
-    def intersect(self, other: Box) -> Box:
+    def intersect(self, other: Box) -> Optional[Box]:
         """
         :param other: other box to intersect
         :return: Box, which represents intersection of two boxes
         """
-        min_point = np.maximum(self.corner_min, other.corner_min)
-        max_point = np.minimum(self.corner_max, other.corner_max)
-        if np.all(min_point < max_point):
-            return Box(min_point, max_point)
+        new_corner_min = np.maximum(self.corner_min, other.corner_min)
+        new_corner_max = np.minimum(self.corner_max, other.corner_max)
+        if np.all(new_corner_min < new_corner_max):
+            return Box(new_corner_min, new_corner_max)
 
     def is_point_inside(self, point: RawPoint):
         """
