@@ -62,7 +62,7 @@ class Grid(GridBase):
                 self.__octrees[voxel_coordinates_hashable] = self._grid_config.octree_type(
                     self._grid_config.octree_config,
                     voxel_coordinates,
-                    self._grid_config.grid_voxel_edge_length,
+                    self._grid_config.grid_voxel_edge_size,
                 )
 
             self.__octrees[voxel_coordinates_hashable].insert_points(
@@ -76,7 +76,7 @@ class Grid(GridBase):
         :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
         """
         point = point[:3]
-        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
+        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_size
         return point // grid_voxel_edge_length * grid_voxel_edge_length
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):

@@ -16,7 +16,7 @@ def generated_grid():
         GridConfig(
             octree_type=MultiPoseOctree,
             octree_config=MultiPoseOctreeConfig(),
-            grid_voxel_edge_length=5,
+            grid_voxel_edge_size=5,
         )
     )
     points_0 = np.array(
