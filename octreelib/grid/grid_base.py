@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, Generic, List, Type
 
 import numpy as np
@@ -9,7 +10,17 @@ from octreelib.internal.voxel import StoringVoxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
-__all__ = ["GridConfigBase", "GridBase"]
+__all__ = ["GridVisualisationType", "GridConfigBase", "GridBase"]
+
+
+class GridVisualisationType(Enum):
+    """
+    Represents types of Grid visualisation:
+    1. POSE - colors in different colors point clouds belonging to different poses
+    2. VOXEL - colors in same colors voxels belonging to different poses
+    """
+    POSE = "pose"
+    VOXEL = "voxel"
 
 
 @dataclass
@@ -22,6 +33,9 @@ class GridConfigBase(ABC):
     debug: debug mode
     grid_voxel_edge_length: initial size of voxels
     corner: corner of a grid
+    visualisation_type: Represents type of visualisation. For more information check VisualisationType definition
+    visualisation_filepath: Path to produced `.html` file
+    visualisation_seed: Represents random seed for generating colors
     """
 
     octree_type: Type[T]
@@ -29,7 +43,9 @@ class GridConfigBase(ABC):
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
-
+    visualisation_type: GridVisualisationType = GridVisualisationType.POSE
+    visualisation_filepath: str = ""
+    visualisation_seed: int = 0
 
 class GridBase(ABC, Generic[T]):
     """
@@ -122,5 +138,13 @@ class GridBase(ABC, Generic[T]):
         :param pose_number: the desired pose number
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
+        """
+        pass
+
+    @abstractmethod
+    def visualise(self) -> None:
+        """
+        Represents method for visualising Grid. It produces `.html` file using
+        [k3d](https://github.com/K3D-tools/K3D-jupyter) library
         """
         pass

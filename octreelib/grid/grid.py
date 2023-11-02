@@ -1,8 +1,10 @@
+import random
 from typing import List, Dict, Callable, Tuple
 
+import k3d
 import numpy as np
 
-from octreelib.grid.grid_base import GridBase, GridConfigBase
+from octreelib.grid.grid_base import GridBase, GridConfigBase, GridVisualisationType
 
 from octreelib.internal.point import (
     RawPointCloud,
@@ -171,3 +173,61 @@ class Grid(GridBase):
         return sum(
             [octree.n_nodes_for_pose(pose_number) for octree in self.__octrees.values()]
         )
+
+    def visualise(self) -> None:
+        """
+        Produces `.html` file with Grid
+        """
+        plot = k3d.Plot()
+        random.seed(self._grid_config.visualisation_seed)
+        poses_number = len(self.__octrees.keys())
+
+        if self._grid_config.visualisation_type is GridVisualisationType.POSE:
+            for pose_number in range(poses_number):
+                color = random.randrange(0, 2 ** 24)
+                points = self.get_points(pose_number=pose_number)
+
+                plot += k3d.points(
+                    positions=points,
+                    point_size=0.1,
+                    color=color,
+                )
+        elif self._grid_config.visualisation_type is GridVisualisationType.VOXEL:
+            voxels_id = set()
+            for pose_number in range(poses_number):
+                leaves = self.get_leaf_points(pose_number=pose_number)
+                for leaf in leaves:
+                    color = random.randrange(0, 2 ** 24)
+                    if leaf.id not in voxels_id:
+                        plot += k3d.points(
+                            positions=leaf.get_points(),
+                            point_size=0.1,
+                            color=color,
+                        )
+                        voxels_id.add(leaf.id)
+
+        vertices = []
+        for pose_number in range(poses_number):
+            # TODO: Draw full grid, either empty voxels
+            leaves = self.get_leaf_points(pose_number=pose_number)
+            for leaf in leaves:
+                vertices.append(leaf.corners)
+
+        for vertex in vertices:
+            plot += k3d.lines(
+                vertices=vertex,
+                indices=[
+                    [0, 2, 2, 6, 6, 4, 4, 0],  # Yeah, that's weird
+                    [0, 1, 1, 5, 5, 4, 4, 0],  # but I didn't invent other way
+                    [0, 1, 1, 3, 3, 2, 2, 0],  # to draw voxels edges
+                    [1, 3, 3, 7, 7, 5, 5, 1],
+                    [2, 3, 3, 7, 7, 6, 6, 2],
+                    [4, 5, 5, 7, 7, 6, 6, 4],
+                ],
+                width=0.01,
+                color=0xFF0000,
+                indices_type="segment",
+            )
+
+        with open(self._grid_config.visualisation_filepath, "w") as f:
+            f.write(plot.get_snapshot())
