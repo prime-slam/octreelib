@@ -18,6 +18,8 @@ class WithID(ABC):
     This class represents the fact that the object has an id.
     When initialized, the class is assigned an id, which can
     be retrieved later using .id property.
+
+    :param _id: Optional[int] -- if specified, this id will be assigned.
     """
 
     _id_static_counter = 0
@@ -38,6 +40,8 @@ class WithPoints(ABC):
     """
     This class represents the fact that the object contains points.
     The points are stored in .points field. By default, the field is immutable.
+
+    :param points: Optional[RawPointCloud] -- if specified, this point cloud will be inserted.
     """
 
     def __init__(self, points: Optional[RawPointCloud] = None):

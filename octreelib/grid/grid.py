@@ -27,6 +27,8 @@ class Grid(GridBase):
     The space is divided into the grid of voxels with the given edge size,
     which is defined in the GridConfig.
     Each voxel in a grid stores points in the form of a MultiPoseOctree.
+
+    :param grid_config: GridConfig
     """
 
     def __init__(self, grid_config: GridConfig):

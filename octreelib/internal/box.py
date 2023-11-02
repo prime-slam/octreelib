@@ -16,8 +16,8 @@ class Box:
     """
     This class represents a box in 3D space.
     The box is defined by two opposite points:
-    corner_min has all minimal coordinates and
-    corner_min has all maximal coordinates
+    :param corner_min: point with all minimal coordinates
+    :param corner_min: point with all  maximal coordinates
     """
 
     corner_min: RawPoint

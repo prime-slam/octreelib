@@ -14,7 +14,7 @@ __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 @dataclass
 class OctreeConfigBase(ABC):
     """
-    Config for OcTree
+    Config for Octree
 
     debug: debug mode is enabled
     """
