@@ -204,8 +204,11 @@ class MultiPoseOctreeNode(OctreeNode):
 
 class MultiPoseOctree(Octree):
     """
-    An implementation of OctreeBase that can store points from
-    multiple poses in a single octree.
+    Stores points from a **multiple poses** in the form of an octree.
+
+    :param octree_config: Configuration for the octree.
+    :param corner: Min corner of the octree.
+    :param edge_length: Edge length of the octree.
     """
 
     _node_type = MultiPoseOctreeNode

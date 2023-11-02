@@ -117,7 +117,9 @@ class OctreeNode(OctreeNodeBase):
         :return: number of leaves a.k.a. number of nodes which have points
         """
         return (
-            sum([child.n_leaves for child in self._children]) if self._has_children else 1
+            sum([child.n_leaves for child in self._children])
+            if self._has_children
+            else 1
         )
 
     @property
@@ -144,6 +146,14 @@ class OctreeNode(OctreeNodeBase):
 
 
 class Octree(OctreeBase, Generic[T]):
+    """
+    Stores points from a **single pose** in the form of an octree.
+
+    :param octree_config: Configuration for the octree.
+    :param corner: Min corner of the octree.
+    :param edge_length: Edge length of the octree.
+    """
+
     _node_type = OctreeNode
 
     def get_points_in_box(self, box: Box) -> RawPointCloud:
