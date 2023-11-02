@@ -31,7 +31,7 @@ HashablePoint = Tuple[float, float, float]
 
 def get_hashable_from_point(point: RawPoint) -> HashablePoint:
     """
-    Retreive hashable equivalent for a point
+    Retrieve hashable equivalent for a point
     :param point: RawPoint
     :return: HashablePoint, a point equivalent, designed to be used with dicts and sets
     """
