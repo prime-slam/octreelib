@@ -116,6 +116,7 @@ class OctreeBase(StoringVoxel, ABC):
     :param corner: Min corner of the octree.
     :param edge_length: Edge length of the octree.
     """
+
     _node_type = OctreeNodeBase
 
     def __init__(

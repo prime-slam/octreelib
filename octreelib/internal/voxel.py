@@ -18,7 +18,7 @@ def _point_to_hashable(point: RawPoint):
 class Voxel(WithID):
     _static_voxel_id_map = {}
 
-    def __init__(self, corner: RawPoint, edge_length: np.float_):
+    def __init__(self, corner: RawPoint, edge_length: float):
         corner_min_hashable = _point_to_hashable(corner)
         corner_max_hashable = _point_to_hashable(corner + edge_length)
 
@@ -27,16 +27,26 @@ class Voxel(WithID):
                 self._static_voxel_id_map
             )
 
-        WithID.__init__(self, self._static_voxel_id_map[(corner_min_hashable, corner_max_hashable)])
-        self.corner = corner
-        self.edge_length = edge_length
+        WithID.__init__(
+            self, self._static_voxel_id_map[(corner_min_hashable, corner_max_hashable)]
+        )
+        self._corner = corner
+        self._edge_length = edge_length
+
+    @property
+    def corner(self):
+        return self._corner
+
+    @property
+    def edge_length(self):
+        return self._edge_length
 
     @property
     def bounding_box(self):
         """
         :return: bounding box
         """
-        return Box(self.corner, self.corner + self.edge_length)
+        return Box(self._corner, self._corner + self._edge_length)
 
     @property
     def corners(self):
@@ -44,8 +54,8 @@ class Voxel(WithID):
         :return: 8 points, which represent the corners of the voxel
         """
         return [
-            self.corner + offset
-            for offset in itertools.product([0, self.edge_length], repeat=3)
+            self._corner + offset
+            for offset in itertools.product([0, self._edge_length], repeat=3)
         ]
 
 

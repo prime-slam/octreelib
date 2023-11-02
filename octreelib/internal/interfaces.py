@@ -39,6 +39,7 @@ class WithPoints(ABC):
     This class represents the fact that the object contains points.
     The points are stored in .points field. By default, the field is immutable.
     """
+
     def __init__(self, points: Optional[RawPointCloud] = None):
         self._points: RawPointCloud = (
             points if points is not None else self._empty_point_cloud

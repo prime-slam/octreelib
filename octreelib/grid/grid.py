@@ -60,7 +60,9 @@ class Grid(GridBase):
 
             # create octree in the voxel if it does not exist yet
             if voxel_coordinates_hashable not in self.__octrees:
-                self.__octrees[voxel_coordinates_hashable] = self._grid_config.octree_type(
+                self.__octrees[
+                    voxel_coordinates_hashable
+                ] = self._grid_config.octree_type(
                     self._grid_config.octree_config,
                     voxel_coordinates,
                     self._grid_config.grid_voxel_edge_size,
@@ -137,7 +139,10 @@ class Grid(GridBase):
         :return: Number of leaves in all octrees, which store points for given pose.
         """
         return sum(
-            [octree.n_leaves_for_pose(pose_number) for octree in self.__octrees.values()]
+            [
+                octree.n_leaves_for_pose(pose_number)
+                for octree in self.__octrees.values()
+            ]
         )
 
     def n_points(self, pose_number: int) -> int:
@@ -146,7 +151,10 @@ class Grid(GridBase):
         :return: Number of points for given pose.
         """
         return sum(
-            [octree.n_points_for_pose(pose_number) for octree in self.__octrees.values()]
+            [
+                octree.n_points_for_pose(pose_number)
+                for octree in self.__octrees.values()
+            ]
         )
 
     def n_nodes(self, pose_number: int) -> int:
