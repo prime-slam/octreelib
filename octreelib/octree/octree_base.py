@@ -110,11 +110,12 @@ class OctreeNodeBase(StoringVoxel, ABC):
 
 class OctreeBase(StoringVoxel, ABC):
     """
-    Octree stores points of a **single** pos.
+    Stores points in the form of an octree.
 
-    root: root node of an octree
+    :param octree_config: Configuration for the octree.
+    :param corner: Min corner of the octree.
+    :param edge_length: Edge length of the octree.
     """
-
     _node_type = OctreeNodeBase
 
     def __init__(
