@@ -20,14 +20,14 @@ class GridConfigBase(ABC):
     octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
     debug: debug mode
-    grid_voxel_edge_size: initial size of voxels
+    grid_voxel_edge_length: initial size of voxels
     corner: corner of a grid
     """
 
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
-    grid_voxel_edge_size: int = 1
+    grid_voxel_edge_length: int = 1
     corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
 
 
