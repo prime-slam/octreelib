@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal, Iterable
+from typing import Annotated, Literal, Iterable, Tuple
 
 import numpy as np
 import numpy.typing as npt
 
 
 __all__ = [
+    "HashablePoint",
+    "get_hashable_from_point",
     "RawPoint",
     "RawPointCloud",
     "Point",
@@ -15,8 +17,25 @@ __all__ = [
     "PosePointCloud",
 ]
 
-RawPoint = Annotated[npt.NDArray[np.float_], Literal[3]]
-RawPointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
+
+"""
+HashablePoint is a type, which represents a point, but is hashable.
+It is intended to be used only as a key to a Dict or an item in a Set or Frozenset.
+
+One can retrieve hashable equivalent for a point using function
+`get_hashable_from_point(point: RawPoint) -> HashablePoint`
+"""
+
+HashablePoint = Tuple[float, float, float]
+
+
+def get_hashable_from_point(point: RawPoint) -> HashablePoint:
+    """
+    Retreive hashable equivalent for a point
+    :param point: RawPoint
+    :return: HashablePoint, a point equivalent, designed to be used with dicts and sets
+    """
+    return float(point[0]), float(point[1]), float(point[2])
 
 
 """
@@ -31,6 +50,9 @@ information about pose number. These classes are subclasses of numpy
 and are implemented according to
 https://numpy.org/doc/stable/user/basics.subclassing.html
 """
+
+RawPoint = Annotated[npt.NDArray[np.float_], Literal[3]]
+RawPointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
 
 
 class Point(np.ndarray):

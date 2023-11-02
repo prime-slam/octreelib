@@ -4,7 +4,13 @@ import numpy as np
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
 
-from octreelib.internal.point import RawPointCloud, RawPoint, PointCloud
+from octreelib.internal.point import (
+    RawPointCloud,
+    RawPoint,
+    PointCloud,
+    get_hashable_from_point,
+    HashablePoint,
+)
 from octreelib.internal.voxel import StaticStoringVoxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
@@ -33,7 +39,7 @@ class Grid(GridBase):
         self.__pose_voxel_coordinates: Dict[int, List[RawPoint]] = {}
 
         # {voxel coordinates -> octree}
-        self.__octrees: Dict[Tuple[float, float, float], grid_config.octree_type] = {}
+        self.__octrees: Dict[HashablePoint, grid_config.octree_type] = {}
 
     def insert_points(self, pose_number: int, points: RawPointCloud):
         """
@@ -53,12 +59,7 @@ class Grid(GridBase):
         for point in points:
             # get coords of voxel into which the point is inserted
             voxel_coordinates = self.__get_voxel_for_point(point)
-            # voxel_coordinates_hashable = voxel_coordinates.tolist()
-            voxel_coordinates_hashable = (
-                float(voxel_coordinates[0]),
-                float(voxel_coordinates[1]),
-                float(voxel_coordinates[2]),
-            )
+            voxel_coordinates_hashable = get_hashable_from_point(voxel_coordinates)
 
             # create octree in the voxel if it does not exist yet
             if voxel_coordinates_hashable not in self.__octrees:

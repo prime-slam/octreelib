@@ -6,21 +6,18 @@ import numpy as np
 
 from octreelib.internal.box import Box
 from octreelib.internal.interfaces import WithID, WithPoints
-from octreelib.internal.point import RawPoint, RawPointCloud
+from octreelib.internal.point import RawPoint, RawPointCloud, get_hashable_from_point
 
 __all__ = ["StaticStoringVoxel", "StoringVoxel", "Voxel"]
 
-
-def _point_to_hashable(point: RawPoint):
-    return float(point[0]), float(point[1]), float(point[2])
 
 
 class Voxel(WithID):
     _static_voxel_id_map = {}
 
     def __init__(self, corner: RawPoint, edge_length: float):
-        corner_min_hashable = _point_to_hashable(corner)
-        corner_max_hashable = _point_to_hashable(corner + edge_length)
+        corner_min_hashable = get_hashable_from_point(corner)
+        corner_max_hashable = get_hashable_from_point(corner + edge_length)
 
         if (corner_min_hashable, corner_max_hashable) not in self._static_voxel_id_map:
             self._static_voxel_id_map[(corner_min_hashable, corner_max_hashable)] = len(
