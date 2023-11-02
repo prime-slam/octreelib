@@ -11,8 +11,12 @@ from octreelib.internal.point import RawPoint, RawPointCloud, get_hashable_from_
 __all__ = ["StaticStoringVoxel", "StoringVoxel", "Voxel"]
 
 
-
 class Voxel(WithID):
+    """
+    Represents a Voxel with ID
+    :param corner: corner point with all minimal coordinates
+    :param edge_length: edge_length of the voxel
+    """
     _static_voxel_id_map = {}
 
     def __init__(self, corner: RawPoint, edge_length: float):
@@ -59,6 +63,9 @@ class Voxel(WithID):
 class StaticStoringVoxel(Voxel, WithPoints):
     """
     Voxel with an immutable point cloud.
+    :param corner: corner point with all minimal coordinates
+    :param edge_length: edge_length of the voxel
+    :param points: if specified, these points will be inserted into voxel
     """
 
     def __init__(
@@ -80,6 +87,8 @@ class StaticStoringVoxel(Voxel, WithPoints):
 class StoringVoxel(Voxel, WithPoints, ABC):
     """
     Voxel with a mutable point cloud.
+    :param corner: corner point with all minimal coordinates
+    :param edge_length: edge_length of the voxel
     """
 
     def __init__(self, corner: RawPoint, edge_length: np.float_):

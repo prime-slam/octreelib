@@ -35,6 +35,8 @@ class GridBase(ABC, Generic[T]):
     """
     This class stores octrees for different nodes
     Generic[T] is used for specifying the class of Octree used.
+
+    :param grid_config: GridConfig
     """
 
     def __init__(
