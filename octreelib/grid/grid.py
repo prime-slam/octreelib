@@ -41,9 +41,11 @@ class Grid(GridBase):
         :param pose_number: pose to which the cloud is inserted
         :param points: point cloud
         """
-        # register pose if it has not been registered yet
-        if pose_number not in self.__pose_voxel_coordinates:
-            self.__pose_voxel_coordinates[pose_number] = []
+        if pose_number in self.__pose_voxel_coordinates:
+            raise ValueError(f"Cannot insert points to existing pose {pose_number}")
+
+        # register pose
+        self.__pose_voxel_coordinates[pose_number] = []
 
         # convert points to PointsWithPose, which is a subclass of np.ndarray
         points = PointCloud(points)
