@@ -50,7 +50,7 @@ class Grid(GridBase):
 
         for point in points:
             # get coords of voxel into which the point is inserted
-            voxel_coordinates = self._get_voxel_for_point(point)
+            voxel_coordinates = self.__get_voxel_for_point(point)
             # voxel_coordinates_hashable = voxel_coordinates.tolist()
             voxel_coordinates_hashable = (
                 float(voxel_coordinates[0]),
@@ -70,7 +70,7 @@ class Grid(GridBase):
                 [point.with_pose(pose_number)]
             )
 
-    def _get_voxel_for_point(self, point: RawPoint) -> RawPoint:
+    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
         """
         Method to get coordinates of a voxel where the given point would be stored.
         :param point: Point.
