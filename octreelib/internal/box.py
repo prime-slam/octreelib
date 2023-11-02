@@ -19,6 +19,7 @@ class Box:
     corner_min has all minimal coordinates and
     corner_min has all maximal coordinates
     """
+
     corner_min: RawPoint
     corner_max: RawPoint
 

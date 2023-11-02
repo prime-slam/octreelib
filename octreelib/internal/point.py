@@ -37,6 +37,7 @@ class Point(np.ndarray):
     """
     Represents a point. Designed for internal use.
     """
+
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
@@ -55,6 +56,7 @@ class PointCloud(np.ndarray):
     """
     Represents a point cloud. Designed for internal use.
     """
+
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
@@ -105,6 +107,7 @@ class PosePoint(np.ndarray):
     """
     Represents a point with pose. Designed for internal use.
     """
+
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
@@ -127,6 +130,7 @@ class PosePointCloud(np.ndarray):
     """
     Represents a point cloud with poses. Designed for internal use.
     """
+
     def __new__(cls, input_array):
         # Construct from existing np.ndarray.
         obj = np.asarray(input_array).view(cls)
