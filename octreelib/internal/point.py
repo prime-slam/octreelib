@@ -61,7 +61,10 @@ class Point(np.ndarray):
     """
 
     def __new__(cls, input_array):
-        # Construct from existing np.ndarray.
+        """
+        Construct from existing array.
+        :param input_array: existing array.
+        """
         obj = np.asarray(input_array).view(cls)
         return obj
 
@@ -80,7 +83,10 @@ class PointCloud(np.ndarray):
     """
 
     def __new__(cls, input_array):
-        # Construct from existing np.ndarray.
+        """
+        Construct from existing array.
+        :param input_array: existing array.
+        """
         obj = np.asarray(input_array).view(cls)
         return obj
 
@@ -131,7 +137,10 @@ class PosePoint(np.ndarray):
     """
 
     def __new__(cls, input_array):
-        # Construct from existing np.ndarray.
+        """
+        Construct from existing array.
+        :param input_array: existing array.
+        """
         obj = np.asarray(input_array).view(cls)
         return obj
 
@@ -154,7 +163,10 @@ class PosePointCloud(np.ndarray):
     """
 
     def __new__(cls, input_array):
-        # Construct from existing np.ndarray.
+        """
+        Construct from existing array.
+        :param input_array: existing array.
+        """
         obj = np.asarray(input_array).view(cls)
         return obj
 
