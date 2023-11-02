@@ -4,7 +4,7 @@ from typing import List, Dict, Callable, Tuple
 import k3d
 import numpy as np
 
-from octreelib.grid.grid_base import GridBase, GridConfigBase, GridVisualisationType
+from octreelib.grid.grid_base import GridBase, GridConfigBase, GridVisualizationType
 
 from octreelib.internal.point import (
     RawPointCloud,
@@ -174,15 +174,15 @@ class Grid(GridBase):
             [octree.n_nodes_for_pose(pose_number) for octree in self.__octrees.values()]
         )
 
-    def visualise(self) -> None:
+    def visualize(self) -> None:
         """
         Produces `.html` file with Grid
         """
         plot = k3d.Plot()
-        random.seed(self._grid_config.visualisation_seed)
+        random.seed(self._grid_config.visualization_seed)
         poses_number = len(self.__octrees.keys())
 
-        if self._grid_config.visualisation_type is GridVisualisationType.POSE:
+        if self._grid_config.visualization_type is GridVisualizationType.POSE:
             for pose_number in range(poses_number):
                 color = random.randrange(0, 2 ** 24)
                 points = self.get_points(pose_number=pose_number)
@@ -192,7 +192,7 @@ class Grid(GridBase):
                     point_size=0.1,
                     color=color,
                 )
-        elif self._grid_config.visualisation_type is GridVisualisationType.VOXEL:
+        elif self._grid_config.visualization_type is GridVisualizationType.VOXEL:
             voxels_id = set()
             for pose_number in range(poses_number):
                 leaves = self.get_leaf_points(pose_number=pose_number)
@@ -229,5 +229,5 @@ class Grid(GridBase):
                 indices_type="segment",
             )
 
-        with open(self._grid_config.visualisation_filepath, "w") as f:
+        with open(self._grid_config.visualization_filepath, "w") as f:
             f.write(plot.get_snapshot())

@@ -10,12 +10,12 @@ from octreelib.internal.voxel import StoringVoxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
-__all__ = ["GridVisualisationType", "GridConfigBase", "GridBase"]
+__all__ = ["GridVisualizationType", "GridConfigBase", "GridBase"]
 
 
-class GridVisualisationType(Enum):
+class GridVisualizationType(Enum):
     """
-    Represents types of Grid visualisation:
+    Represents types of Grid visualization:
     1. POSE - colors in different colors point clouds belonging to different poses
     2. VOXEL - colors in same colors voxels belonging to different poses
     """
@@ -33,9 +33,9 @@ class GridConfigBase(ABC):
     debug: debug mode
     grid_voxel_edge_length: initial size of voxels
     corner: corner of a grid
-    visualisation_type: Represents type of visualisation. For more information check VisualisationType definition
-    visualisation_filepath: Path to produced `.html` file
-    visualisation_seed: Represents random seed for generating colors
+    visualization_type: Represents type of visualization. For more information check VisualizationType definition
+    visualization_filepath: Path to produced `.html` file
+    visualization_seed: Represents random seed for generating colors
     """
 
     octree_type: Type[T]
@@ -43,9 +43,9 @@ class GridConfigBase(ABC):
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
-    visualisation_type: GridVisualisationType = GridVisualisationType.POSE
-    visualisation_filepath: str = ""
-    visualisation_seed: int = 0
+    visualization_type: GridVisualizationType = GridVisualizationType.POSE
+    visualization_filepath: str = ""
+    visualization_seed: int = 0
 
 class GridBase(ABC, Generic[T]):
     """
@@ -142,9 +142,9 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def visualise(self) -> None:
+    def visualize(self) -> None:
         """
-        Represents method for visualising Grid. It produces `.html` file using
+        Represents method for visualizing Grid. It produces `.html` file using
         [k3d](https://github.com/K3D-tools/K3D-jupyter) library
         """
         pass
