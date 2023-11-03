@@ -5,8 +5,8 @@ from typing import Callable, List, Optional
 import numpy as np
 
 from octreelib.internal.box import Box
-from octreelib.internal.point import RawPoint, RawPointCloud
-from octreelib.internal.voxel import StoringVoxel
+from octreelib.internal.point import RawPoint, RawPointCloud, PointCloud
+from octreelib.internal.voxel import DynamicVoxel
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -22,7 +22,7 @@ class OctreeConfigBase(ABC):
     debug: bool = True
 
 
-class OctreeNodeBase(StoringVoxel, ABC):
+class OctreeNodeBase(DynamicVoxel, ABC):
     """
     points: stores points of a node
 
@@ -34,15 +34,13 @@ class OctreeNodeBase(StoringVoxel, ABC):
     and are not stored in the parent node.
     """
 
-    _points: RawPointCloud
-    _children: Optional[List["OctreeNodeBase"]]
-    _has_children: bool
+    _point_cloud_type = PointCloud
 
-    def __init__(self, corner: RawPoint, edge_length: np.float_):
-        super().__init__(corner, edge_length)
-        self._points: RawPointCloud = self._empty_point_cloud
-        self._children = []
-        self._has_children = False
+    def __init__(self, corner_min: RawPoint, edge_length: np.float_):
+        super().__init__(corner_min, edge_length)
+        self._points: OctreeNodeBase._point_cloud_type = self._point_cloud_type.empty()
+        self._children: Optional[List["OctreeNodeBase"]] = []
+        self._has_children: bool = False
 
     @property
     @abstractmethod
@@ -93,7 +91,7 @@ class OctreeNodeBase(StoringVoxel, ABC):
         """
 
     @abstractmethod
-    def get_leaf_points(self) -> List[StoringVoxel]:
+    def get_leaf_points(self) -> List[DynamicVoxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """
@@ -108,12 +106,12 @@ class OctreeNodeBase(StoringVoxel, ABC):
         pass
 
 
-class OctreeBase(StoringVoxel, ABC):
+class OctreeBase(DynamicVoxel, ABC):
     """
     Stores points in the form of an octree.
 
     :param octree_config: Configuration for the octree.
-    :param corner: Min corner of the octree.
+    :param corner_min: Min corner of the octree.
     :param edge_length: Edge length of the octree.
     """
 
@@ -122,12 +120,12 @@ class OctreeBase(StoringVoxel, ABC):
     def __init__(
         self,
         octree_config: OctreeConfigBase,
-        corner: RawPoint,
+        corner_min: RawPoint,
         edge_length: np.float_,
     ):
-        super().__init__(corner, edge_length)
+        super().__init__(corner_min, edge_length)
         self._config = octree_config
-        self._root = self._node_type(self.corner, self.edge_length)
+        self._root = self._node_type(self.corner_min, self.edge_length)
 
     @property
     @abstractmethod
@@ -179,7 +177,7 @@ class OctreeBase(StoringVoxel, ABC):
         pass
 
     @abstractmethod
-    def get_leaf_points(self) -> List[StoringVoxel]:
+    def get_leaf_points(self) -> List[DynamicVoxel]:
         """
         :return: List of PointClouds where each PointCloud
         represents points in a separate leaf node

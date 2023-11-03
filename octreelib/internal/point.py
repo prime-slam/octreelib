@@ -90,6 +90,10 @@ class PointCloud(np.ndarray):
         obj = np.asarray(input_array).view(cls)
         return obj
 
+    @classmethod
+    def empty(cls):
+        return cls(np.empty((0, 3), dtype=float))
+
     def with_poses(self, pose_numbers: Iterable[int]) -> PosePointCloud:
         """
         :param pose_numbers: New pose numbers.
@@ -169,6 +173,10 @@ class PosePointCloud(np.ndarray):
         """
         obj = np.asarray(input_array).view(cls)
         return obj
+
+    @classmethod
+    def empty(cls):
+        return cls(np.empty((0, 4), dtype=float))
 
     def without_poses(self) -> PointCloud:
         """
