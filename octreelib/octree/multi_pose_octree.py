@@ -29,7 +29,7 @@ class MultiPoseOctreeNode(OctreeNode):
 
     _point_cloud_type = PosePointCloud
 
-    def get_leaf_points_for_pose(self, pose_number: int) -> List[Voxel]:
+    def get_leaf_points_by_pose_number(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: Desired pose number.
         :return: List of leaf voxels with points for this pose.
@@ -39,7 +39,7 @@ class MultiPoseOctreeNode(OctreeNode):
         if self._has_children:
             return sum(
                 [
-                    child.get_leaf_points_for_pose(pose_number)
+                    child.get_leaf_points_by_pose_number(pose_number)
                     for child in self._children
                 ],
                 [],
@@ -55,7 +55,7 @@ class MultiPoseOctreeNode(OctreeNode):
             ]
         return []
 
-    def get_points_for_pose(self, pose_number: int) -> RawPointCloud:
+    def get_points_by_pose_number(self, pose_number: int) -> RawPointCloud:
         """
         :param pose_number: Desired pose number.
         :return: Points for this pose which are stored inside the octree.
@@ -65,7 +65,7 @@ class MultiPoseOctreeNode(OctreeNode):
         return (
             reduce(
                 lambda points_first, points_second: points_first.extend(points_second),
-                [child.get_points_for_pose(pose_number) for child in self._children],
+                [child.get_points_by_pose_number(pose_number) for child in self._children],
             )
             if self._has_children
             else self._points.filtered_by_pose(pose_number).without_poses()
@@ -148,42 +148,42 @@ class MultiPoseOctreeNode(OctreeNode):
         else:
             self._points = self._points.extend(points)
 
-    def n_points_for_pose(self, pose_number: int) -> int:
+    def n_points_by_pose_number(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of points for this pose inside this node.
         """
-        # if node has children return sum of n_points_for_pose in children
+        # if node has children return sum of n_points_by_pose_number in children
         # else return number of points for this pose in self
         return (
-            sum([child.n_points_for_pose(pose_number) for child in self._children])
+            sum([child.n_points_by_pose_number(pose_number) for child in self._children])
             if self._has_children
             else len(self._points.filtered_by_pose(pose_number))
         )
 
-    def n_leaves_for_pose(self, pose_number: int) -> int:
+    def n_leaves_by_pose_number(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of leaves which store points for this pose.
         """
-        # if node has children return sum of n_leaves_for_pose in children
+        # if node has children return sum of n_leaves_by_pose_number in children
         # else return 1 if this leaf has points for this pose else 0
         return (
-            sum([child.n_leaves_for_pose(pose_number) for child in self._children])
+            sum([child.n_leaves_by_pose_number(pose_number) for child in self._children])
             if self._has_children
             else len(self._points.filtered_by_pose(pose_number)) != 0
         )
 
-    def n_nodes_for_pose(self, pose_number: int) -> int:
+    def n_nodes_by_pose_number(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of nodes (both leaves and not) which store points for this pose.
         """
         # if node has children and any of the children has points for this pose
-        #     return sum of n_nodes_for_pose for children + 1 (because this voxel also counts)
+        #     return sum of n_nodes_by_pose_number for children + 1 (because this voxel also counts)
         # else return 1 if this leaf has points for this pose else 0
         n_nodes = (
-            sum([child.n_nodes_for_pose(pose_number) for child in self._children])
+            sum([child.n_nodes_by_pose_number(pose_number) for child in self._children])
             if self._has_children
             else None
         )
@@ -208,37 +208,37 @@ class MultiPoseOctree(Octree):
 
     _node_type = MultiPoseOctreeNode
 
-    def get_leaf_points_for_pose(self, pose_number: int) -> List[Voxel]:
+    def get_leaf_points_by_pose_number(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: Desired pose number.
         :return: List of leaf voxels with points for this pose.
         """
-        return self._root.get_leaf_points_for_pose(pose_number)
+        return self._root.get_leaf_points_by_pose_number(pose_number)
 
-    def get_points_for_pose(self, pose_number: int) -> RawPointCloud:
+    def get_points_by_pose_number(self, pose_number: int) -> RawPointCloud:
         """
         :param pose_number: Desired pose number.
         :return: Points for this pose which are stored inside the octree.
         """
-        return self._root.get_points_for_pose(pose_number)
+        return self._root.get_points_by_pose_number(pose_number)
 
-    def n_points_for_pose(self, pose_number: int) -> int:
+    def n_points_by_pose_number(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of points for this pose inside this node.
         """
-        return self._root.n_points_for_pose(pose_number)
+        return self._root.n_points_by_pose_number(pose_number)
 
-    def n_leaves_for_pose(self, pose_number: int) -> int:
+    def n_leaves_by_pose_number(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of leaves which store points for this pose.
         """
-        return self._root.n_leaves_for_pose(pose_number)
+        return self._root.n_leaves_by_pose_number(pose_number)
 
-    def n_nodes_for_pose(self, pose_number: int) -> int:
+    def n_nodes_by_pose_number(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of nodes (both leaves and not) which store points for this pose.
         """
-        return self._root.n_nodes_for_pose(pose_number)
+        return self._root.n_nodes_by_pose_number(pose_number)

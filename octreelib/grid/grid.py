@@ -76,16 +76,6 @@ class Grid(GridBase):
                 [point.with_pose(pose_number)]
             )
 
-    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
-        """
-        Method to get coordinates of a voxel where the given point would be stored.
-        :param point: Point.
-        :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
-        """
-        point = point[:3]
-        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
-        return point // grid_voxel_edge_length * grid_voxel_edge_length
-
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
         Transforms point cloud in each leaf node of each octree using the function
@@ -102,7 +92,8 @@ class Grid(GridBase):
         """
         return sum(
             [
-                octree.get_leaf_points_for_pose(pose_number)
+                octree.get_leaf_points_by_pose_number
+                (pose_number)
                 for octree in self.__octrees.values()
             ],
             [],
@@ -115,7 +106,8 @@ class Grid(GridBase):
         """
         return np.vstack(
             [
-                octree.get_points_for_pose(pose_number)
+                octree.get_points_by_pose_number
+                (pose_number)
                 for octree in self.__octrees.values()
             ]
         )
@@ -144,7 +136,8 @@ class Grid(GridBase):
         """
         return sum(
             [
-                octree.n_leaves_for_pose(pose_number)
+                octree.n_leaves_by_pose_number
+                (pose_number)
                 for octree in self.__octrees.values()
             ]
         )
@@ -156,7 +149,8 @@ class Grid(GridBase):
         """
         return sum(
             [
-                octree.n_points_for_pose(pose_number)
+                octree.n_points_by_pose_number
+                (pose_number)
                 for octree in self.__octrees.values()
             ]
         )
@@ -168,5 +162,16 @@ class Grid(GridBase):
         (either themselves, or through their child nodes).
         """
         return sum(
-            [octree.n_nodes_for_pose(pose_number) for octree in self.__octrees.values()]
+            [octree.n_nodes_by_pose_number
+             (pose_number) for octree in self.__octrees.values()]
         )
+
+    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
+        """
+        Method to get coordinates of a voxel where the given point would be stored.
+        :param point: Point.
+        :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
+        """
+        point = point[:3]
+        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
+        return point // grid_voxel_edge_length * grid_voxel_edge_length
