@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, List, Optional
@@ -105,6 +107,13 @@ class OctreeNodeBase(DynamicVoxel, ABC):
         """
         pass
 
+    @abstractmethod
+    def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the node.
+        """
+        pass
+
 
 class OctreeBase(DynamicVoxel, ABC):
     """
@@ -189,5 +198,12 @@ class OctreeBase(DynamicVoxel, ABC):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
+        """
+        pass
+
+    @abstractmethod
+    def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the octree.
         """
         pass
