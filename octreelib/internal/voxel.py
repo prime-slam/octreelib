@@ -9,8 +9,6 @@ from octreelib.internal.interfaces import WithID
 from octreelib.internal.point import (
     RawPoint,
     RawPointCloud,
-    Point,
-    get_hashable_from_point,
     PointCloud,
 )
 

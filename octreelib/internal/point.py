@@ -7,8 +7,6 @@ import numpy.typing as npt
 
 
 __all__ = [
-    "HashablePoint",
-    "get_hashable_from_point",
     "RawPoint",
     "RawPointCloud",
     "Point",
@@ -16,27 +14,6 @@ __all__ = [
     "PosePoint",
     "PosePointCloud",
 ]
-
-
-"""
-HashablePoint is a type, which represents a point, but is hashable.
-It is intended to be used only as a key to a Dict or an item in a Set or Frozenset.
-
-One can retrieve hashable equivalent for a point using function
-`get_hashable_from_point(point: RawPoint) -> HashablePoint`
-"""
-
-HashablePoint = Tuple[float, float, float]
-
-
-def get_hashable_from_point(point: RawPoint) -> HashablePoint:
-    """
-    Retrieve hashable equivalent for a point
-    :param point: RawPoint
-    :return: HashablePoint, a point equivalent, designed to be used with dicts and sets
-    """
-    return float(point[0]), float(point[1]), float(point[2])
-
 
 """
 RawPoint and RawPointCloud are intended to be used in the methods
