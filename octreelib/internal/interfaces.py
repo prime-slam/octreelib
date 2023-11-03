@@ -3,12 +3,8 @@ This file contains interface classes which represent
 certain features of the objects.
 """
 
-from abc import ABC, abstractmethod
-from typing import Optional, Union
-
-import numpy as np
-
-from octreelib.internal.point import RawPointCloud, PointCloud, PosePointCloud
+from abc import ABC
+from typing import Optional
 
 __all__ = ["WithID"]
 
