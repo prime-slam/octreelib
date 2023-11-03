@@ -24,11 +24,31 @@ class GridConfigBase(ABC):
     corner: corner of a grid
     """
 
+    _compatible_octree_types = []
+
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
+
+    @property
+    def compatible_octree_types(self):
+        """
+        :return: Types of Octrees which are compatible with this
+        """
+        return self._compatible_octree_types
+
+    def __post_init__(self):
+        """
+        Check that
+        :raises TypeError: if given octree_type is not compatible with this type of grid.
+        """
+        if self.octree_type not in self.compatible_octree_types:
+            raise TypeError(
+                f"Cannot use the provided octree type {self.octree_type}. "
+                f"The compatible octree types are {', '.join(cls.__name__ for cls in self.compatible_octree_types)}."
+            )
 
 
 class GridBase(ABC, Generic[T]):

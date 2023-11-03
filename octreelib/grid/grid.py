@@ -17,7 +17,7 @@ __all__ = ["Grid", "GridConfig"]
 
 
 class GridConfig(GridConfigBase):
-    pass
+    _compatible_octree_types = [MultiPoseOctree]
 
 
 class Grid(GridBase):
@@ -32,9 +32,6 @@ class Grid(GridBase):
 
     def __init__(self, grid_config: GridConfig):
         super().__init__(grid_config)
-
-        # workaround for restricting the type of octree for this grid
-        self._grid_config.octree_type = MultiPoseOctree
 
         # {pose -> list of voxel coordinates}
         self.__pose_voxel_coordinates: Dict[int, List[RawPoint]] = {}
@@ -92,8 +89,7 @@ class Grid(GridBase):
         """
         return sum(
             [
-                octree.get_leaf_points_by_pose_number
-                (pose_number)
+                octree.get_leaf_points_by_pose_number(pose_number)
                 for octree in self.__octrees.values()
             ],
             [],
@@ -106,8 +102,7 @@ class Grid(GridBase):
         """
         return np.vstack(
             [
-                octree.get_points_by_pose_number
-                (pose_number)
+                octree.get_points_by_pose_number(pose_number)
                 for octree in self.__octrees.values()
             ]
         )
@@ -136,8 +131,7 @@ class Grid(GridBase):
         """
         return sum(
             [
-                octree.n_leaves_by_pose_number
-                (pose_number)
+                octree.n_leaves_by_pose_number(pose_number)
                 for octree in self.__octrees.values()
             ]
         )
@@ -149,8 +143,7 @@ class Grid(GridBase):
         """
         return sum(
             [
-                octree.n_points_by_pose_number
-                (pose_number)
+                octree.n_points_by_pose_number(pose_number)
                 for octree in self.__octrees.values()
             ]
         )
@@ -162,8 +155,10 @@ class Grid(GridBase):
         (either themselves, or through their child nodes).
         """
         return sum(
-            [octree.n_nodes_by_pose_number
-             (pose_number) for octree in self.__octrees.values()]
+            [
+                octree.n_nodes_by_pose_number(pose_number)
+                for octree in self.__octrees.values()
+            ]
         )
 
     def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
