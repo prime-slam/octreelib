@@ -65,7 +65,10 @@ class MultiPoseOctreeNode(OctreeNode):
         return (
             reduce(
                 lambda points_first, points_second: points_first.extend(points_second),
-                [child.get_points_by_pose_number(pose_number) for child in self._children],
+                [
+                    child.get_points_by_pose_number(pose_number)
+                    for child in self._children
+                ],
             )
             if self._has_children
             else self._points.filtered_by_pose(pose_number).without_poses()
@@ -156,7 +159,9 @@ class MultiPoseOctreeNode(OctreeNode):
         # if node has children return sum of n_points_by_pose_number in children
         # else return number of points for this pose in self
         return (
-            sum([child.n_points_by_pose_number(pose_number) for child in self._children])
+            sum(
+                [child.n_points_by_pose_number(pose_number) for child in self._children]
+            )
             if self._has_children
             else len(self._points.filtered_by_pose(pose_number))
         )
@@ -169,7 +174,9 @@ class MultiPoseOctreeNode(OctreeNode):
         # if node has children return sum of n_leaves_by_pose_number in children
         # else return 1 if this leaf has points for this pose else 0
         return (
-            sum([child.n_leaves_by_pose_number(pose_number) for child in self._children])
+            sum(
+                [child.n_leaves_by_pose_number(pose_number) for child in self._children]
+            )
             if self._has_children
             else len(self._points.filtered_by_pose(pose_number)) != 0
         )
