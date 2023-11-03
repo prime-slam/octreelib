@@ -6,8 +6,8 @@ from octreelib.grid import Grid, GridConfig
 from octreelib.octree import MultiPoseOctree, MultiPoseOctreeConfig
 
 
-def points_are_same(points_a: RawPointCloud, points_b: RawPointCloud):
-    return set(map(str, points_a.tolist())) == set(map(str, points_b.tolist()))
+def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
+    return set(map(str, points_first.tolist())) == set(map(str, points_second.tolist()))
 
 
 @pytest.fixture()
