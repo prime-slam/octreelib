@@ -5,7 +5,7 @@ from typing import Any, Callable, Generic, List, Type
 import numpy as np
 
 from octreelib.internal.point import RawPoint, RawPointCloud
-from octreelib.internal.voxel import StoringVoxel
+from octreelib.internal.voxel import DynamicVoxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
@@ -117,7 +117,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_leaf_points(self, pose_number: int) -> List[StoringVoxel]:
+    def get_leaf_points(self, pose_number: int) -> List[DynamicVoxel]:
         """
         :param pose_number: the desired pose number
         :return: List of voxels. Each voxel is a representation of a leaf node.

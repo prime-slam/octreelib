@@ -6,7 +6,7 @@ from typing import Callable, List, Generic
 import numpy as np
 
 from octreelib.internal import Box
-from octreelib.internal import RawPointCloud, T, StoringVoxel
+from octreelib.internal import RawPointCloud, T, DynamicVoxel, PointCloud
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -18,6 +18,8 @@ class OctreeConfig(OctreeConfigBase):
 
 
 class OctreeNode(OctreeNodeBase):
+    _point_cloud_type = PointCloud
+
     def get_points_inside_box(self, box: Box) -> RawPointCloud:
         """
         Returns points that occupy the given box
@@ -28,7 +30,7 @@ class OctreeNode(OctreeNodeBase):
             return sum(
                 [child.get_points_inside_box(box) for child in self._children], []
             )
-        points_inside = np.empty((0, 3), dtype=float)
+        points_inside = self._point_cloud_type.empty()
         for point in self._points:
             if box.is_point_inside(point):
                 points_inside = np.vstack((points_inside, point))
@@ -45,12 +47,12 @@ class OctreeNode(OctreeNodeBase):
                 [0, child_edge_length], repeat=3
             )
             self._children = [
-                OctreeNode(self.corner + offset, child_edge_length)
+                OctreeNode(self.corner_min + offset, child_edge_length)
                 for offset in children_corners_offsets
             ]
             self._has_children = True
             self.insert_points(self._points.copy())
-            self._points = self._empty_point_cloud
+            self._points = self._point_cloud_type.empty()
             for child in self._children:
                 child.subdivide(subdivision_criteria)
 
@@ -61,7 +63,7 @@ class OctreeNode(OctreeNodeBase):
         if not self._has_children:
             return self._points.copy()
 
-        points = self._empty_point_cloud
+        points = self._point_cloud_type.empty()
         for child in self._children:
             points = np.vstack((points, child.get_points()))
         return points
@@ -70,13 +72,15 @@ class OctreeNode(OctreeNodeBase):
         """
         :param points: Points to insert.
         """
+        # convert to internal type
+        points = self._point_cloud_type(points)
         if self._has_children:
             for point in points:
                 for child in self._children:
                     if child.bounding_box.is_point_inside(point):
                         child.insert_points(point)
         else:
-            self._points = np.vstack((self._points, points))
+            self._points = self._points.extend(points)
 
     def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
@@ -90,7 +94,7 @@ class OctreeNode(OctreeNodeBase):
                 self._children = []
                 self._has_children = False
         elif not all([criterion(self._points) for criterion in filtering_criteria]):
-            self._points = self._empty_point_cloud
+            self._points = self._point_cloud_type.empty()
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
@@ -103,7 +107,7 @@ class OctreeNode(OctreeNodeBase):
         elif self._points:
             self._points = function(self._points.copy())
 
-    def get_leaf_points(self) -> List[StoringVoxel]:
+    def get_leaf_points(self) -> List[DynamicVoxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """
@@ -197,7 +201,7 @@ class Octree(OctreeBase, Generic[T]):
         """
         self._root.map_leaf_points(function)
 
-    def get_leaf_points(self) -> List[StoringVoxel]:
+    def get_leaf_points(self) -> List[DynamicVoxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """

@@ -11,7 +11,7 @@ from octreelib.internal.point import (
     get_hashable_from_point,
     HashablePoint,
 )
-from octreelib.internal.voxel import StaticStoringVoxel
+from octreelib.internal.voxel import Voxel
 from octreelib.octree.multi_pose_octree import MultiPoseOctree
 
 __all__ = ["Grid", "GridConfig"]
@@ -95,7 +95,7 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].map_leaf_points(function)
 
-    def get_leaf_points(self, pose_number: int) -> List[StaticStoringVoxel]:
+    def get_leaf_points(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: Pose number.
         :return: List of voxels. Each voxel is a representation of a leaf node.

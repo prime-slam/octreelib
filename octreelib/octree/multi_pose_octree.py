@@ -5,7 +5,7 @@ from typing import List, Callable
 
 import numpy as np
 
-from octreelib.internal.voxel import StaticStoringVoxel
+from octreelib.internal.voxel import Voxel
 from octreelib.internal.point import (
     PosePointCloud,
     PointCloud,
@@ -27,7 +27,9 @@ class MultiPoseOctreeNode(OctreeNode):
     but which can store points from multiple poses.
     """
 
-    def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
+    _point_cloud_type = PosePointCloud
+
+    def get_leaf_points_for_pose(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: Desired pose number.
         :return: List of leaf voxels with points for this pose.
@@ -45,8 +47,8 @@ class MultiPoseOctreeNode(OctreeNode):
         filtered_points = self._points.filtered_by_pose(pose_number)
         if len(filtered_points):
             return [
-                StaticStoringVoxel(
-                    self.corner,
+                Voxel(
+                    self.corner_min,
                     self.edge_length,
                     filtered_points.without_poses(),
                 )
@@ -78,7 +80,7 @@ class MultiPoseOctreeNode(OctreeNode):
             for child in self._children:
                 child.map_leaf_points(function)
         elif len(self._points):
-            new_points = self._empty_point_cloud
+            new_points = self._point_cloud_type.empty()
             pose_numbers = set(self._points.poses())
             for pose_number in pose_numbers:
                 points = self._points.filtered_by_pose(pose_number)
@@ -109,14 +111,14 @@ class MultiPoseOctreeNode(OctreeNode):
 
             # initialize children
             self._children = [
-                MultiPoseOctreeNode(self.corner + offset, child_edge_length)
+                MultiPoseOctreeNode(self.corner_min + offset, child_edge_length)
                 for offset in children_corners_offsets
             ]
             self._has_children = True
 
             # reinsert points so that they are inserted into the child nodes
             self.insert_points(self._points.copy())
-            self._points = self._empty_point_cloud
+            self._points = self._point_cloud_type.empty()
 
             # subdivide children
             for child in self._children:
@@ -194,13 +196,6 @@ class MultiPoseOctreeNode(OctreeNode):
             else len(self._points.filtered_by_pose(pose_number)) != 0
         )
 
-    @property
-    def _empty_point_cloud(self) -> PosePointCloud:
-        """
-        Internal property which returns empty PosePointCloud.
-        """
-        return PosePointCloud(np.empty((0, 4), dtype=float))
-
 
 class MultiPoseOctree(Octree):
     """
@@ -213,7 +208,7 @@ class MultiPoseOctree(Octree):
 
     _node_type = MultiPoseOctreeNode
 
-    def get_leaf_points_for_pose(self, pose_number: int) -> List[StaticStoringVoxel]:
+    def get_leaf_points_for_pose(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: Desired pose number.
         :return: List of leaf voxels with points for this pose.
