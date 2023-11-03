@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, List, Type
+from typing import Callable, Generic, List, Type
 
 import numpy as np
 

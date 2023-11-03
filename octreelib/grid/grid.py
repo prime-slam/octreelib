@@ -1,9 +1,8 @@
-from typing import List, Dict, Callable, Tuple
+from typing import List, Dict, Callable
 
 import numpy as np
 
 from octreelib.grid.grid_base import GridBase, GridConfigBase
-
 from octreelib.internal.point import (
     RawPointCloud,
     RawPoint,
