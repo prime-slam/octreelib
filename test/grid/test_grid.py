@@ -3,11 +3,16 @@ import pytest
 
 from octreelib.internal import RawPointCloud
 from octreelib.grid import Grid, GridConfig
-from octreelib.octree import MultiPoseOctree, MultiPoseOctreeConfig
+from octreelib.octree import (
+    MultiPoseOctree,
+    MultiPoseOctreeConfig,
+    OctreeConfig,
+    Octree,
+)
 
 
-def points_are_same(points_a: RawPointCloud, points_b: RawPointCloud):
-    return set(map(str, points_a.tolist())) == set(map(str, points_b.tolist()))
+def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
+    return set(map(str, points_first.tolist())) == set(map(str, points_second.tolist()))
 
 
 @pytest.fixture()
@@ -147,3 +152,21 @@ def test_get_leaf_points(generated_grid):
     assert set(map(str, leaf_points_pos_1[2].get_points())) == set(
         map(str, pose_points[1][4:])
     )
+
+
+def test_invalid_octree_type():
+    try:
+        grid = Grid(
+            GridConfig(
+                octree_type=Octree,
+                octree_config=OctreeConfig(),
+                grid_voxel_edge_length=5,
+            )
+        )
+    except TypeError as e:
+        assert str(e) == (
+            "Cannot use the provided octree type Octree. "
+            "The compatible octree types are [MultiPoseOctree]."
+        )
+    else:
+        raise AssertionError("This type of octree should have caused an exception")

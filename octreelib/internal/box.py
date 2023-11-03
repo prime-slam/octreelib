@@ -14,8 +14,11 @@ __all__ = ["Box"]
 @dataclass
 class Box:
     """
-    This class represents a box in 3D space.
-    The box is defined by two opposite points:
+    Represents a box (or cuboid) in 3D space as a geometric object.
+    Unlike Voxel, this class is designed for purely geometric purposes
+    e.g. retrieving bounding boxes, determining whether a point is inside some space.
+
+    A box is defined by two opposite points:
     :param corner_min: point with all minimal coordinates
     :param corner_min: point with all  maximal coordinates
     """

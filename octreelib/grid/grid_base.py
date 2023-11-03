@@ -6,7 +6,7 @@ from typing import Any, Callable, Generic, List, Type
 import numpy as np
 
 from octreelib.internal.point import RawPoint, RawPointCloud
-from octreelib.internal.voxel import StoringVoxel
+from octreelib.internal.voxel import DynamicVoxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
@@ -55,11 +55,31 @@ class GridConfigBase(ABC):
     corner: corner of a grid
     """
 
+    _compatible_octree_types = []
+
     octree_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
+
+    @property
+    def compatible_octree_types(self):
+        """
+        :return: Types of Octrees which are compatible with this
+        """
+        return self._compatible_octree_types
+
+    def __post_init__(self):
+        """
+        Check that
+        :raises TypeError: if given octree_type is not compatible with this type of grid.
+        """
+        if self.octree_type not in self.compatible_octree_types:
+            raise TypeError(
+                f"Cannot use the provided octree type {self.octree_type.__name__}. "
+                f"The compatible octree types are [{', '.join(cls.__name__ for cls in self.compatible_octree_types)}]."
+            )
 
 
 class GridBase(ABC, Generic[T]):
@@ -148,7 +168,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_leaf_points(self, pose_number: int) -> List[StoringVoxel]:
+    def get_leaf_points(self, pose_number: int) -> List[DynamicVoxel]:
         """
         :param pose_number: the desired pose number
         :return: List of voxels. Each voxel is a representation of a leaf node.
