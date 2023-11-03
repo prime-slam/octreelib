@@ -16,11 +16,31 @@ __all__ = ["GridVisualizationType", "GridConfigBase", "GridBase"]
 class GridVisualizationType(Enum):
     """
     Represents types of Grid visualization:
-    1. POSE - colors in different colors point clouds belonging to different poses
-    2. VOXEL - colors in same colors voxels belonging to different poses
+    1. POSE - renders in different colors point clouds belonging to different poses
+    2. VOXEL - renders in same colors voxels belonging to different poses
     """
     POSE = "pose"
     VOXEL = "voxel"
+
+
+@dataclass
+class VisualizationConfig:
+    """
+    Represents configuration for Grid visualization
+
+    visualization_type: Represents type of visualization. For more information check VisualizationType definition
+    point_size: Represents size of points in Grid
+    line_width_size: Represents size of voxels lines in Grid
+    line_color: Represents color of voxels lines in Grid
+    visualization_filepath: Path to produced `.html` file
+    visualization_seed: Represents random seed for generating colors
+    """
+    type: GridVisualizationType = GridVisualizationType.VOXEL
+    point_size: float = 0.1
+    line_width_size: float = 0.01
+    line_color: int = 0xFF0000
+    filepath: str = "visualization.html"
+    seed: int = 0
 
 
 @dataclass
@@ -33,9 +53,6 @@ class GridConfigBase(ABC):
     debug: debug mode
     grid_voxel_edge_length: initial size of voxels
     corner: corner of a grid
-    visualization_type: Represents type of visualization. For more information check VisualizationType definition
-    visualization_filepath: Path to produced `.html` file
-    visualization_seed: Represents random seed for generating colors
     """
 
     octree_type: Type[T]
@@ -43,9 +60,7 @@ class GridConfigBase(ABC):
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
-    visualization_type: GridVisualizationType = GridVisualizationType.POSE
-    visualization_filepath: str = ""
-    visualization_seed: int = 0
+
 
 class GridBase(ABC, Generic[T]):
     """
@@ -142,7 +157,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def visualize(self) -> None:
+    def visualize(self, config: VisualizationConfig) -> None:
         """
         Represents method for visualizing Grid. It produces `.html` file using
         [k3d](https://github.com/K3D-tools/K3D-jupyter) library
