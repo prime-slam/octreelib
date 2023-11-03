@@ -46,8 +46,8 @@ class GridConfigBase(ABC):
         """
         if self.octree_type not in self.compatible_octree_types:
             raise TypeError(
-                f"Cannot use the provided octree type {self.octree_type}. "
-                f"The compatible octree types are {', '.join(cls.__name__ for cls in self.compatible_octree_types)}."
+                f"Cannot use the provided octree type {self.octree_type.__name__}. "
+                f"The compatible octree types are [{', '.join(cls.__name__ for cls in self.compatible_octree_types)}]."
             )
 
 

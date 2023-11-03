@@ -163,7 +163,10 @@ def test_invalid_octree_type():
                 grid_voxel_edge_length=5,
             )
         )
-    except TypeError:
-        pass
+    except TypeError as e:
+        assert str(e) == (
+            "Cannot use the provided octree type Octree. "
+            "The compatible octree types are [MultiPoseOctree]."
+        )
     else:
         raise AssertionError("This type of octree should have caused an exception")
