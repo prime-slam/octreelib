@@ -76,6 +76,9 @@ class Point(np.ndarray):
         new_array = np.hstack([self, np.array([pose_number])])
         return PosePoint(new_array)
 
+    def __hash__(self):
+        return hash((float(self[0]), float(self[1]), float(self[2])))
+
 
 class PointCloud(np.ndarray):
     """
@@ -134,6 +137,9 @@ class PointCloud(np.ndarray):
         # purposes in parent np.ndarray.
         return PointCloud(np.vstack((self, other)))
 
+    def __hash__(self):
+        return hash(self.tobytes())
+
 
 class PosePoint(np.ndarray):
     """
@@ -153,6 +159,9 @@ class PosePoint(np.ndarray):
         :return: The same point but without information about pose numbers.
         """
         return Point(self[:3])
+
+    def __hash__(self):
+        return hash((float(self[0]), float(self[1]), float(self[2])))
 
     def pose(self):
         """
@@ -221,3 +230,6 @@ class PosePointCloud(np.ndarray):
         :return: A point cloud, where each point is related to the desired pose number.
         """
         return PosePointCloud(self[self[:, 3] == pose_number])
+
+    def __hash__(self):
+        return hash(self.tobytes())

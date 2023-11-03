@@ -2,11 +2,14 @@ import itertools
 from abc import ABC, abstractmethod
 from typing import Optional
 
+import numpy as np
+
 from octreelib.internal.box import Box
 from octreelib.internal.interfaces import WithID
 from octreelib.internal.point import (
     RawPoint,
     RawPointCloud,
+    Point,
     get_hashable_from_point,
     PointCloud,
 )
@@ -29,19 +32,19 @@ class Voxel(WithID):
         edge_length: float,
         points: Optional[RawPointCloud] = None,
     ):
-        hashable_corner_min = get_hashable_from_point(corner_min)
-        hashable_corner_max = get_hashable_from_point(corner_min + edge_length)
+        self._corner_min = corner_min
+        self._edge_length = edge_length
 
-        if (hashable_corner_min, hashable_corner_max) not in self._static_voxel_id_map:
-            self._static_voxel_id_map[(hashable_corner_min, hashable_corner_max)] = len(
+        voxel_position_hash = hash(PointCloud(np.vstack([corner_min, corner_min + edge_length])))
+
+        if voxel_position_hash not in self._static_voxel_id_map:
+            self._static_voxel_id_map[voxel_position_hash] = len(
                 self._static_voxel_id_map
             )
 
         WithID.__init__(
-            self, self._static_voxel_id_map[(hashable_corner_min, hashable_corner_max)]
+            self, self._static_voxel_id_map[voxel_position_hash]
         )
-        self._corner_min = corner_min
-        self._edge_length = edge_length
 
         self._points: RawPointCloud = (
             points if points is not None else PointCloud.empty()
