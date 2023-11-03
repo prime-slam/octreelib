@@ -64,7 +64,7 @@ class MultiPoseOctreeNode(OctreeNode):
         # else return self._points
         return (
             reduce(
-                lambda points_a, points_b: points_a.extend(points_b),
+                lambda points_first, points_second: points_first.extend(points_second),
                 [child.get_points_for_pose(pose_number) for child in self._children],
             )
             if self._has_children
