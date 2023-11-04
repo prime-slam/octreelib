@@ -133,7 +133,7 @@ class Grid(GridBase):
         """
         plot = k3d.Plot()
         random.seed(config.seed)
-        poses_number = len(self.__octrees.keys())
+        poses_number = len(self.__octrees.keys()) + 1
 
         if config.type is GridVisualizationType.POSE:
             for pose_number in range(poses_number):
