@@ -43,6 +43,16 @@ class VoxelBase(WithID):
 
         WithID.__init__(self, self._static_voxel_id_map[voxel_position_hash])
 
+    def is_point_geometrically_inside(self, point: RawPoint) -> bool:
+        """
+        This method checks if the point is inside the voxel geometrically.
+        :param point: Point to check.
+        :return: True if point is inside the bounding box of a voxel, False if outside.
+        """
+        return bool((self.corner_min <= point).all()) and bool(
+            (point <= self.corner_max).all()
+        )
+
     @property
     def corner_min(self):
         return self._corner_min
@@ -50,6 +60,10 @@ class VoxelBase(WithID):
     @property
     def edge_length(self):
         return self._edge_length
+
+    @property
+    def corner_max(self):
+        return self.corner_min + self.edge_length
 
     @property
     def bounding_box(self):
@@ -69,7 +83,7 @@ class VoxelBase(WithID):
         ]
 
 
-class Voxel(VoxelBase, ABC):
+class Voxel(VoxelBase):
     """
     Voxel with a mutable point cloud.
     :param corner_min: corner point with all minimal coordinates
@@ -82,9 +96,9 @@ class Voxel(VoxelBase, ABC):
         edge_length: float,
         points: Optional[RawPointCloud] = None,
     ):
-        super().__init__(self, corner_min, edge_length)
+        super().__init__(corner_min, edge_length)
 
-        self._points: RawPointCloud = (
+        self._points: PointCloud = (
             points if points is not None else PointCloud.empty()
         )
 
@@ -94,9 +108,8 @@ class Voxel(VoxelBase, ABC):
         """
         return self._points.copy()
 
-    @abstractmethod
     def insert_points(self, points: RawPointCloud):
         """
         :param points: Points to insert
         """
-        pass
+        self._points = self._points.extend(points)
