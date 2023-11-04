@@ -161,10 +161,10 @@ class Grid(GridBase):
 
         vertices = []
         for pose_number in range(poses_number):
-            # TODO: Draw full grid, either empty voxels
+            # TODO: Draw full grid including empty voxels
             leaves = self.get_leaf_points(pose_number=pose_number)
             for leaf in leaves:
-                vertices.append(leaf.corners)
+                vertices.append(leaf.all_corners)
 
         for vertex in vertices:
             plot += k3d.lines(
