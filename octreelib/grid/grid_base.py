@@ -146,6 +146,23 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
+    def get_leaf_points(self, pose_number: int) -> List[Voxel]:
+        """
+        :param pose_number: the desired pose number
+        :return: List of voxels. Each voxel is a representation of a leaf node.
+        Each voxel has the same corner, edge_length and points as one of the leaf nodes.
+        """
+        pass
+
+    @abstractmethod
+    def visualize(self, config: VisualizationConfig) -> None:
+        """
+        Represents method for visualizing Grid. It produces `.html` file using
+        [k3d](https://github.com/K3D-tools/K3D-jupyter) library
+        """
+        pass
+
+    @abstractmethod
     def n_nodes(self, pose_number: int):
         """
         :param pose_number: desired pose number.
@@ -166,22 +183,5 @@ class GridBase(ABC, Generic[T]):
         """
         :param pose_number: the desired pose number.
         :return: number of leaf nodes in the octree for given pose number
-        """
-        pass
-
-    @abstractmethod
-    def get_leaf_points(self, pose_number: int) -> List[Voxel]:
-        """
-        :param pose_number: the desired pose number
-        :return: List of voxels. Each voxel is a representation of a leaf node.
-        Each voxel has the same corner, edge_length and points as one of the leaf nodes.
-        """
-        pass
-
-    @abstractmethod
-    def visualize(self, config: VisualizationConfig) -> None:
-        """
-        Represents method for visualizing Grid. It produces `.html` file using
-        [k3d](https://github.com/K3D-tools/K3D-jupyter) library
         """
         pass

@@ -127,53 +127,6 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].filter(filtering_criteria)
 
-    def n_leaves(self, pose_number: int) -> int:
-        """
-        :param pose_number: Pose number.
-        :return: Number of leaves in all octrees, which store points for given pose.
-        """
-        return sum(
-            [
-                octree.n_leaves_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
-        )
-
-    def n_points(self, pose_number: int) -> int:
-        """
-        :param pose_number: Pose number.
-        :return: Number of points for given pose.
-        """
-        return sum(
-            [
-                octree.n_points_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
-        )
-
-    def n_nodes(self, pose_number: int) -> int:
-        """
-        :param pose_number: Pose number.
-        :return: Number of nodes in all octrees, which store points for given pose
-        (either themselves, or through their child nodes).
-        """
-        return sum(
-            [
-                octree.n_nodes_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
-        )
-
-    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
-        """
-        Method to get coordinates of a voxel where the given point would be stored.
-        :param point: Point.
-        :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
-        """
-        point = point[:3]
-        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
-        return point // grid_voxel_edge_length * grid_voxel_edge_length
-
     def visualize(self, config: VisualizationConfig) -> None:
         """
         Produces `.html` file with Grid
@@ -233,3 +186,50 @@ class Grid(GridBase):
 
         with open(config.filepath, "w") as f:
             f.write(plot.get_snapshot())
+
+    def n_leaves(self, pose_number: int) -> int:
+        """
+        :param pose_number: Pose number.
+        :return: Number of leaves in all octrees, which store points for given pose.
+        """
+        return sum(
+            [
+                octree.n_leaves_by_pose_number(pose_number)
+                for octree in self.__octrees.values()
+            ]
+        )
+
+    def n_points(self, pose_number: int) -> int:
+        """
+        :param pose_number: Pose number.
+        :return: Number of points for given pose.
+        """
+        return sum(
+            [
+                octree.n_points_by_pose_number(pose_number)
+                for octree in self.__octrees.values()
+            ]
+        )
+
+    def n_nodes(self, pose_number: int) -> int:
+        """
+        :param pose_number: Pose number.
+        :return: Number of nodes in all octrees, which store points for given pose
+        (either themselves, or through their child nodes).
+        """
+        return sum(
+            [
+                octree.n_nodes_by_pose_number(pose_number)
+                for octree in self.__octrees.values()
+            ]
+        )
+
+    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
+        """
+        Method to get coordinates of a voxel where the given point would be stored.
+        :param point: Point.
+        :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
+        """
+        point = point[:3]
+        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
+        return point // grid_voxel_edge_length * grid_voxel_edge_length
