@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal import Voxel
-from octreelib.internal.typing import PointCloud, Point
+from octreelib.internal.point import RawPoint, RawPointCloud, PointCloud
+from octreelib.internal.voxel import Voxel
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -13,7 +15,7 @@ __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 @dataclass
 class OctreeConfigBase(ABC):
     """
-    Config for OcTree
+    Config for Octree
 
     debug: debug mode is enabled
     """
@@ -33,15 +35,13 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    points: Optional[PointCloud]
-    children: Optional[List["OctreeNodeBase"]]
-    has_children: bool
+    _point_cloud_type = PointCloud
 
-    def __init__(self, corner: Point, edge_length: np.float_):
-        super().__init__(corner, edge_length)
-        self.points = []
-        self.children = []
-        self.has_children = False
+    def __init__(self, corner_min: RawPoint, edge_length: np.float_):
+        super().__init__(corner_min, edge_length)
+        self._points: OctreeNodeBase._point_cloud_type = self._point_cloud_type.empty()
+        self._children: Optional[List["OctreeNodeBase"]] = []
+        self._has_children: bool = False
 
     @property
     @abstractmethod
@@ -51,19 +51,11 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
-    @abstractmethod
-    def _point_is_inside(self, point: Point) -> bool:
-        """
-        :param point: point
-        :return: the given point is inside the node
-        """
-        pass
-
     @property
     @abstractmethod
-    def n_leafs(self):
+    def n_leaves(self):
         """
-        :return: number of leafs a.k.a. number of nodes which have points
+        :return: number of leaves a.k.a. number of nodes which have points
         """
         pass
 
@@ -71,24 +63,56 @@ class OctreeNodeBase(Voxel, ABC):
     @abstractmethod
     def n_points(self):
         """
-        :return: number of points in the octree
+        :return: number of points in the octree node
         """
         return
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
-        filter nodes with points by filtering criteria
-        :param filtering_criteria: list of filtering criteria functions
+        Filter nodes with points by filtering criteria
+        :param filtering_criteria: List of filtering criteria functions
+        """
+        pass
+
+    @abstractmethod
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function RawPointCloud -> RawPointCloud
+        """
+        pass
+
+    @abstractmethod
+    def get_leaf_points(self) -> List[Voxel]:
+        """
+        :return: List of voxels where each voxel represents a leaf node with points.
+        """
+        pass
+
+    @abstractmethod
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+        """
+        Subdivide node based on the subdivision criteria.
+        :param subdivision_criteria: list of criteria for subdivision
+        """
+        pass
+
+    @abstractmethod
+    def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the node.
         """
         pass
 
 
 class OctreeBase(Voxel, ABC):
     """
-    Octree stores points of a **single** pos.
+    Stores points in the form of an octree.
 
-    root: root node of an octree
+    :param octree_config: Configuration for the octree.
+    :param corner_min: Min corner of the octree.
+    :param edge_length: Edge length of the octree.
     """
 
     _node_type = OctreeNodeBase
@@ -96,12 +120,12 @@ class OctreeBase(Voxel, ABC):
     def __init__(
         self,
         octree_config: OctreeConfigBase,
-        corner: Point,
+        corner_min: RawPoint,
         edge_length: np.float_,
     ):
-        super().__init__(corner, edge_length)
-        self.config = octree_config
-        self.root = self._node_type(self.corner, self.edge_length)
+        super().__init__(corner_min, edge_length)
+        self._config = octree_config
+        self._root = self._node_type(self.corner_min, self.edge_length)
 
     @property
     @abstractmethod
@@ -113,9 +137,9 @@ class OctreeBase(Voxel, ABC):
 
     @property
     @abstractmethod
-    def n_leafs(self):
+    def n_leaves(self):
         """
-        :return: number of leafs a.k.a. number of nodes which have points
+        :return: number of leaves a.k.a. number of nodes which have points
         """
         pass
 
@@ -128,9 +152,40 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         filter nodes with points by criterion
         :param filtering_criteria:
+        """
+        pass
+
+    @abstractmethod
+    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+        """
+        transform point cloud in each node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        """
+        pass
+
+    @abstractmethod
+    def get_leaf_points(self) -> List[Voxel]:
+        """
+        :return: List of PointClouds where each PointCloud
+        represents points in a separate leaf node
+        """
+        pass
+
+    @abstractmethod
+    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+        """
+        Subdivide node based on the subdivision criteria.
+        :param subdivision_criteria: list of criteria for subdivision
+        """
+        pass
+
+    @abstractmethod
+    def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the octree.
         """
         pass
