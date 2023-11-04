@@ -12,10 +12,10 @@ from octreelib.internal.point import (
     PointCloud,
 )
 
-__all__ = ["DynamicVoxel", "Voxel"]
+__all__ = ["Voxel", "VoxelBase"]
 
 
-class Voxel(WithID):
+class VoxelBase(WithID):
     """
     Represents a Voxel with ID
     :param corner_min: corner point with all minimal coordinates
@@ -28,31 +28,20 @@ class Voxel(WithID):
         self,
         corner_min: RawPoint,
         edge_length: float,
-        points: Optional[RawPointCloud] = None,
     ):
         self._corner_min = corner_min
         self._edge_length = edge_length
 
-        voxel_position_hash = hash(PointCloud(np.vstack([corner_min, corner_min + edge_length])))
+        voxel_position_hash = hash(
+            PointCloud(np.vstack([corner_min, corner_min + edge_length]))
+        )
 
         if voxel_position_hash not in self._static_voxel_id_map:
             self._static_voxel_id_map[voxel_position_hash] = len(
                 self._static_voxel_id_map
             )
 
-        WithID.__init__(
-            self, self._static_voxel_id_map[voxel_position_hash]
-        )
-
-        self._points: RawPointCloud = (
-            points if points is not None else PointCloud.empty()
-        )
-
-    def get_points(self) -> RawPointCloud:
-        """
-        :return: Points, which are stored inside the voxel.
-        """
-        return self._points.copy()
+        WithID.__init__(self, self._static_voxel_id_map[voxel_position_hash])
 
     @property
     def corner_min(self):
@@ -80,15 +69,30 @@ class Voxel(WithID):
         ]
 
 
-class DynamicVoxel(Voxel, ABC):
+class Voxel(VoxelBase, ABC):
     """
     Voxel with a mutable point cloud.
     :param corner_min: corner point with all minimal coordinates
     :param edge_length: edge_length of the voxel
     """
 
-    def __init__(self, corner_min: RawPoint, edge_length: float):
-        Voxel.__init__(self, corner_min, edge_length)
+    def __init__(
+        self,
+        corner_min: RawPoint,
+        edge_length: float,
+        points: Optional[RawPointCloud] = None,
+    ):
+        super().__init__(self, corner_min, edge_length)
+
+        self._points: RawPointCloud = (
+            points if points is not None else PointCloud.empty()
+        )
+
+    def get_points(self) -> RawPointCloud:
+        """
+        :return: Points, which are stored inside the voxel.
+        """
+        return self._points.copy()
 
     @abstractmethod
     def insert_points(self, points: RawPointCloud):

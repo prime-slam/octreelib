@@ -62,9 +62,7 @@ class Grid(GridBase):
 
             # create octree in the voxel if it does not exist yet
             if voxel_coordinates_hash not in self.__octrees:
-                self.__octrees[
-                    voxel_coordinates_hash
-                ] = self._grid_config.octree_type(
+                self.__octrees[voxel_coordinates_hash] = self._grid_config.octree_type(
                     self._grid_config.octree_config,
                     voxel_coordinates,
                     self._grid_config.grid_voxel_edge_length,

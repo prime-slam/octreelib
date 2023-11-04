@@ -8,7 +8,7 @@ import numpy as np
 
 from octreelib.internal.box import Box
 from octreelib.internal.point import RawPoint, RawPointCloud, PointCloud
-from octreelib.internal.voxel import DynamicVoxel
+from octreelib.internal.voxel import Voxel
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
 
@@ -24,7 +24,7 @@ class OctreeConfigBase(ABC):
     debug: bool = True
 
 
-class OctreeNodeBase(DynamicVoxel, ABC):
+class OctreeNodeBase(Voxel, ABC):
     """
     points: stores points of a node
 
@@ -93,7 +93,7 @@ class OctreeNodeBase(DynamicVoxel, ABC):
         """
 
     @abstractmethod
-    def get_leaf_points(self) -> List[DynamicVoxel]:
+    def get_leaf_points(self) -> List[Voxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """
@@ -115,7 +115,7 @@ class OctreeNodeBase(DynamicVoxel, ABC):
         pass
 
 
-class OctreeBase(DynamicVoxel, ABC):
+class OctreeBase(Voxel, ABC):
     """
     Stores points in the form of an octree.
 
@@ -186,7 +186,7 @@ class OctreeBase(DynamicVoxel, ABC):
         pass
 
     @abstractmethod
-    def get_leaf_points(self) -> List[DynamicVoxel]:
+    def get_leaf_points(self) -> List[Voxel]:
         """
         :return: List of PointClouds where each PointCloud
         represents points in a separate leaf node

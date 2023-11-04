@@ -6,7 +6,7 @@ from typing import Callable, List, Generic
 import numpy as np
 
 from octreelib.internal import Box
-from octreelib.internal import RawPointCloud, T, DynamicVoxel, PointCloud
+from octreelib.internal import RawPointCloud, T, Voxel, PointCloud
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -107,7 +107,7 @@ class OctreeNode(OctreeNodeBase):
         elif self._points:
             self._points = function(self._points.copy())
 
-    def get_leaf_points(self) -> List[DynamicVoxel]:
+    def get_leaf_points(self) -> List[Voxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """
@@ -201,7 +201,7 @@ class Octree(OctreeBase, Generic[T]):
         """
         self._root.map_leaf_points(function)
 
-    def get_leaf_points(self) -> List[DynamicVoxel]:
+    def get_leaf_points(self) -> List[Voxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """
