@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Generic, List, Type
+from typing import Callable, Generic, List, Type
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from octreelib.internal.voxel import Voxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
-__all__ = ["GridVisualizationType", "GridConfigBase", "GridBase"]
+__all__ = ["GridVisualizationType", "VisualizationConfig", "GridConfigBase", "GridBase"]
 
 
 class GridVisualizationType(Enum):
@@ -19,6 +19,7 @@ class GridVisualizationType(Enum):
     1. POSE - renders in different colors point clouds belonging to different poses
     2. VOXEL - renders in same colors voxels belonging to different poses
     """
+
     POSE = "pose"
     VOXEL = "voxel"
 
@@ -35,6 +36,7 @@ class VisualizationConfig:
     visualization_filepath: Path to produced `.html` file
     visualization_seed: Represents random seed for generating colors
     """
+
     type: GridVisualizationType = GridVisualizationType.VOXEL
     point_size: float = 0.1
     line_width_size: float = 0.01

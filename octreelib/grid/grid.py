@@ -1,11 +1,15 @@
 import random
-from typing import List, Dict, Callable, Tuple
+from typing import List, Dict, Callable
 
 import k3d
 import numpy as np
 
-from octreelib.grid.grid_base import GridBase, GridConfigBase, GridVisualizationType, VisualizationConfig
-
+from octreelib.grid.grid_base import (
+    GridBase,
+    GridConfigBase,
+    GridVisualizationType,
+    VisualizationConfig,
+)
 from octreelib.internal.point import (
     RawPointCloud,
     RawPoint,
