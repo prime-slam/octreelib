@@ -5,7 +5,6 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
-from octreelib.internal import Box
 from octreelib.internal import RawPointCloud, T, Voxel, PointCloud
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
@@ -19,22 +18,6 @@ class OctreeConfig(OctreeConfigBase):
 
 class OctreeNode(OctreeNodeBase):
     _point_cloud_type = PointCloud
-
-    def get_points_inside_box(self, box: Box) -> RawPointCloud:
-        """
-        Returns points that occupy the given box
-        :param box: tuple of two points representing min and max points of the box
-        :return: points which are inside the box.
-        """
-        if self._has_children:
-            return sum(
-                [child.get_points_inside_box(box) for child in self._children], []
-            )
-        points_inside = self._point_cloud_type.empty()
-        for point in self._points:
-            if box.is_point_inside(point):
-                points_inside = np.vstack((points_inside, point))
-        return points_inside
 
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         """
@@ -77,7 +60,7 @@ class OctreeNode(OctreeNodeBase):
         if self._has_children:
             for point in points:
                 for child in self._children:
-                    if child.bounding_box.is_point_inside(point):
+                    if child.is_point_geometrically_inside(point):
                         child.insert_points(point)
         else:
             self._points = self._points.extend(points)
@@ -159,14 +142,6 @@ class Octree(OctreeBase, Generic[T]):
     """
 
     _node_type = OctreeNode
-
-    def get_points_in_box(self, box: Box) -> RawPointCloud:
-        """
-        Returns points that occupy the given box
-        :param box: tuple of two points representing min and max points of the box
-        :return: PointCloud
-        """
-        return self._root.get_points_inside_box(box)
 
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         """

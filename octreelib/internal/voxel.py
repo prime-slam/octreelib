@@ -4,7 +4,6 @@ from typing import Optional
 
 import numpy as np
 
-from octreelib.internal.box import Box
 from octreelib.internal.interfaces import WithID
 from octreelib.internal.point import (
     RawPoint,
@@ -64,13 +63,6 @@ class VoxelBase(WithID):
     @property
     def corner_max(self):
         return self.corner_min + self.edge_length
-
-    @property
-    def bounding_box(self):
-        """
-        :return: bounding box
-        """
-        return Box(self._corner_min, self._corner_min + self._edge_length)
 
     @property
     def all_corners(self):
