@@ -6,7 +6,6 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal.box import Box
 from octreelib.internal.point import RawPoint, RawPointCloud, PointCloud
 from octreelib.internal.voxel import Voxel
 
@@ -83,14 +82,6 @@ class OctreeNodeBase(Voxel, ABC):
         :param function: transformation function RawPointCloud -> RawPointCloud
         """
         pass
-
-    @abstractmethod
-    def get_points_inside_box(self, box: Box) -> RawPointCloud:
-        """
-        Returns points that occupy the given box
-        :param box: tuple of two points representing min and max points of the box
-        :return: points which are inside the box.
-        """
 
     @abstractmethod
     def get_leaf_points(self) -> List[Voxel]:
@@ -173,15 +164,6 @@ class OctreeBase(Voxel, ABC):
         """
         transform point cloud in each node using the function
         :param function: transformation function PointCloud -> PointCloud
-        """
-        pass
-
-    @abstractmethod
-    def get_points_in_box(self, box: Box) -> RawPointCloud:
-        """
-        Returns points that occupy the given box
-        :param box: tuple of two points representing min and max points of the box
-        :return: PointCloud
         """
         pass
 
