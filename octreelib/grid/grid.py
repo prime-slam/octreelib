@@ -1,8 +1,11 @@
-from typing import List, Dict, Callable
+import random
+from typing import List, Dict, Callable, Tuple
 
+import k3d
 import numpy as np
 
-from octreelib.grid.grid_base import GridBase, GridConfigBase
+from octreelib.grid.grid_base import GridBase, GridConfigBase, GridVisualizationType, VisualizationConfig
+
 from octreelib.internal.point import (
     RawPointCloud,
     RawPoint,
@@ -159,12 +162,62 @@ class Grid(GridBase):
             ]
         )
 
-    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
+    def visualize(self, config: VisualizationConfig) -> None:
         """
-        Method to get coordinates of a voxel where the given point would be stored.
-        :param point: Point.
-        :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
+        Produces `.html` file with Grid
         """
-        point = point[:3]
-        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
-        return point // grid_voxel_edge_length * grid_voxel_edge_length
+        plot = k3d.Plot()
+        random.seed(config.seed)
+        poses_number = len(self.__octrees.keys())
+
+        if config.type is GridVisualizationType.POSE:
+            for pose_number in range(poses_number):
+                color = random.randrange(0, 0xFFFFFF)
+                points = self.get_points(pose_number=pose_number)
+
+                plot += k3d.points(
+                    positions=points,
+                    point_size=config.point_size,
+                    color=color,
+                )
+        elif config.type is GridVisualizationType.VOXEL:
+            voxels_id = set()
+            for pose_number in range(poses_number):
+                leaves = self.get_leaf_points(pose_number=pose_number)
+                for leaf in leaves:
+                    color = random.randrange(0, 0xFFFFFF)
+                    if leaf.id not in voxels_id:
+                        plot += k3d.points(
+                            positions=leaf.get_points(),
+                            point_size=config.point_size,
+                            color=color,
+                        )
+                        voxels_id.add(leaf.id)
+
+        vertices = []
+        for pose_number in range(poses_number):
+            # TODO: Draw full grid, either empty voxels
+            leaves = self.get_leaf_points(pose_number=pose_number)
+            for leaf in leaves:
+                vertices.append(leaf.corners)
+
+        for vertex in vertices:
+            plot += k3d.lines(
+                vertices=vertex,
+                # Represents tracing of voxel corners
+                # Each line - separate face of the voxel
+                indices=[
+                    [0, 2, 2, 6, 6, 4, 4, 0],  # Yeah, that's weird
+                    [0, 1, 1, 5, 5, 4, 4, 0],  # but I didn't invent other way
+                    [0, 1, 1, 3, 3, 2, 2, 0],  # to draw voxels edges
+                    [1, 3, 3, 7, 7, 5, 5, 1],
+                    [2, 3, 3, 7, 7, 6, 6, 2],
+                    [4, 5, 5, 7, 7, 6, 6, 4],
+                ],
+                width=config.line_width_size,
+                color=config.line_color,
+                indices_type="segment",
+            )
+
+        with open(config.filepath, "w") as f:
+            f.write(plot.get_snapshot())
