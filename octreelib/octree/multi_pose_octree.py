@@ -134,8 +134,8 @@ class MultiPoseOctreeNode(OctreeNode):
         """
         if self._has_children:
             for child in self._children:
-                if child.is_point_geometrically_inside(point.without_pose()):
-                    child.insert_points(point)
+                if child.is_point_geometrically_inside(point):
+                    child._insert_point(point)
         else:
             self._points = self._points.extend(point)
 
