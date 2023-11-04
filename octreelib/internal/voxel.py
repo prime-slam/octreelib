@@ -90,9 +90,7 @@ class Voxel(VoxelBase):
     ):
         super().__init__(corner_min, edge_length)
 
-        self._points: PointCloud = (
-            points if points is not None else PointCloud.empty()
-        )
+        self._points: PointCloud = points if points is not None else PointCloud.empty()
 
     def get_points(self) -> RawPointCloud:
         """
