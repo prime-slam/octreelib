@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Generic, List, Type
+from enum import Enum
+from typing import Any, Callable, Generic, List, Type
 
 import numpy as np
 
@@ -9,7 +10,37 @@ from octreelib.internal.voxel import DynamicVoxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
 
-__all__ = ["GridConfigBase", "GridBase"]
+__all__ = ["GridVisualizationType", "GridConfigBase", "GridBase"]
+
+
+class GridVisualizationType(Enum):
+    """
+    Represents types of Grid visualization:
+    1. POSE - renders in different colors point clouds belonging to different poses
+    2. VOXEL - renders in same colors voxels belonging to different poses
+    """
+    POSE = "pose"
+    VOXEL = "voxel"
+
+
+@dataclass
+class VisualizationConfig:
+    """
+    Represents configuration for Grid visualization
+
+    visualization_type: Represents type of visualization. For more information check VisualizationType definition
+    point_size: Represents size of points in Grid
+    line_width_size: Represents size of voxels lines in Grid
+    line_color: Represents color of voxels lines in Grid
+    visualization_filepath: Path to produced `.html` file
+    visualization_seed: Represents random seed for generating colors
+    """
+    type: GridVisualizationType = GridVisualizationType.VOXEL
+    point_size: float = 0.1
+    line_width_size: float = 0.01
+    line_color: int = 0xFF0000
+    filepath: str = "visualization.html"
+    seed: int = 0
 
 
 @dataclass
@@ -142,5 +173,13 @@ class GridBase(ABC, Generic[T]):
         :param pose_number: the desired pose number
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
+        """
+        pass
+
+    @abstractmethod
+    def visualize(self, config: VisualizationConfig) -> None:
+        """
+        Represents method for visualizing Grid. It produces `.html` file using
+        [k3d](https://github.com/K3D-tools/K3D-jupyter) library
         """
         pass
