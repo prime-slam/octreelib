@@ -48,9 +48,7 @@ class VoxelBase(WithID):
         :param point: Point to check.
         :return: True if point is inside the bounding box of a voxel, False if outside.
         """
-        return bool((self.corner_min <= point).all()) and bool(
-            (point <= self.corner_max).all()
-        )
+        return bool((point >= self.corner_min).all()) and bool((point <= self.corner_max).all())
 
     @property
     def corner_min(self):
