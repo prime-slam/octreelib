@@ -1,5 +1,4 @@
 import itertools
-from abc import ABC, abstractmethod
 from typing import Optional
 
 import numpy as np
@@ -48,7 +47,9 @@ class VoxelBase(WithID):
         :param point: Point to check.
         :return: True if point is inside the bounding box of a voxel, False if outside.
         """
-        return bool((point >= self.corner_min).all()) and bool((point <= self.corner_max).all())
+        return bool((point >= self.corner_min).all()) and bool(
+            (point <= self.corner_max).all()
+        )
 
     @property
     def corner_min(self):
@@ -88,9 +89,7 @@ class Voxel(VoxelBase):
     ):
         super().__init__(corner_min, edge_length)
 
-        self._points: PointCloud = (
-            points if points is not None else PointCloud.empty()
-        )
+        self._points: PointCloud = points if points is not None else PointCloud.empty()
 
     def get_points(self) -> RawPointCloud:
         """
