@@ -38,7 +38,7 @@ jobs:
     - name: Lint with black
       uses: psf/black@stable
       with:
-        options: "--check --verbose"
+        options: "--check --verbose --diff"
 
     - name: Test with pytest
       run: |
