@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Generic, List, Type
 
@@ -63,7 +63,7 @@ class GridConfigBase(ABC):
     octree_config: OctreeConfigBase
     debug: bool = False
     grid_voxel_edge_length: int = 1
-    corner: RawPoint = np.array(([0.0, 0.0, 0.0]))
+    corner: RawPoint = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
 
     @property
     def compatible_octree_types(self):
