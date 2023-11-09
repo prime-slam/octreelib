@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Optional
 
 import k3d
 import numpy as np
@@ -10,19 +10,15 @@ from octreelib.grid.grid_base import (
     GridVisualizationType,
     VisualizationConfig,
 )
-from octreelib.internal.point import (
-    RawPointCloud,
-    RawPoint,
-    PointCloud,
-)
+from octreelib.internal.point import RawPointCloud, RawPoint
 from octreelib.internal.voxel import Voxel
-from octreelib.octree.multi_pose_octree import MultiPoseOctree
+from octreelib.octree_manager import MultiPoseManager
 
 __all__ = ["Grid", "GridConfig"]
 
 
 class GridConfig(GridConfigBase):
-    _compatible_octree_types = [MultiPoseOctree]
+    _compatible_octree_types = [MultiPoseManager]
 
 
 class Grid(GridBase):
@@ -56,13 +52,12 @@ class Grid(GridBase):
         # register pose
         self.__pose_voxel_coordinates[pose_number] = []
 
-        # convert points to PointsWithPose, which is a subclass of np.ndarray
-        points = PointCloud(points)
-
         for point in points:
             # get coords of voxel into which the point is inserted
             voxel_coordinates = self.__get_voxel_for_point(point)
-            voxel_coordinates_hash = hash(voxel_coordinates)
+            voxel_coordinates_hash = hash(
+                (voxel_coordinates[0], voxel_coordinates[1], voxel_coordinates[2])
+            )
 
             # create octree in the voxel if it does not exist yet
             if voxel_coordinates_hash not in self.__octrees:
@@ -73,7 +68,7 @@ class Grid(GridBase):
                 )
 
             self.__octrees[voxel_coordinates_hash].insert_points(
-                [point.with_pose(pose_number)]
+                point.reshape((1, 3)), pose_number
             )
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
@@ -91,10 +86,7 @@ class Grid(GridBase):
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
         return sum(
-            [
-                octree.get_leaf_points_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ],
+            [octree.get_leaf_points(pose_number) for octree in self.__octrees.values()],
             [],
         )
 
@@ -104,20 +96,23 @@ class Grid(GridBase):
         :return: All points inside the grid.
         """
         return np.vstack(
-            [
-                octree.get_points_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
+            [octree.get_points(pose_number) for octree in self.__octrees.values()]
         )
 
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(
+        self,
+        subdivision_criteria: List[Callable[[RawPointCloud], bool]],
+        pose_numbers: Optional[List[int]] = None,
+    ):
         """
         Subdivides all octrees based on all points and given subdivision criteria.
         :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
         If any of the criteria returns **true**, the octree node is subdivided.
         """
         for voxel_coordinates in self.__octrees:
-            self.__octrees[voxel_coordinates].subdivide(subdivision_criteria)
+            self.__octrees[voxel_coordinates].subdivide(
+                subdivision_criteria, pose_numbers
+            )
 
     def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
@@ -127,7 +122,7 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].filter(filtering_criteria)
 
-    def visualize(self, config: VisualizationConfig) -> None:
+    def visualize(self, config: VisualizationConfig = VisualizationConfig()) -> None:
         """
         Produces `.html` file with Grid
         """
@@ -193,24 +188,14 @@ class Grid(GridBase):
         :param pose_number: Pose number.
         :return: Number of leaves in all octrees, which store points for given pose.
         """
-        return sum(
-            [
-                octree.n_leaves_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
-        )
+        return sum([octree.n_leaves(pose_number) for octree in self.__octrees.values()])
 
     def n_points(self, pose_number: int) -> int:
         """
         :param pose_number: Pose number.
         :return: Number of points for given pose.
         """
-        return sum(
-            [
-                octree.n_points_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
-        )
+        return sum([octree.n_points(pose_number) for octree in self.__octrees.values()])
 
     def n_nodes(self, pose_number: int) -> int:
         """
@@ -218,12 +203,7 @@ class Grid(GridBase):
         :return: Number of nodes in all octrees, which store points for given pose
         (either themselves, or through their child nodes).
         """
-        return sum(
-            [
-                octree.n_nodes_by_pose_number(pose_number)
-                for octree in self.__octrees.values()
-            ]
-        )
+        return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
 
     def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
         """

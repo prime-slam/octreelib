@@ -37,8 +37,9 @@ class OctreeNodeBase(Voxel, ABC):
 
     _point_cloud_type = PointCloud
 
-    def __init__(self, corner_min: RawPoint, edge_length: np.float_):
+    def __init__(self, corner_min: RawPoint, edge_length: float, position: int):
         super().__init__(corner_min, edge_length)
+        self._position = position
         self._points: OctreeNodeBase._point_cloud_type = self._point_cloud_type.empty()
         self._children: Optional[List["OctreeNodeBase"]] = []
         self._has_children: bool = False
@@ -121,11 +122,11 @@ class OctreeBase(Voxel, ABC):
         self,
         octree_config: OctreeConfigBase,
         corner_min: RawPoint,
-        edge_length: np.float_,
+        edge_length: float,
     ):
         super().__init__(corner_min, edge_length)
         self._config = octree_config
-        self._root = self._node_type(self.corner_min, self.edge_length)
+        self._root = self._node_type(self.corner_min, self.edge_length, 0o0)
 
     @property
     @abstractmethod
@@ -188,4 +189,8 @@ class OctreeBase(Voxel, ABC):
         """
         :return: Points, which are stored inside the octree.
         """
+        pass
+
+    @abstractmethod
+    def insert_points(self, points: RawPointCloud):
         pass

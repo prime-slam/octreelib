@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import itertools
 
 from dataclasses import dataclass
@@ -19,25 +21,48 @@ class OctreeConfig(OctreeConfigBase):
 class OctreeNode(OctreeNodeBase):
     _point_cloud_type = PointCloud
 
+    def __generate_children(self):
+        child_edge_length = self.edge_length / np.float_(2)
+        children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
+        return [
+            OctreeNode(
+                self.corner_min + offset,
+                child_edge_length,
+                8 * self._position + internal_position,
+            )
+            for internal_position, offset in enumerate(children_corners_offsets)
+        ]
+
+    def __unify(self):
+        self._points = self.get_points()
+        self._has_children = False
+        self._children = []
+
     def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
         """
         if any([criterion(self._points) for criterion in subdivision_criteria]):
-            child_edge_length = self.edge_length / np.float_(2)
-            children_corners_offsets = itertools.product(
-                [0, child_edge_length], repeat=3
-            )
-            self._children = [
-                OctreeNode(self.corner_min + offset, child_edge_length)
-                for offset in children_corners_offsets
-            ]
+            self._children = self.__generate_children()
             self._has_children = True
             self.insert_points(self._points.copy())
             self._points = self._point_cloud_type.empty()
             for child in self._children:
                 child.subdivide(subdivision_criteria)
+
+    def subdivide_as(self, other: OctreeNode):
+        if other._has_children and not self._has_children:
+            self._children = self.__generate_children()
+            self._has_children = True
+            self.insert_points(self._points.copy())
+            self._points = self._point_cloud_type.empty()
+
+        if other._has_children:
+            for self_child, other_child in zip(self._children, other._children):
+                self_child.subdivide_as(other_child)
+        elif self._has_children:
+            self.__unify()
 
     def get_points(self) -> RawPointCloud:
         """
@@ -61,7 +86,7 @@ class OctreeNode(OctreeNodeBase):
             for point in points:
                 for child in self._children:
                     if child.is_point_geometrically_inside(point):
-                        child.insert_points(point)
+                        child.insert_points(point.reshape((1, 3)))
         else:
             self._points = self._points.extend(points)
 
@@ -87,7 +112,7 @@ class OctreeNode(OctreeNodeBase):
         if self._has_children:
             for child in self._children:
                 child.map_leaf_points(function)
-        elif self._points:
+        elif len(self._points):
             self._points = function(self._points.copy())
 
     def get_leaf_points(self) -> List[Voxel]:
@@ -96,7 +121,11 @@ class OctreeNode(OctreeNodeBase):
         """
         if self._has_children:
             return sum([child.get_leaf_points() for child in self._children], [])
-        return [self] if len(self._points) else []
+        return (
+            [Voxel(self.corner_min, self.edge_length, self._points)]
+            if len(self._points)
+            else []
+        )
 
     @property
     def n_leaves(self):
@@ -107,6 +136,8 @@ class OctreeNode(OctreeNodeBase):
             sum([child.n_leaves for child in self._children])
             if self._has_children
             else 1
+            if len(self._points) != 0
+            else 0
         )
 
     @property
@@ -115,7 +146,7 @@ class OctreeNode(OctreeNodeBase):
         :return: number of nodes
         """
         return (
-            len(self._children) + sum([child.n_nodes for child in self._children])
+            sum([child.n_nodes for child in self._children]) + 1
             if self._has_children
             else 1
         )
@@ -149,6 +180,9 @@ class Octree(OctreeBase, Generic[T]):
         :param subdivision_criteria: list of criteria for subdivision
         """
         self._root.subdivide(subdivision_criteria)
+
+    def subdivide_as(self, other: Octree):
+        self._root.subdivide_as(other._root)
 
     def get_points(self) -> RawPointCloud:
         """
