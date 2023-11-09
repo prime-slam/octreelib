@@ -7,7 +7,7 @@ from octreelib.internal.interfaces import WithID
 from octreelib.internal.point import (
     RawPoint,
     RawPointCloud,
-    PointCloud,
+    hash_point,
 )
 
 __all__ = ["Voxel", "VoxelBase"]
@@ -31,7 +31,7 @@ class VoxelBase(WithID):
         self._edge_length = edge_length
 
         voxel_position_hash = hash(
-            PointCloud(np.vstack([corner_min, corner_min + edge_length]))
+            (hash_point(corner_min), hash_point(corner_min + edge_length))
         )
 
         if voxel_position_hash not in self._static_voxel_id_map:
@@ -89,7 +89,9 @@ class Voxel(VoxelBase):
     ):
         super().__init__(corner_min, edge_length)
 
-        self._points: PointCloud = points if points is not None else PointCloud.empty()
+        self._points: RawPointCloud = (
+            points if points is not None else np.empty((0, 3), dtype=float)
+        )
 
     def get_points(self) -> RawPointCloud:
         """
@@ -101,4 +103,4 @@ class Voxel(VoxelBase):
         """
         :param points: Points to insert
         """
-        self._points = self._points.extend(points)
+        self._points = np.vstack([self._points, points])

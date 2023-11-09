@@ -7,7 +7,7 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
-from octreelib.internal import RawPointCloud, T, Voxel, PointCloud
+from octreelib.internal import RawPointCloud, T, Voxel
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -19,8 +19,6 @@ class OctreeConfig(OctreeConfigBase):
 
 
 class OctreeNode(OctreeNodeBase):
-    _point_cloud_type = PointCloud
-
     def __generate_children(self):
         child_edge_length = self.edge_length / np.float_(2)
         children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
@@ -47,7 +45,7 @@ class OctreeNode(OctreeNodeBase):
             self._children = self.__generate_children()
             self._has_children = True
             self.insert_points(self._points.copy())
-            self._points = self._point_cloud_type.empty()
+            self._points = np.empty((0, 3), dtype=float)
             for child in self._children:
                 child.subdivide(subdivision_criteria)
 
@@ -56,7 +54,7 @@ class OctreeNode(OctreeNodeBase):
             self._children = self.__generate_children()
             self._has_children = True
             self.insert_points(self._points.copy())
-            self._points = self._point_cloud_type.empty()
+            self._points = np.empty((0, 3), dtype=float)
 
         if other._has_children:
             for self_child, other_child in zip(self._children, other._children):
@@ -71,7 +69,7 @@ class OctreeNode(OctreeNodeBase):
         if not self._has_children:
             return self._points.copy()
 
-        points = self._point_cloud_type.empty()
+        points = np.empty((0, 3), dtype=float)
         for child in self._children:
             points = np.vstack((points, child.get_points()))
         return points
@@ -80,15 +78,13 @@ class OctreeNode(OctreeNodeBase):
         """
         :param points: Points to insert.
         """
-        # convert to internal type
-        points = self._point_cloud_type(points)
         if self._has_children:
             for point in points:
                 for child in self._children:
                     if child.is_point_geometrically_inside(point):
                         child.insert_points(point.reshape((1, 3)))
         else:
-            self._points = self._points.extend(points)
+            self._points = np.vstack([self._points, points])
 
     def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
         """
@@ -102,7 +98,7 @@ class OctreeNode(OctreeNodeBase):
                 self._children = []
                 self._has_children = False
         elif not all([criterion(self._points) for criterion in filtering_criteria]):
-            self._points = self._point_cloud_type.empty()
+            self._points = np.empty((0, 3), dtype=float)
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """

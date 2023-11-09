@@ -6,7 +6,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal.point import RawPoint, RawPointCloud, PointCloud
+from octreelib.internal.point import RawPoint, RawPointCloud
 from octreelib.internal.voxel import Voxel
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
@@ -35,12 +35,10 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    _point_cloud_type = PointCloud
-
     def __init__(self, corner_min: RawPoint, edge_length: float, position: int):
         super().__init__(corner_min, edge_length)
         self._position = position
-        self._points: OctreeNodeBase._point_cloud_type = self._point_cloud_type.empty()
+        self._points: np.empty((0, 3), dtype=float)
         self._children: Optional[List["OctreeNodeBase"]] = []
         self._has_children: bool = False
 
