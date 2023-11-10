@@ -7,7 +7,7 @@ from octreelib.internal.interfaces import WithID
 from octreelib.internal.point import (
     RawPoint,
     RawPointCloud,
-    hash_point,
+    CloudManager,
 )
 
 __all__ = ["Voxel", "VoxelBase"]
@@ -31,7 +31,10 @@ class VoxelBase(WithID):
         self._edge_length = edge_length
 
         voxel_position_hash = hash(
-            (hash_point(corner_min), hash_point(corner_min + edge_length))
+            (
+                CloudManager.hash_point(corner_min),
+                CloudManager.hash_point(corner_min + edge_length),
+            )
         )
 
         if voxel_position_hash not in self._static_voxel_id_map:

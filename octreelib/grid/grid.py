@@ -10,7 +10,7 @@ from octreelib.grid.grid_base import (
     GridVisualizationType,
     VisualizationConfig,
 )
-from octreelib.internal.point import RawPointCloud, RawPoint
+from octreelib.internal.point import RawPointCloud, RawPoint, CloudManager
 from octreelib.internal.voxel import Voxel
 from octreelib.octree_manager import MultiPoseManager
 
@@ -52,9 +52,10 @@ class Grid(GridBase):
         # register pose
         self.__pose_voxel_coordinates[pose_number] = []
 
-        for point in points:
-            # get coords of voxel into which the point is inserted
-            voxel_coordinates = self.__get_voxel_for_point(point)
+        distributed_points = CloudManager.distribute_grid(
+            points, self._grid_config.grid_voxel_edge_length, self._grid_config.corner
+        )
+        for voxel_coordinates, voxel_points in distributed_points.items():
             voxel_coordinates_hash = hash(
                 (voxel_coordinates[0], voxel_coordinates[1], voxel_coordinates[2])
             )
@@ -63,13 +64,12 @@ class Grid(GridBase):
             if voxel_coordinates_hash not in self.__octrees:
                 self.__octrees[voxel_coordinates_hash] = self._grid_config.octree_type(
                     self._grid_config.octree_config,
-                    voxel_coordinates,
+                    np.array(voxel_coordinates),
                     self._grid_config.grid_voxel_edge_length,
                 )
 
-            self.__octrees[voxel_coordinates_hash].insert_points(
-                point.reshape((1, 3)), pose_number
-            )
+            self.__pose_voxel_coordinates[pose_number].append(voxel_coordinates)
+            self.__octrees[voxel_coordinates_hash].insert_points(pose_number, voxel_points)
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """
@@ -106,6 +106,7 @@ class Grid(GridBase):
     ):
         """
         Subdivides all octrees based on all points and given subdivision criteria.
+        :param pose_numbers: List of pose numbers to subdivide.
         :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
         If any of the criteria returns **true**, the octree node is subdivided.
         """
