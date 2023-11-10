@@ -111,7 +111,7 @@ class MultiPoseManager(VoxelBase):
             # return sum(octree.n_nodes for octree in self._octrees.values())
         return self._octrees.get(pose_number, self._empty_octree).n_nodes
 
-    def insert_points(self, pose_number: int, wpoints: RawPointCloud):
+    def insert_points(self, pose_number: int, points: RawPointCloud):
         """
         :param pose_number:
         :param points: Points to insert
