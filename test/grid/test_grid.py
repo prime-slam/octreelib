@@ -127,8 +127,6 @@ def test_get_leaf_points(generated_grid):
         )
         == 3
     )
-    # assert leaf_points_pos_0[0].id == leaf_points_pos_1[0].id
-    # assert leaf_points_pos_0[1].id == leaf_points_pos_1[1].id
 
     assert {
         leaf_points_pos_0_voxel.id for leaf_points_pos_0_voxel in leaf_points_pos_0
