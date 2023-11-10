@@ -49,7 +49,6 @@ def generated_grid():
 def test_n_leaves(generated_grid):
     grid, pose_points = generated_grid
 
-    # visualize_grid(grid)
     assert grid.n_leaves(0) == 2
     assert grid.n_leaves(1) == 3
     grid.subdivide([lambda points: len(points) > 2])
@@ -87,19 +86,18 @@ def test_get_points(generated_grid):
 
 
 @pytest.mark.parametrize(
-    "subdivision_criteria, nodes_expected, leaves_expected",
+    "subdivision_criteria, leaves_expected",
     [
-        ([lambda points: len(points) > 2], [7, 8], [4, 5]),
-        ([lambda points: len(points) > 3], [4, 6], [3, 5]),
+        ([lambda points: len(points) > 2], [4, 5]),
+        ([lambda points: len(points) > 3], [3, 5]),
     ],
 )
 def test_subdivide(
-    generated_grid, subdivision_criteria, nodes_expected, leaves_expected
+    generated_grid, subdivision_criteria, leaves_expected
 ):
     grid, pose_points = generated_grid
 
     grid.subdivide(subdivision_criteria)
-    # assert nodes_expected == [grid.n_nodes(0), grid.n_nodes(1)]
     assert leaves_expected == [grid.n_leaves(0), grid.n_leaves(1)]
 
 
