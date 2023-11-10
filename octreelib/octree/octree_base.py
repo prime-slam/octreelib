@@ -6,7 +6,7 @@ from typing import Callable, List, Optional
 
 import numpy as np
 
-from octreelib.internal.point import RawPoint, RawPointCloud
+from octreelib.internal.point import Point, PointCloud
 from octreelib.internal.voxel import Voxel
 
 __all__ = ["OctreeConfigBase", "OctreeBase", "OctreeNodeBase"]
@@ -35,7 +35,7 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    def __init__(self, corner_min: RawPoint, edge_length: float, position: int):
+    def __init__(self, corner_min: Point, edge_length: float, position: int):
         super().__init__(corner_min, edge_length)
         self._position = position
         self._points: np.empty((0, 3), dtype=float)
@@ -67,7 +67,7 @@ class OctreeNodeBase(Voxel, ABC):
         return
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
         :param filtering_criteria: List of filtering criteria functions
@@ -75,10 +75,10 @@ class OctreeNodeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         transform point cloud in the node using the function
-        :param function: transformation function RawPointCloud -> RawPointCloud
+        :param function: transformation function PointCloud -> PointCloud
         """
         pass
 
@@ -90,7 +90,7 @@ class OctreeNodeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
@@ -98,7 +98,7 @@ class OctreeNodeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def get_points(self) -> RawPointCloud:
+    def get_points(self) -> PointCloud:
         """
         :return: Points, which are stored inside the node.
         """
@@ -119,7 +119,7 @@ class OctreeBase(Voxel, ABC):
     def __init__(
         self,
         octree_config: OctreeConfigBase,
-        corner_min: RawPoint,
+        corner_min: Point,
         edge_length: float,
     ):
         super().__init__(corner_min, edge_length)
@@ -151,7 +151,7 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         filter nodes with points by criterion
         :param filtering_criteria:
@@ -159,7 +159,7 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         transform point cloud in each node using the function
         :param function: transformation function PointCloud -> PointCloud
@@ -175,7 +175,7 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
@@ -183,12 +183,12 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def get_points(self) -> RawPointCloud:
+    def get_points(self) -> PointCloud:
         """
         :return: Points, which are stored inside the octree.
         """
         pass
 
     @abstractmethod
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         pass

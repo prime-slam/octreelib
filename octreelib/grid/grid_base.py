@@ -5,7 +5,7 @@ from typing import Callable, Generic, List, Type
 
 import numpy as np
 
-from octreelib.internal.point import RawPoint, RawPointCloud
+from octreelib.internal.point import Point, PointCloud
 from octreelib.internal.voxel import Voxel
 from octreelib.internal.typing import T
 from octreelib.octree.octree_base import OctreeConfigBase
@@ -63,7 +63,7 @@ class GridConfigBase(ABC):
     octree_config: OctreeConfigBase
     debug: bool = False
     grid_voxel_edge_length: int = 1
-    corner: RawPoint = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
+    corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
 
     @property
     def compatible_octree_types(self):
@@ -102,7 +102,7 @@ class GridBase(ABC, Generic[T]):
         self._grid_config = grid_config
 
     @abstractmethod
-    def insert_points(self, pose_number: int, points: List[RawPoint]) -> None:
+    def insert_points(self, pose_number: int, points: List[Point]) -> None:
         """
         Insert points to the according octree.
         If an octree for this pos does not exist, a new octree is created
@@ -112,7 +112,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_points(self, pose_number: int) -> List[RawPoint]:
+    def get_points(self, pose_number: int) -> List[Point]:
         """
         Returns points for a specific pos
         :param pose_number: the desired pos
@@ -121,7 +121,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivides all octrees
         :param subdivision_criteria: criteria for subdivision.
@@ -130,7 +130,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filters nodes of each octree with points by criterion
         :param filtering_criteria:
@@ -138,7 +138,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         Transform point cloud in each node of each octree using the function
         :param function: transformation function PointCloud -> PointCloud

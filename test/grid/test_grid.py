@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
 
-from octreelib.internal import RawPointCloud
+from octreelib.internal import PointCloud
 from octreelib.grid import Grid, GridConfig
 from octreelib.octree import OctreeConfig, Octree
 from octreelib.octree_manager import OctreeManager
 
 
-def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
+def points_are_same(points_first: PointCloud, points_second: PointCloud):
     return set(map(str, points_first.tolist())) == set(map(str, points_second.tolist()))
 
 

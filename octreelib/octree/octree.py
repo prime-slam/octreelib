@@ -7,7 +7,7 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
-from octreelib.internal import RawPointCloud, T, Voxel, CloudManager
+from octreelib.internal import PointCloud, T, Voxel, CloudManager
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -36,7 +36,7 @@ class OctreeNode(OctreeNodeBase):
         self._has_children = False
         self._children = []
 
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
@@ -62,7 +62,7 @@ class OctreeNode(OctreeNodeBase):
         elif self._has_children:
             self.__unify()
 
-    def get_points(self) -> RawPointCloud:
+    def get_points(self) -> PointCloud:
         """
         :return: Points inside the octree node.
         """
@@ -74,7 +74,7 @@ class OctreeNode(OctreeNodeBase):
             points = np.vstack((points, child.get_points()))
         return points
 
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         """
         :param points: Points to insert.
         """
@@ -85,7 +85,7 @@ class OctreeNode(OctreeNodeBase):
         else:
             self._points = np.vstack([self._points, points])
 
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
         :param filtering_criteria: List of filtering criteria functions.
@@ -99,10 +99,10 @@ class OctreeNode(OctreeNodeBase):
         elif not all([criterion(self._points) for criterion in filtering_criteria]):
             self._points = np.empty((0, 3), dtype=float)
 
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         Transform point cloud in the node using the function.
-        :param function: Transformation function RawPointCloud -> RawPointCloud.
+        :param function: Transformation function PointCloud -> PointCloud.
         """
         if self._has_children:
             for child in self._children:
@@ -169,7 +169,7 @@ class Octree(OctreeBase, Generic[T]):
 
     _node_type = OctreeNode
 
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
@@ -179,29 +179,29 @@ class Octree(OctreeBase, Generic[T]):
     def subdivide_as(self, other: Octree):
         self._root.subdivide_as(other._root)
 
-    def get_points(self) -> RawPointCloud:
+    def get_points(self) -> PointCloud:
         """
         :return: Points, which are stored inside the Octree.
         """
         return self._root.get_points()
 
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         """
         :param points: Points to insert
         """
         self._root.insert_points(points)
 
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
         :param filtering_criteria: List of filtering criteria functions
         """
         self._root.filter(filtering_criteria)
 
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         transform point cloud in the node using the function
-        :param function: transformation function RawPointCloud -> RawPointCloud
+        :param function: transformation function PointCloud -> PointCloud
         """
         self._root.map_leaf_points(function)
 

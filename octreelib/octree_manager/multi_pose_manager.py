@@ -3,7 +3,7 @@ from typing import List, Callable, Optional, Dict
 import numpy as np
 
 from octreelib.internal.voxel import Voxel, VoxelBase
-from octreelib.internal.point import RawPointCloud, RawPoint
+from octreelib.internal.point import PointCloud, Point
 from octreelib.octree.octree import Octree, OctreeConfig
 
 __all__ = ["OctreeManager"]
@@ -11,7 +11,7 @@ __all__ = ["OctreeManager"]
 
 class OctreeManager(VoxelBase):
     def __init__(
-        self, octree_config: OctreeConfig, corner_min: RawPoint, edge_length: float
+        self, octree_config: OctreeConfig, corner_min: Point, edge_length: float
     ):
         super().__init__(corner_min, edge_length)
         self._octree_config = octree_config
@@ -20,7 +20,7 @@ class OctreeManager(VoxelBase):
 
     def subdivide(
         self,
-        subdivision_criteria: List[Callable[[RawPointCloud], bool]],
+        subdivision_criteria: List[Callable[[PointCloud], bool]],
         pose_numbers: Optional[List[int]],
     ):
         if pose_numbers is None:
@@ -42,7 +42,7 @@ class OctreeManager(VoxelBase):
 
     def map_leaf_points(
         self,
-        function: Callable[[RawPointCloud], RawPointCloud],
+        function: Callable[[PointCloud], PointCloud],
         pose_numbers: Optional[List[int]] = None,
     ):
         if pose_numbers is None:
@@ -53,7 +53,7 @@ class OctreeManager(VoxelBase):
 
     def filter(
         self,
-        filtering_criteria: List[Callable[[RawPointCloud], bool]],
+        filtering_criteria: List[Callable[[PointCloud], bool]],
         pose_numbers: Optional[List[int]],
     ):
         if pose_numbers is None:
@@ -73,7 +73,7 @@ class OctreeManager(VoxelBase):
             )
         return self._octrees.get(pose_number, self._empty_octree).get_leaf_points()
 
-    def get_points(self, pose_number: Optional[int] = None) -> RawPointCloud:
+    def get_points(self, pose_number: Optional[int] = None) -> PointCloud:
         """
         :param pose_number: Desired pose number.
         :return: Points for this pose which are stored inside the octree.
@@ -111,7 +111,7 @@ class OctreeManager(VoxelBase):
             # return sum(octree.n_nodes for octree in self._octrees.values())
         return self._octrees.get(pose_number, self._empty_octree).n_nodes
 
-    def insert_points(self, pose_number: int, points: RawPointCloud):
+    def insert_points(self, pose_number: int, points: PointCloud):
         """
         :param pose_number:
         :param points: Points to insert

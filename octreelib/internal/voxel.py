@@ -5,8 +5,8 @@ import numpy as np
 
 from octreelib.internal.interfaces import WithID
 from octreelib.internal.point import (
-    RawPoint,
-    RawPointCloud,
+    Point,
+    PointCloud,
     CloudManager,
 )
 
@@ -24,7 +24,7 @@ class VoxelBase(WithID):
 
     def __init__(
         self,
-        corner_min: RawPoint,
+        corner_min: Point,
         edge_length: float,
     ):
         self._corner_min = corner_min
@@ -44,7 +44,7 @@ class VoxelBase(WithID):
 
         WithID.__init__(self, self._static_voxel_id_map[voxel_position_hash])
 
-    def is_point_geometrically_inside(self, point: RawPoint) -> bool:
+    def is_point_geometrically_inside(self, point: Point) -> bool:
         """
         This method checks if the point is inside the voxel geometrically.
         :param point: Point to check.
@@ -86,23 +86,23 @@ class Voxel(VoxelBase):
 
     def __init__(
         self,
-        corner_min: RawPoint,
+        corner_min: Point,
         edge_length: float,
-        points: Optional[RawPointCloud] = None,
+        points: Optional[PointCloud] = None,
     ):
         super().__init__(corner_min, edge_length)
 
-        self._points: RawPointCloud = (
+        self._points: PointCloud = (
             points if points is not None else np.empty((0, 3), dtype=float)
         )
 
-    def get_points(self) -> RawPointCloud:
+    def get_points(self) -> PointCloud:
         """
         :return: Points, which are stored inside the voxel.
         """
         return self._points.copy()
 
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         """
         :param points: Points to insert
         """

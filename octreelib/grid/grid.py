@@ -10,7 +10,7 @@ from octreelib.grid.grid_base import (
     GridVisualizationType,
     VisualizationConfig,
 )
-from octreelib.internal.point import RawPointCloud, RawPoint, CloudManager
+from octreelib.internal.point import PointCloud, Point, CloudManager
 from octreelib.internal.voxel import Voxel
 from octreelib.octree_manager import OctreeManager
 
@@ -35,12 +35,12 @@ class Grid(GridBase):
         super().__init__(grid_config)
 
         # {pose -> list of voxel coordinates}
-        self.__pose_voxel_coordinates: Dict[int, List[RawPoint]] = {}
+        self.__pose_voxel_coordinates: Dict[int, List[Point]] = {}
 
         # {voxel coordinates hash -> octree}
         self.__octrees: Dict[int, grid_config.octree_type] = {}
 
-    def insert_points(self, pose_number: int, points: RawPointCloud):
+    def insert_points(self, pose_number: int, points: PointCloud):
         """
         Insert points to the grid
         :param pose_number: pose to which the cloud is inserted
@@ -71,7 +71,7 @@ class Grid(GridBase):
                 pose_number, voxel_points
             )
 
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         Transforms point cloud in each leaf node of each octree using the function
         :param function: transformation function PointCloud -> PointCloud
@@ -93,7 +93,7 @@ class Grid(GridBase):
             [],
         )
 
-    def get_points(self, pose_number: int) -> RawPointCloud:
+    def get_points(self, pose_number: int) -> PointCloud:
         """
         :param pose_number: Pose number.
         :return: All points inside the grid.
@@ -104,7 +104,7 @@ class Grid(GridBase):
 
     def subdivide(
         self,
-        subdivision_criteria: List[Callable[[RawPointCloud], bool]],
+        subdivision_criteria: List[Callable[[PointCloud], bool]],
         pose_numbers: Optional[List[int]] = None,
     ):
         """
@@ -118,7 +118,7 @@ class Grid(GridBase):
                 subdivision_criteria, pose_numbers
             )
 
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filters nodes of each octree with points by criteria
         :param filtering_criteria: Filtering Criteria
@@ -209,7 +209,7 @@ class Grid(GridBase):
         """
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
 
-    def __get_voxel_for_point(self, point: RawPoint) -> RawPoint:
+    def __get_voxel_for_point(self, point: Point) -> Point:
         """
         Method to get coordinates of a voxel where the given point would be stored.
         :param point: Point.

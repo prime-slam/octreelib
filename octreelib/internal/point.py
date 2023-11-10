@@ -1,23 +1,24 @@
 from __future__ import annotations
 
 import itertools
-from typing import Annotated, Literal, List
+from typing import Annotated, Literal, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
 
 
-__all__ = ["RawPoint", "RawPointCloud", "CloudManager"]
+__all__ = ["Point", "PointCloud", "CloudManager"]
 
 """
-RawPoint and RawPointCloud are intended to be used in the methods
+Point and PointCloud are intended to be used in the methods
 which interact with the user or the methods which facilitate those.
 These are meant to be the main types for Points and Point Clouds to
 be used by user.
 """
 
-RawPoint = Annotated[npt.NDArray[np.float_], Literal[3]]
-RawPointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
+Point = Annotated[npt.NDArray[np.float_], Literal[3]]
+PointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
+HashablePoint = Tuple[float, float, float]
 
 
 class CloudManager:
@@ -28,7 +29,7 @@ class CloudManager:
         raise TypeError("This class is not intended to be instantiated")
 
     @classmethod
-    def hash_point(cls, point: RawPoint):
+    def hash_point(cls, point: Point):
         """
         Hash point.
         :param point: Point to hash.
@@ -44,7 +45,7 @@ class CloudManager:
         return np.empty((0, 3), dtype=float)
 
     @classmethod
-    def add(cls, points_a: RawPoint, points_b: RawPoint):
+    def add(cls, points_a: Point, points_b: Point):
         """
         Add two point clouds.
         :param points_a: First point cloud.
@@ -55,7 +56,7 @@ class CloudManager:
 
     @classmethod
     def distribute_grid(
-        cls, points: RawPointCloud, voxel_size: float, grid_start: RawPoint
+        cls, points: PointCloud, voxel_size: float, grid_start: Point
     ):
         """
         Distribute points into voxels.
@@ -76,8 +77,8 @@ class CloudManager:
 
     @classmethod
     def distribute(
-        cls, points: RawPointCloud, corner_min: RawPoint, edge_length: float
-    ) -> List[RawPointCloud]:
+        cls, points: PointCloud, corner_min: Point, edge_length: float
+    ) -> List[PointCloud]:
         """
         Distribute points into 8 octants.
         :param points: Points to distribute.
