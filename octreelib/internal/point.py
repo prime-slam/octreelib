@@ -33,11 +33,13 @@ class CloudManager:
         return np.empty((0, 3), dtype=float)
 
     @classmethod
-    def add(cls, points_a, points_b):
+    def add(cls, points_a: RawPoint, points_b: RawPoint):
         return np.vstack([points_a, points_b])
 
     @classmethod
-    def distribute_grid(cls, points, voxel_size, grid_start):
+    def distribute_grid(
+        cls, points: RawPointCloud, voxel_size: float, grid_start: RawPoint
+    ):
         voxel_indices = (((points - grid_start) // voxel_size) * voxel_size).astype(int)
         voxel_dict = {}
         unique_indices = np.unique(voxel_indices, axis=0)
@@ -50,7 +52,7 @@ class CloudManager:
 
     @classmethod
     def distribute(
-        cls, points: RawPointCloud, corner_min, edge_length
+        cls, points: RawPointCloud, corner_min: RawPoint, edge_length: float
     ) -> List[RawPointCloud]:
         clouds = []
 
