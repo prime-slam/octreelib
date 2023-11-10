@@ -85,10 +85,6 @@ class Grid(GridBase):
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
-        # return sum(
-        #     [octree.get_leaf_points(pose_number) for octree in self.__octrees.values()],
-        #     [],
-        # )
         return sum(
             [
                 self.__octrees[voxel_coordinates].get_leaf_points(pose_number)
