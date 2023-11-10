@@ -38,22 +38,13 @@ class CloudManager:
 
     @classmethod
     def distribute_grid(cls, points, voxel_size, grid_start):
-        # Calculate voxel indices for all points using integer division
         voxel_indices = (((points - grid_start) // voxel_size) * voxel_size).astype(int)
-
-        # Create a unique identifier for each voxel based on its indices
-        voxel_ids = tuple(voxel_indices.T)
-
-        # Create a dictionary to store points in each voxel
         voxel_dict = {}
+        unique_indices = np.unique(voxel_indices, axis=0)
 
-        # Use np.unique to get unique voxel_ids and their corresponding indices
-        unique_ids, unique_indices = np.unique(voxel_ids, axis=1, return_inverse=True)
-
-        # Iterate over unique voxel_ids and assign points to corresponding voxels
-        for unique_id in unique_ids.T:
-            indices_to_select = np.where((voxel_indices == unique_id).all(axis=1))
-            voxel_dict[tuple(unique_id)] = points[indices_to_select]
+        for unique_id in unique_indices:
+            mask = np.where((voxel_indices == unique_id).all(axis=1))
+            voxel_dict[tuple(unique_id)] = points[mask]
 
         return voxel_dict
 
