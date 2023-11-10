@@ -69,7 +69,9 @@ class Grid(GridBase):
                 )
 
             self.__pose_voxel_coordinates[pose_number].append(voxel_coordinates)
-            self.__octrees[voxel_coordinates_hash].insert_points(pose_number, voxel_points)
+            self.__octrees[voxel_coordinates_hash].insert_points(
+                pose_number, voxel_points
+            )
 
     def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
         """

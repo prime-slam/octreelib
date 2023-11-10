@@ -7,11 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-__all__ = [
-    "RawPoint",
-    "RawPointCloud",
-    "CloudManager"
-]
+__all__ = ["RawPoint", "RawPointCloud", "CloudManager"]
 
 """
 RawPoint and RawPointCloud are intended to be used in the methods
@@ -100,4 +96,3 @@ class CloudManager:
             clouds.append(new_cloud)
 
         return clouds
-
