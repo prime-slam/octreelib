@@ -22,7 +22,7 @@ def generated_multi_pose():
         ],
         dtype=float,
     )
-    multi_pose.insert_points(points_0, 0)
+    multi_pose.insert_points(0, points_0)
     points_1 = np.array(
         [
             [1, 0, 1],
@@ -31,7 +31,7 @@ def generated_multi_pose():
         ],
         dtype=float,
     )
-    multi_pose.insert_points(points_1, 1)
+    multi_pose.insert_points(1, points_1)
 
     return multi_pose, {0: points_0, 1: points_1}
 
