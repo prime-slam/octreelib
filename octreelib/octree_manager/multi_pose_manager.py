@@ -6,10 +6,10 @@ from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.internal.point import RawPointCloud, RawPoint
 from octreelib.octree.octree import Octree, OctreeConfig
 
-__all__ = ["MultiPoseManager"]
+__all__ = ["OctreeManager"]
 
 
-class MultiPoseManager(VoxelBase):
+class OctreeManager(VoxelBase):
     def __init__(
         self, octree_config: OctreeConfig, corner_min: RawPoint, edge_length: float
     ):

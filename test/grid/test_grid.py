@@ -4,7 +4,7 @@ import pytest
 from octreelib.internal import RawPointCloud
 from octreelib.grid import Grid, GridConfig
 from octreelib.octree import OctreeConfig, Octree
-from octreelib.octree_manager import MultiPoseManager
+from octreelib.octree_manager import OctreeManager
 
 
 def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
@@ -15,7 +15,7 @@ def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
 def generated_grid():
     grid = Grid(
         GridConfig(
-            octree_type=MultiPoseManager,
+            octree_type=OctreeManager,
             octree_config=OctreeConfig(),
             grid_voxel_edge_length=5,
         )
@@ -163,7 +163,7 @@ def test_invalid_octree_type():
     except TypeError as e:
         assert str(e) == (
             "Cannot use the provided octree type Octree. "
-            "The compatible octree types are [MultiPoseManager]."
+            "The compatible octree types are [OctreeManager]."
         )
     else:
         raise AssertionError("This type of octree should have caused an exception")

@@ -3,7 +3,7 @@ import pytest
 
 from octreelib.internal import RawPointCloud, Voxel
 from octreelib.octree import OctreeConfig
-from octreelib.octree_manager import MultiPoseManager
+from octreelib.octree_manager import OctreeManager
 
 
 def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
@@ -12,7 +12,7 @@ def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
 
 @pytest.fixture()
 def generated_multi_pose():
-    multi_pose = MultiPoseManager(OctreeConfig(), np.array([0, 0, 0]), 5)
+    multi_pose = OctreeManager(OctreeConfig(), np.array([0, 0, 0]), 5)
 
     points_0 = np.array(
         [

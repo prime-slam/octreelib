@@ -12,13 +12,13 @@ from octreelib.grid.grid_base import (
 )
 from octreelib.internal.point import RawPointCloud, RawPoint, CloudManager
 from octreelib.internal.voxel import Voxel
-from octreelib.octree_manager import MultiPoseManager
+from octreelib.octree_manager import OctreeManager
 
 __all__ = ["Grid", "GridConfig"]
 
 
 class GridConfig(GridConfigBase):
-    _compatible_octree_types = [MultiPoseManager]
+    _compatible_octree_types = [OctreeManager]
 
 
 class Grid(GridBase):
