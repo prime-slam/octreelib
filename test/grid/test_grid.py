@@ -92,9 +92,7 @@ def test_get_points(generated_grid):
         ([lambda points: len(points) > 3], [3, 5]),
     ],
 )
-def test_subdivide(
-    generated_grid, subdivision_criteria, leaves_expected
-):
+def test_subdivide(generated_grid, subdivision_criteria, leaves_expected):
     grid, pose_points = generated_grid
 
     grid.subdivide(subdivision_criteria)
@@ -129,8 +127,14 @@ def test_get_leaf_points(generated_grid):
         )
         == 3
     )
-    assert leaf_points_pos_0[0].id == leaf_points_pos_1[0].id
-    assert leaf_points_pos_0[1].id == leaf_points_pos_1[1].id
+    # assert leaf_points_pos_0[0].id == leaf_points_pos_1[0].id
+    # assert leaf_points_pos_0[1].id == leaf_points_pos_1[1].id
+
+    assert {
+        leaf_points_pos_0_voxel.id for leaf_points_pos_0_voxel in leaf_points_pos_0
+    }.issubset(
+        {leaf_points_pos_1_voxel.id for leaf_points_pos_1_voxel in leaf_points_pos_1}
+    )
 
     assert set(map(str, leaf_points_pos_0[0].get_points())) == set(
         map(str, pose_points[0][:3])
@@ -142,10 +146,10 @@ def test_get_leaf_points(generated_grid):
         map(str, pose_points[1][:3])
     )
     assert set(map(str, leaf_points_pos_1[1].get_points())) == set(
-        map(str, pose_points[1][3:4])
+        map(str, pose_points[1][4:])
     )
     assert set(map(str, leaf_points_pos_1[2].get_points())) == set(
-        map(str, pose_points[1][4:])
+        map(str, pose_points[1][3:4])
     )
 
 

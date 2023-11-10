@@ -56,9 +56,7 @@ class Grid(GridBase):
             points, self._grid_config.grid_voxel_edge_length, self._grid_config.corner
         )
         for voxel_coordinates, voxel_points in distributed_points.items():
-            voxel_coordinates_hash = hash(
-                (voxel_coordinates[0], voxel_coordinates[1], voxel_coordinates[2])
-            )
+            voxel_coordinates_hash = tuple(voxel_coordinates)
 
             # create octree in the voxel if it does not exist yet
             if voxel_coordinates_hash not in self.__octrees:
@@ -87,8 +85,15 @@ class Grid(GridBase):
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
+        # return sum(
+        #     [octree.get_leaf_points(pose_number) for octree in self.__octrees.values()],
+        #     [],
+        # )
         return sum(
-            [octree.get_leaf_points(pose_number) for octree in self.__octrees.values()],
+            [
+                self.__octrees[voxel_coordinates].get_leaf_points(pose_number)
+                for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]
+            ],
             [],
         )
 
