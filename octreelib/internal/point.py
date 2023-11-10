@@ -21,17 +21,6 @@ RawPointCloud = Annotated[npt.NDArray[np.float_], Literal["N", 3]]
 
 
 class CloudManager:
-    class Voxel:
-        def __init__(self, min_corner, edge_length):
-            self.corner_min = min_corner
-            self.corner_max = min_corner + edge_length
-            self.edge_length = edge_length
-
-        def is_point_geometrically_inside(self, point: RawPoint) -> bool:
-            return bool((point >= self.corner_min).all()) and bool(
-                (point <= self.corner_max).all()
-            )
-
     def __init__(self):
         raise TypeError("This class is not intended to be instantiated")
 
@@ -72,27 +61,15 @@ class CloudManager:
     def distribute(
         cls, points: RawPointCloud, corner_min, edge_length
     ) -> List[RawPointCloud]:
-        # TODO: implement this smarter 🙄
-        def __generate_children():
-            child_edge_length = edge_length / np.float_(2)
-            children_corners_offsets = itertools.product(
-                [0, child_edge_length], repeat=3
-            )
-            return [
-                CloudManager.Voxel(
-                    corner_min + offset,
-                    child_edge_length,
-                )
-                for internal_position, offset in enumerate(children_corners_offsets)
-            ]
-
         clouds = []
 
-        for child in __generate_children():
-            new_cloud = cls.empty()
-            for point in points:
-                if child.is_point_geometrically_inside(point):
-                    new_cloud = cls.add(new_cloud, point.reshape((1, 3)))
-            clouds.append(new_cloud)
+        for offset in itertools.product([0, edge_length / 2], repeat=3):
+            child_corner_min = corner_min + np.array(offset)
+            child_corner_max = child_corner_min + edge_length / 2
+            mask = np.all(
+                (points >= child_corner_min) & (points < child_corner_max), axis=1
+            )
+            child_points = points[mask]
+            clouds.append(child_points)
 
         return clouds
