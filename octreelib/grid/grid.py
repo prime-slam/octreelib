@@ -18,7 +18,7 @@ __all__ = ["Grid", "GridConfig"]
 
 
 class GridConfig(GridConfigBase):
-    _compatible_octree_types = [OctreeManager]
+    _compatible_octree_manager_types = [OctreeManager]
 
 
 class Grid(GridBase):
@@ -38,7 +38,7 @@ class Grid(GridBase):
         self.__pose_voxel_coordinates: Dict[int, List[VoxelBase]] = {}
 
         # {voxel -> octree manager}
-        self.__octrees: Dict[VoxelBase, grid_config.octree_type] = {}
+        self.__octrees: Dict[VoxelBase, grid_config.octree_manager_type] = {}
 
     def insert_points(self, pose_number: int, points: PointCloud):
         """
@@ -73,7 +73,7 @@ class Grid(GridBase):
                 self._grid_config.grid_voxel_edge_length,
             )
             if target_voxel not in self.__octrees:
-                self.__octrees[target_voxel] = self._grid_config.octree_type(
+                self.__octrees[target_voxel] = self._grid_config.octree_manager_type(
                     self._grid_config.octree_config,
                     np.array(voxel_coordinates),
                     self._grid_config.grid_voxel_edge_length,

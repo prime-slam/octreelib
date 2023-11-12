@@ -50,16 +50,16 @@ class GridConfigBase(ABC):
     """
     Config for Grid
 
-    octree_type: type of Octree used
+    octree_manager_type: type of OctreeManager used
     octree_config: config to be forwarded to the octrees
     debug: debug mode
     grid_voxel_edge_length: initial size of voxels
     corner: corner of a grid
     """
 
-    _compatible_octree_types = []
+    _compatible_octree_manager_types = []
 
-    octree_type: Type[T]
+    octree_manager_type: Type[T]
     octree_config: OctreeConfigBase
     debug: bool = False
     grid_voxel_edge_length: int = 1
@@ -70,17 +70,17 @@ class GridConfigBase(ABC):
         """
         :return: Types of Octrees which are compatible with this
         """
-        return self._compatible_octree_types
+        return self._compatible_octree_manager_types
 
     def __post_init__(self):
         """
         Check that
         :raises TypeError: if given octree_type is not compatible with this type of grid.
         """
-        if self.octree_type not in self.compatible_octree_types:
+        if self.octree_manager_type not in self.compatible_octree_types:
             raise TypeError(
-                f"Cannot use the provided octree type {self.octree_type.__name__}. "
-                f"The compatible octree types are [{', '.join(cls.__name__ for cls in self.compatible_octree_types)}]."
+                f"Cannot use the provided octree manager type {self.octree_manager_type.__name__}. "
+                f"The compatible octree manager types are [{', '.join(cls.__name__ for cls in self.compatible_octree_types)}]."
             )
 
 

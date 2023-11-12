@@ -19,23 +19,6 @@ class OctreeConfig(OctreeConfigBase):
 
 
 class OctreeNode(OctreeNodeBase):
-    def __generate_children(self):
-        child_edge_length = self.edge_length / np.float_(2)
-        children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
-        return [
-            OctreeNode(
-                self.corner_min + offset,
-                child_edge_length,
-                8 * self._position + internal_position,
-            )
-            for internal_position, offset in enumerate(children_corners_offsets)
-        ]
-
-    def __unify(self):
-        self._points = self.get_points()
-        self._has_children = False
-        self._children = []
-
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
@@ -79,17 +62,19 @@ class OctreeNode(OctreeNodeBase):
         :param points: Points to insert.
         """
         if self._has_children:
+            # distribute points to children
             clouds = []
-
             for offset in itertools.product([0, self.edge_length / 2], repeat=3):
                 child_corner_min = self.corner_min + np.array(offset)
                 child_corner_max = child_corner_min + self.edge_length / 2
+                # find points in the child
                 mask = np.all(
                     (points >= child_corner_min) & (points < child_corner_max), axis=1
                 )
                 child_points = points[mask]
                 clouds.append(child_points)
 
+            # insert points to children
             for child, cloud in zip(self._children, clouds):
                 child.insert_points(cloud)
         else:
@@ -166,6 +151,29 @@ class OctreeNode(OctreeNodeBase):
             if self._has_children
             else len(self._points)
         )
+
+    def __generate_children(self):
+        """
+        Generate children of the node.
+        """
+        child_edge_length = self.edge_length / np.float_(2)
+        children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
+        return [
+            OctreeNode(
+                self.corner_min + offset,
+                child_edge_length,
+                8 * self._position + internal_position,
+            )
+            for internal_position, offset in enumerate(children_corners_offsets)
+        ]
+
+    def __unify(self):
+        """
+        Unify (unsubdivide) children of the node.
+        """
+        self._points = self.get_points()
+        self._has_children = False
+        self._children = []
 
 
 class Octree(OctreeBase, Generic[T]):
