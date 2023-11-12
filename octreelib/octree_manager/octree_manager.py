@@ -10,6 +10,13 @@ __all__ = ["OctreeManager"]
 
 
 class OctreeManager(VoxelBase):
+    """
+    Octree manager which stores octrees for different poses.
+
+    :param octree_config: Octree configuration.
+    :param corner_min: Minimum corner of the node.
+    :param edge_length: Edge length of the node.
+    """
     def __init__(
         self, octree_config: OctreeConfig, corner_min: Point, edge_length: float
     ):
@@ -23,6 +30,11 @@ class OctreeManager(VoxelBase):
         subdivision_criteria: List[Callable[[PointCloud], bool]],
         pose_numbers: Optional[List[int]],
     ):
+        """
+        Subdivide all nodes based on the subdivision criteria.
+        :param subdivision_criteria: list of criteria for subdivision
+        :param pose_numbers: List of pose numbers to subdivide
+        """
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
@@ -45,6 +57,11 @@ class OctreeManager(VoxelBase):
         function: Callable[[PointCloud], PointCloud],
         pose_numbers: Optional[List[int]] = None,
     ):
+        """
+        Transform point cloud in the node using the function
+        :param function: Function PointCloud -> PointCloud
+        :param pose_numbers: List of pose numbers to transform
+        """
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
@@ -56,6 +73,11 @@ class OctreeManager(VoxelBase):
         filtering_criteria: List[Callable[[PointCloud], bool]],
         pose_numbers: Optional[List[int]],
     ):
+        """
+        Filter nodes with points by filtering criteria
+        :param filtering_criteria: List of filtering criteria functions
+        :param pose_numbers: List of pose numbers to filter
+        """
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
