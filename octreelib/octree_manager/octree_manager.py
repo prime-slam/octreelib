@@ -113,24 +113,18 @@ class OctreeManager(VoxelBase):
             return sum(octree.n_points() for octree in self._octrees.values())
         return self._octrees.get(pose_number, self._empty_octree).n_points
 
-    def n_leaves(self, pose_number: Optional[int] = None) -> int:
+    def n_leaves(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of leaves which store points for this pose.
         """
-        if pose_number is None:
-            raise NotImplementedError
-            # return sum(octree.n_leaves for octree in self._octrees.values())
         return self._octrees.get(pose_number, self._empty_octree).n_leaves
 
-    def n_nodes(self, pose_number: Optional[int] = None) -> int:
+    def n_nodes(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of nodes (both leaves and not) which store points for this pose.
         """
-        if pose_number is None:
-            raise NotImplementedError
-            # return sum(octree.n_nodes for octree in self._octrees.values())
         return self._octrees.get(pose_number, self._empty_octree).n_nodes
 
     def insert_points(self, pose_number: int, points: PointCloud):
