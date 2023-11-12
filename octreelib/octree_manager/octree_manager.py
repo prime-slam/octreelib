@@ -17,6 +17,7 @@ class OctreeManager(VoxelBase):
     :param corner_min: Minimum corner of the node.
     :param edge_length: Edge length of the node.
     """
+
     def __init__(
         self, octree_config: OctreeConfig, corner_min: Point, edge_length: float
     ):
