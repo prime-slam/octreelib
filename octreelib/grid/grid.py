@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict, Callable, Optional
+from typing import List, Dict, Callable, Optional, Tuple
 
 import k3d
 import numpy as np
@@ -10,8 +10,8 @@ from octreelib.grid.grid_base import (
     GridVisualizationType,
     VisualizationConfig,
 )
-from octreelib.internal.point import PointCloud, Point, CloudManager
-from octreelib.internal.voxel import Voxel
+from octreelib.internal.point import PointCloud, Point
+from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.octree_manager import OctreeManager
 
 __all__ = ["Grid", "GridConfig"]
@@ -34,11 +34,11 @@ class Grid(GridBase):
     def __init__(self, grid_config: GridConfig):
         super().__init__(grid_config)
 
-        # {pose -> list of voxel coordinates}
-        self.__pose_voxel_coordinates: Dict[int, List[Point]] = {}
+        # {pose -> list of voxels}
+        self.__pose_voxel_coordinates: Dict[int, List[VoxelBase]] = {}
 
-        # {voxel coordinates hash -> octree}
-        self.__octrees: Dict[int, grid_config.octree_type] = {}
+        # {voxel -> octree manager}
+        self.__octrees: Dict[VoxelBase, grid_config.octree_type] = {}
 
     def insert_points(self, pose_number: int, points: PointCloud):
         """
@@ -52,24 +52,35 @@ class Grid(GridBase):
         # register pose
         self.__pose_voxel_coordinates[pose_number] = []
 
-        distributed_points = CloudManager.distribute_grid(
-            points, self._grid_config.grid_voxel_edge_length, self._grid_config.corner
-        )
-        for voxel_coordinates, voxel_points in distributed_points.items():
-            voxel_coordinates_hash = tuple(voxel_coordinates)
+        # distribute points to voxels
+        voxel_indices = (
+            (
+                (points - self._grid_config.corner)
+                // self._grid_config.grid_voxel_edge_length
+            )
+            * self._grid_config.grid_voxel_edge_length
+        ).astype(int)
+        distributed_points = {}
+        unique_indices = np.unique(voxel_indices, axis=0)
+        for unique_id in unique_indices:
+            mask = np.where((voxel_indices == unique_id).all(axis=1))
+            distributed_points[tuple(unique_id)] = points[mask]
 
-            # create octree in the voxel if it does not exist yet
-            if voxel_coordinates_hash not in self.__octrees:
-                self.__octrees[voxel_coordinates_hash] = self._grid_config.octree_type(
+        # insert points to octrees
+        for voxel_coordinates, voxel_points in distributed_points.items():
+            target_voxel = VoxelBase(
+                np.array(voxel_coordinates),
+                self._grid_config.grid_voxel_edge_length,
+            )
+            if target_voxel not in self.__octrees:
+                self.__octrees[target_voxel] = self._grid_config.octree_type(
                     self._grid_config.octree_config,
                     np.array(voxel_coordinates),
                     self._grid_config.grid_voxel_edge_length,
                 )
 
-            self.__pose_voxel_coordinates[pose_number].append(voxel_coordinates)
-            self.__octrees[voxel_coordinates_hash].insert_points(
-                pose_number, voxel_points
-            )
+            self.__pose_voxel_coordinates[pose_number].append(target_voxel)
+            self.__octrees[target_voxel].insert_points(pose_number, voxel_points)
 
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """

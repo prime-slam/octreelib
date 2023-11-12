@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 import itertools
 from typing import Optional
 
 import numpy as np
 
 from octreelib.internal.interfaces import WithID
-from octreelib.internal.point import (
-    Point,
-    PointCloud,
-    CloudManager,
-)
+from octreelib.internal.point import Point, PointCloud
 
 __all__ = ["Voxel", "VoxelBase"]
 
@@ -30,28 +28,18 @@ class VoxelBase(WithID):
         self._corner_min = corner_min
         self._edge_length = edge_length
 
-        voxel_position_hash = hash(
-            (
-                CloudManager.hash_point(corner_min),
-                CloudManager.hash_point(corner_min + edge_length),
-            )
-        )
+        if self not in self._static_voxel_id_map:
+            self._static_voxel_id_map[self] = len(self._static_voxel_id_map)
 
-        if voxel_position_hash not in self._static_voxel_id_map:
-            self._static_voxel_id_map[voxel_position_hash] = len(
-                self._static_voxel_id_map
-            )
+        WithID.__init__(self, self._static_voxel_id_map[self])
 
-        WithID.__init__(self, self._static_voxel_id_map[voxel_position_hash])
+    def __hash__(self):
+        return hash((tuple(self._corner_min), self._edge_length))
 
-    def is_point_geometrically_inside(self, point: Point) -> bool:
-        """
-        This method checks if the point is inside the voxel geometrically.
-        :param point: Point to check.
-        :return: True if point is inside the bounding box of a voxel, False if outside.
-        """
-        return bool((point >= self.corner_min).all()) and bool(
-            (point <= self.corner_max).all()
+    def __eq__(self, other: VoxelBase):
+        return (
+            all(self.corner_min == other.corner_min)
+            and self.edge_length == other.edge_length
         )
 
     @property

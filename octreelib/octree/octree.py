@@ -7,7 +7,7 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
-from octreelib.internal import PointCloud, T, Voxel, CloudManager
+from octreelib.internal import PointCloud, T, Voxel
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -79,7 +79,17 @@ class OctreeNode(OctreeNodeBase):
         :param points: Points to insert.
         """
         if self._has_children:
-            clouds = CloudManager.distribute(points, self.corner_min, self.edge_length)
+            clouds = []
+
+            for offset in itertools.product([0, self.edge_length / 2], repeat=3):
+                child_corner_min = self.corner_min + np.array(offset)
+                child_corner_max = child_corner_min + self.edge_length / 2
+                mask = np.all(
+                    (points >= child_corner_min) & (points < child_corner_max), axis=1
+                )
+                child_points = points[mask]
+                clouds.append(child_points)
+
             for child, cloud in zip(self._children, clouds):
                 child.insert_points(cloud)
         else:
