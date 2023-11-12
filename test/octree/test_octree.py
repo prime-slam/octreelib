@@ -7,7 +7,7 @@ __all__ = ["test_octree", "test_octree_node"]
 
 
 def test_octree_node():
-    node = OctreeNode(np.array([0, 0, 0]), np.float_(10), 0)
+    node = OctreeNode(np.array([0, 0, 0]), np.float_(10))
 
     point_cloud = np.array(
         [

@@ -35,9 +35,8 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    def __init__(self, corner_min: Point, edge_length: float, position: int):
+    def __init__(self, corner_min: Point, edge_length: float):
         super().__init__(corner_min, edge_length)
-        self._position = position
         self._points: np.empty((0, 3), dtype=float)
         self._children: Optional[List["OctreeNodeBase"]] = []
         self._has_children: bool = False
@@ -124,7 +123,7 @@ class OctreeBase(Voxel, ABC):
     ):
         super().__init__(corner_min, edge_length)
         self._config = octree_config
-        self._root = self._node_type(self.corner_min, self.edge_length, 0o0)
+        self._root = self._node_type(self.corner_min, self.edge_length)
 
     @property
     @abstractmethod

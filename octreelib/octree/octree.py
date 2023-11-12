@@ -162,7 +162,6 @@ class OctreeNode(OctreeNodeBase):
             OctreeNode(
                 self.corner_min + offset,
                 child_edge_length,
-                8 * self._position + internal_position,
             )
             for internal_position, offset in enumerate(children_corners_offsets)
         ]
