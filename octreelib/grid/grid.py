@@ -219,13 +219,3 @@ class Grid(GridBase):
         (either themselves, or through their child nodes).
         """
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
-
-    def __get_voxel_for_point(self, point: Point) -> Point:
-        """
-        Method to get coordinates of a voxel where the given point would be stored.
-        :param point: Point.
-        :return: Corner of the voxel in the grid, where an appropriate octree for the point resides.
-        """
-        point = point[:3]
-        grid_voxel_edge_length = self._grid_config.grid_voxel_edge_length
-        return point // grid_voxel_edge_length * grid_voxel_edge_length
