@@ -8,7 +8,8 @@ import numpy as np
 from octreelib.internal.point import Point, PointCloud
 from octreelib.internal.voxel import Voxel
 from octreelib.internal.typing import T
-from octreelib.octree.octree_base import OctreeConfigBase
+from octreelib.octree import OctreeConfigBase, Octree
+from octreelib.octree_manager import OctreeManager
 
 __all__ = ["GridVisualizationType", "VisualizationConfig", "GridConfigBase", "GridBase"]
 
@@ -51,6 +52,7 @@ class GridConfigBase(ABC):
     Config for Grid
 
     octree_manager_type: type of OctreeManager used
+    octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
     debug: debug mode
     grid_voxel_edge_length: initial size of voxels
@@ -59,8 +61,9 @@ class GridConfigBase(ABC):
 
     _compatible_octree_manager_types = []
 
-    octree_manager_type: Type[T]
-    octree_config: OctreeConfigBase
+    octree_manager_type: Type[T] = OctreeManager
+    octree_type: Type[T] = Octree
+    octree_config: OctreeConfigBase = OctreeConfigBase()
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))

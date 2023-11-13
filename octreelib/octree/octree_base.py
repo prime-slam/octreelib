@@ -96,6 +96,13 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
+    def subdivide_as(self, other: OctreeNodeBase):
+        """
+        Subdivide octree node using the subdivision scheme of a different octree node.
+        :param other: Octree node to copy subdivision scheme from.
+        """
+        pass
+
     @abstractmethod
     def get_points(self) -> PointCloud:
         """
@@ -178,6 +185,13 @@ class OctreeBase(Voxel, ABC):
         """
         Subdivide node based on the subdivision criteria.
         :param subdivision_criteria: list of criteria for subdivision
+        """
+        pass
+
+    def subdivide_as(self, other: OctreeBase):
+        """
+        Subdivide octree using the subdivision scheme of a different octree.
+        :param other: Octree to copy subdivision scheme from.
         """
         pass
 

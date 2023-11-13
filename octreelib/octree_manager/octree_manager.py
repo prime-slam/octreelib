@@ -2,8 +2,9 @@ from typing import List, Callable, Optional, Dict
 
 import numpy as np
 
-from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.internal.point import PointCloud, Point
+from octreelib.internal.typing import T
+from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.octree.octree import Octree, OctreeConfig
 
 __all__ = ["OctreeManager"]
@@ -19,12 +20,13 @@ class OctreeManager(VoxelBase):
     """
 
     def __init__(
-        self, octree_config: OctreeConfig, corner_min: Point, edge_length: float
+        self, octree_type: T, octree_config: OctreeConfig, corner_min: Point, edge_length: float
     ):
         super().__init__(corner_min, edge_length)
+        self._octree_type = octree_type
         self._octree_config = octree_config
-        self._octrees: Dict[int, Octree] = {}
-        self._empty_octree = Octree(octree_config, corner_min, edge_length)
+        self._octrees: Dict[int, octree_type] = {}
+        self._empty_octree = self._octree_type(octree_config, corner_min, edge_length)
 
     def subdivide(
         self,
@@ -39,7 +41,7 @@ class OctreeManager(VoxelBase):
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
-        scheme_octree = Octree(self._octree_config, self._corner_min, self._edge_length)
+        scheme_octree = self._octree_type(self._octree_config, self._corner_min, self._edge_length)
         scheme_octree.insert_points(
             np.vstack(
                 [
@@ -134,7 +136,7 @@ class OctreeManager(VoxelBase):
         :param points: Points to insert
         """
         if pose_number not in self._octrees:
-            self._octrees[pose_number] = Octree(
+            self._octrees[pose_number] = self._octree_type(
                 self._octree_config, self._corner_min, self._edge_length
             )
         self._octrees[pose_number].insert_points(points)

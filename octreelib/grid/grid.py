@@ -74,6 +74,7 @@ class Grid(GridBase):
             )
             if target_voxel not in self.__octrees:
                 self.__octrees[target_voxel] = self._grid_config.octree_manager_type(
+                    self._grid_config.octree_type,
                     self._grid_config.octree_config,
                     np.array(voxel_coordinates),
                     self._grid_config.grid_voxel_edge_length,
