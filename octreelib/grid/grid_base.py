@@ -60,7 +60,7 @@ class GridConfigBase(ABC):
     """
 
     octree_manager_type: Type[T] = OctreeManager
-    octree_type: Type[T] = Octree
+    octree_type: Type[T] = OctreeBase
     octree_config: OctreeConfigBase = field(default_factory=lambda: OctreeConfigBase())
     debug: bool = False
     grid_voxel_edge_length: int = 1

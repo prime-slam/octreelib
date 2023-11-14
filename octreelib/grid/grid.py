@@ -1,5 +1,6 @@
+from dataclasses import dataclass, field
 import random
-from typing import List, Dict, Callable, Optional, Tuple
+from typing import List, Dict, Callable, Optional, Type
 
 import k3d
 import numpy as np
@@ -10,15 +11,18 @@ from octreelib.grid.grid_base import (
     GridVisualizationType,
     VisualizationConfig,
 )
-from octreelib.internal.point import PointCloud, Point
+from octreelib.internal.typing import T
+from octreelib.internal.point import PointCloud
 from octreelib.internal.voxel import Voxel, VoxelBase
-from octreelib.octree_manager import OctreeManager
+from octreelib.octree import Octree, OctreeConfig
 
 __all__ = ["Grid", "GridConfig"]
 
 
+@dataclass
 class GridConfig(GridConfigBase):
-    _compatible_octree_manager_types = [OctreeManager]
+    octree_type: Type[T] = Octree
+    octree_config: OctreeConfig = field(default_factory=lambda: OctreeConfig())
 
 
 class Grid(GridBase):
