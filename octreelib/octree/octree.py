@@ -25,7 +25,7 @@ class OctreeNode(OctreeNodeBase):
         :param subdivision_criteria: list of criteria for subdivision
         """
         if any([criterion(self._points) for criterion in subdivision_criteria]):
-            self._children = self.__generate_children()
+            self._children = self._generate_children()
             self._has_children = True
             self.insert_points(self._points.copy())
             self._points = np.empty((0, 3), dtype=float)
@@ -38,7 +38,7 @@ class OctreeNode(OctreeNodeBase):
         :param other: Octree node to copy subdivision scheme from.
         """
         if other._has_children and not self._has_children:
-            self._children = self.__generate_children()
+            self._children = self._generate_children()
             self._has_children = True
             self.insert_points(self._points.copy())
             self._points = np.empty((0, 3), dtype=float)
@@ -47,7 +47,7 @@ class OctreeNode(OctreeNodeBase):
             for self_child, other_child in zip(self._children, other._children):
                 self_child.subdivide_as(other_child)
         elif self._has_children:
-            self.__unify()
+            self._unify()
 
     def get_points(self) -> PointCloud:
         """
@@ -156,7 +156,7 @@ class OctreeNode(OctreeNodeBase):
             else len(self._points)
         )
 
-    def __generate_children(self):
+    def _generate_children(self):
         """
         Generate children of the node.
         """
@@ -170,7 +170,7 @@ class OctreeNode(OctreeNodeBase):
             for internal_position, offset in enumerate(children_corners_offsets)
         ]
 
-    def __unify(self):
+    def _unify(self):
         """
         Unify (unsubdivide) children of the node.
         """
