@@ -33,7 +33,7 @@ class GridConfig(GridConfigBase):
     """
 
     octree_type: Type[T] = Octree
-    octree_config: OctreeConfig = field(default_factory=lambda: OctreeConfig())
+    octree_config: OctreeConfig = field(default_factory=OctreeConfig)
 
 
 class Grid(GridBase):
