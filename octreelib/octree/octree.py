@@ -47,7 +47,9 @@ class OctreeNode(OctreeNodeBase):
             for self_child, other_child in zip(self._children, other._children):
                 self_child.subdivide_as(other_child)
         elif self._has_children:
-            self._unify()
+            self._points = self.get_points()
+            self._has_children = False
+            self._children = []
 
     def get_points(self) -> PointCloud:
         """
@@ -169,14 +171,6 @@ class OctreeNode(OctreeNodeBase):
             )
             for internal_position, offset in enumerate(children_corners_offsets)
         ]
-
-    def _unify(self):
-        """
-        Unify (unsubdivide) children of the node.
-        """
-        self._points = self.get_points()
-        self._has_children = False
-        self._children = []
 
 
 class Octree(OctreeBase, Generic[T]):
