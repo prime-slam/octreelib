@@ -21,6 +21,17 @@ __all__ = ["Grid", "GridConfig"]
 
 @dataclass
 class GridConfig(GridConfigBase):
+    """
+    Config for Grid
+
+    octree_manager_type: type of OctreeManager used
+    octree_type: type of Octree used
+    octree_config: config to be forwarded to the octrees
+    debug: debug mode
+    grid_voxel_edge_length: initial size of voxels
+    corner: corner of a grid
+    """
+
     octree_type: Type[T] = Octree
     octree_config: OctreeConfig = field(default_factory=lambda: OctreeConfig())
 
