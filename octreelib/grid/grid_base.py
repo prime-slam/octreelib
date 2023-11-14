@@ -8,7 +8,7 @@ import numpy as np
 from octreelib.internal.point import Point, PointCloud
 from octreelib.internal.voxel import Voxel
 from octreelib.internal.typing import T
-from octreelib.octree import OctreeConfigBase, Octree
+from octreelib.octree import OctreeConfigBase, Octree, OctreeBase
 from octreelib.octree_manager import OctreeManager
 
 __all__ = ["GridVisualizationType", "VisualizationConfig", "GridConfigBase", "GridBase"]
@@ -59,8 +59,6 @@ class GridConfigBase(ABC):
     corner: corner of a grid
     """
 
-    _compatible_octree_manager_types = []
-
     octree_manager_type: Type[T] = OctreeManager
     octree_type: Type[T] = Octree
     octree_config: OctreeConfigBase = OctreeConfigBase()
@@ -68,22 +66,20 @@ class GridConfigBase(ABC):
     grid_voxel_edge_length: int = 1
     corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
 
-    @property
-    def compatible_octree_types(self):
-        """
-        :return: Types of Octrees which are compatible with this
-        """
-        return self._compatible_octree_manager_types
-
     def __post_init__(self):
         """
-        Check that
         :raises TypeError: if given octree_type is not compatible with this type of grid.
+        :raises TypeError: if given octree_manager_type is not compatible with this type of grid.
         """
-        if self.octree_manager_type not in self.compatible_octree_types:
+        if not issubclass(self.octree_manager_type, OctreeManager):
             raise TypeError(
                 f"Cannot use the provided octree manager type {self.octree_manager_type.__name__}. "
-                f"The compatible octree manager types are [{', '.join(cls.__name__ for cls in self.compatible_octree_types)}]."
+                "It has to be a subclass of octree_manager.OctreeManager."
+            )
+        if not issubclass(self.octree_type, OctreeBase):
+            raise TypeError(
+                f"Cannot use the provided octree type {self.octree_manager_type.__name__}. "
+                "It has to be a subclass of octree.OctreeBase."
             )
 
 

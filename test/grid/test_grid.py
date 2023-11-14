@@ -13,13 +13,7 @@ def points_are_same(points_first: PointCloud, points_second: PointCloud):
 
 @pytest.fixture()
 def generated_grid():
-    grid = Grid(
-        GridConfig(
-            octree_manager_type=OctreeManager,
-            octree_config=OctreeConfig(),
-            grid_voxel_edge_length=5,
-        )
-    )
+    grid = Grid(GridConfig(grid_voxel_edge_length=5))
     points_0 = np.array(
         [
             [0, 0, 1],  # voxel 0,0,0
@@ -163,7 +157,26 @@ def test_invalid_octree_type():
     except TypeError as e:
         assert str(e) == (
             "Cannot use the provided octree manager type Octree. "
-            "The compatible octree manager types are [OctreeManager]."
+            "It has to be a subclass of octree_manager.OctreeManager."
+        )
+    else:
+        raise AssertionError(
+            "This type of octree manager should have caused an exception"
+        )
+
+    try:
+        Grid(
+            GridConfig(
+                octree_manager_type=OctreeManager,
+                octree_type=OctreeManager,
+                octree_config=OctreeConfig(),
+                grid_voxel_edge_length=5,
+            )
+        )
+    except TypeError as e:
+        assert str(e) == (
+            "Cannot use the provided octree type OctreeManager. "
+            "It has to be a subclass of octree.OctreeBase."
         )
     else:
         raise AssertionError("This type of octree should have caused an exception")

@@ -20,7 +20,11 @@ class OctreeManager(VoxelBase):
     """
 
     def __init__(
-        self, octree_type: T, octree_config: OctreeConfig, corner_min: Point, edge_length: float
+        self,
+        octree_type: T,
+        octree_config: OctreeConfig,
+        corner_min: Point,
+        edge_length: float,
     ):
         super().__init__(corner_min, edge_length)
         self._octree_type = octree_type
@@ -42,7 +46,9 @@ class OctreeManager(VoxelBase):
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
-        scheme_octree = self._octree_type(self._octree_config, self._corner_min, self._edge_length)
+        scheme_octree = self._octree_type(
+            self._octree_config, self._corner_min, self._edge_length
+        )
         scheme_octree.insert_points(
             np.vstack(
                 [
