@@ -63,10 +63,10 @@ def test_n_points(generated_grid):
 def test_n_nodes(generated_grid):
     grid, pose_points = generated_grid
 
-    assert grid.n_nodes(0) == 3
+    assert grid.n_nodes(0) == 2
     assert grid.n_nodes(1) == 3
     grid.subdivide([lambda points: len(points) > 2])
-    assert grid.n_nodes(0) == 27
+    assert grid.n_nodes(0) == 26
     assert grid.n_nodes(1) == 27
 
 

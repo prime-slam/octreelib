@@ -30,8 +30,6 @@ class OctreeManager(VoxelBase):
         self._octree_type = octree_type
         self._octree_config = octree_config
         self._octrees: Dict[int, octree_type] = {}
-        # Empty octree for poses which are not present in the manager
-        self.__empty_octree = self._octree_type(octree_config, corner_min, edge_length)
 
     def subdivide(
         self,
@@ -103,7 +101,9 @@ class OctreeManager(VoxelBase):
             return sum(
                 [octree.get_leaf_points() for octree in self._octrees.values()], []
             )
-        return self._octrees.get(pose_number, self.__empty_octree).get_leaf_points()
+        if pose_number in self._octrees:
+            return self._octrees[pose_number].get_leaf_points()
+        return []
 
     def get_points(self, pose_number: Optional[int] = None) -> PointCloud:
         """
@@ -112,7 +112,9 @@ class OctreeManager(VoxelBase):
         """
         if pose_number is None:
             return np.vstack([octree.get_points() for octree in self._octrees.values()])
-        return self._octrees.get(pose_number, self.__empty_octree).get_points()
+        if pose_number in self._octrees:
+            return self._octrees[pose_number].get_points()
+        return np.empty((0, 3), dtype=float)
 
     def n_points(self, pose_number: Optional[int] = None) -> int:
         """
@@ -121,21 +123,27 @@ class OctreeManager(VoxelBase):
         """
         if pose_number is None:
             return sum(octree.n_points() for octree in self._octrees.values())
-        return self._octrees.get(pose_number, self.__empty_octree).n_points
+        if pose_number in self._octrees:
+            return self._octrees[pose_number].n_points
+        return 0
 
     def n_leaves(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of leaves which store points for this pose.
         """
-        return self._octrees.get(pose_number, self.__empty_octree).n_leaves
+        if pose_number in self._octrees:
+            return self._octrees[pose_number].n_leaves
+        return 0
 
     def n_nodes(self, pose_number: int) -> int:
         """
         :param pose_number: Desired pose number.
         :return: Number of nodes (both leaves and not) which store points for this pose.
         """
-        return self._octrees.get(pose_number, self.__empty_octree).n_nodes
+        if pose_number in self._octrees:
+            return self._octrees[pose_number].n_nodes
+        return 0
 
     def insert_points(self, pose_number: int, points: PointCloud):
         """
