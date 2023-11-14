@@ -59,9 +59,9 @@ class GridConfigBase(ABC):
     corner: corner of a grid
     """
 
-    octree_manager_type: Type[T] = field(default_factory=lambda: OctreeManager)
-    octree_type: Type[T] = field(default_factory=lambda: Octree)
-    octree_config: OctreeConfigBase = OctreeConfigBase()
+    octree_manager_type: Type[T] = OctreeManager
+    octree_type: Type[T] = Octree
+    octree_config: OctreeConfigBase = field(default_factory=lambda: OctreeConfigBase())
     debug: bool = False
     grid_voxel_edge_length: int = 1
     corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
