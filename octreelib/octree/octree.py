@@ -197,12 +197,12 @@ class Octree(OctreeBase, Generic[T]):
         """
         self._root.subdivide(subdivision_criteria)
 
-    def subdivide_as(self, other: Octree):
+    def subdivide_as(self, other_octree: Octree):
         """
         Subdivide octree using the subdivision scheme of a different octree.
-        :param other: Octree to copy subdivision scheme from.
+        :param other_octree: Octree to copy subdivision scheme from.
         """
-        self._root.subdivide_as(other._root)
+        self._root.subdivide_as(other_octree._root)
 
     def get_points(self) -> PointCloud:
         """
