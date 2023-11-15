@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import itertools
 
 from dataclasses import dataclass
@@ -33,7 +31,7 @@ class OctreeNode(OctreeNodeBase):
             for child in self._children:
                 child.subdivide(subdivision_criteria)
 
-    def subdivide_as(self, other: OctreeNode):
+    def subdivide_as(self, other: 'OctreeNode'):
         """
         Subdivide octree node using the subdivision scheme of a different octree node.
         :param other: Octree node to copy subdivision scheme from.
