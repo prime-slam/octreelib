@@ -34,7 +34,7 @@ class OctreeManager(VoxelBase):
     def subdivide(
         self,
         subdivision_criteria: List[Callable[[PointCloud], bool]],
-        pose_numbers: Optional[List[int]],
+        pose_numbers: Optional[List[int]] = None,
     ):
         """
         Subdivide all nodes based on the subdivision criteria.
@@ -79,7 +79,7 @@ class OctreeManager(VoxelBase):
     def filter(
         self,
         filtering_criteria: List[Callable[[PointCloud], bool]],
-        pose_numbers: Optional[List[int]],
+        pose_numbers: Optional[List[int]] = None,
     ):
         """
         Filter nodes with points by filtering criteria
