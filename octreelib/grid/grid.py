@@ -71,9 +71,9 @@ class Grid(GridBase):
         voxel_indices = (
             (
                 (points - self._grid_config.corner)
-                // self._grid_config.grid_voxel_edge_length
+                // self._grid_config.voxel_edge_length
             )
-            * self._grid_config.grid_voxel_edge_length
+            * self._grid_config.voxel_edge_length
         ).astype(int)
         distributed_points = {}
         unique_indices = np.unique(voxel_indices, axis=0)
@@ -85,14 +85,14 @@ class Grid(GridBase):
         for voxel_coordinates, voxel_points in distributed_points.items():
             target_voxel = VoxelBase(
                 np.array(voxel_coordinates),
-                self._grid_config.grid_voxel_edge_length,
+                self._grid_config.voxel_edge_length,
             )
             if target_voxel not in self.__octrees:
                 self.__octrees[target_voxel] = self._grid_config.octree_manager_type(
                     self._grid_config.octree_type,
                     self._grid_config.octree_config,
                     np.array(voxel_coordinates),
-                    self._grid_config.grid_voxel_edge_length,
+                    self._grid_config.voxel_edge_length,
                 )
 
             self.__pose_voxel_coordinates[pose_number].append(target_voxel)

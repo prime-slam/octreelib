@@ -63,7 +63,7 @@ class GridConfigBase(ABC):
     octree_type: Type[T] = OctreeBase
     octree_config: OctreeConfigBase = field(default_factory=OctreeConfig)
     debug: bool = False
-    grid_voxel_edge_length: float = 1
+    voxel_edge_length: float = 1
     corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
 
     def __post_init__(self):

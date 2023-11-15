@@ -13,7 +13,7 @@ def points_are_same(points_first: PointCloud, points_second: PointCloud):
 
 @pytest.fixture()
 def generated_grid():
-    grid = Grid(GridConfig(grid_voxel_edge_length=5))
+    grid = Grid(GridConfig(voxel_edge_length=5))
     points_0 = np.array(
         [
             [0, 0, 1],  # voxel 0,0,0
@@ -151,7 +151,7 @@ def test_invalid_octree_type():
             GridConfig(
                 octree_manager_type=Octree,
                 octree_config=OctreeConfig(),
-                grid_voxel_edge_length=5,
+                voxel_edge_length=5,
             )
         )
     except TypeError as e:
@@ -170,7 +170,7 @@ def test_invalid_octree_type():
                 octree_manager_type=OctreeManager,
                 octree_type=OctreeManager,
                 octree_config=OctreeConfig(),
-                grid_voxel_edge_length=5,
+                voxel_edge_length=5,
             )
         )
     except TypeError as e:
