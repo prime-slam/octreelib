@@ -80,7 +80,7 @@ class GridConfigBase(ABC):
             )
         if not issubclass(self.octree_type, OctreeBase):
             raise TypeError(
-                f"Cannot use the provided octree type {self.octree_manager_type.__name__}. "
+                f"Cannot use the provided octree type {self.octree_type.__name__}. "
                 "It has to be a subclass of octree.OctreeBase."
             )
 

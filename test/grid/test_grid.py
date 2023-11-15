@@ -149,14 +149,14 @@ def test_invalid_octree_type():
     try:
         Grid(
             GridConfig(
-                octree_manager_type=Octree,
+                octree_manager_type=type(None),
                 octree_config=OctreeConfig(),
                 voxel_edge_length=5,
             )
         )
     except TypeError as e:
         assert str(e) == (
-            "Cannot use the provided octree manager type Octree. "
+            "Cannot use the provided octree manager type NoneType. "
             "It has to be a subclass of octree_manager.OctreeManager."
         )
     else:
@@ -168,14 +168,14 @@ def test_invalid_octree_type():
         Grid(
             GridConfig(
                 octree_manager_type=OctreeManager,
-                octree_type=OctreeManager,
+                octree_type=type(None),
                 octree_config=OctreeConfig(),
                 voxel_edge_length=5,
             )
         )
     except TypeError as e:
         assert str(e) == (
-            "Cannot use the provided octree type OctreeManager. "
+            "Cannot use the provided octree type NoneType. "
             "It has to be a subclass of octree.OctreeBase."
         )
     else:
