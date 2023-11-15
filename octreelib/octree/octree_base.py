@@ -96,7 +96,7 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
-    def subdivide_as(self, other: 'OctreeNodeBase'):
+    def subdivide_as(self, other: "OctreeNodeBase"):
         """
         Subdivide octree node using the subdivision scheme of a different octree node.
         :param other: Octree node to copy subdivision scheme from.
@@ -189,7 +189,7 @@ class OctreeBase(Voxel, ABC):
         """
         pass
 
-    def subdivide_as(self, other: 'OctreeBase'):
+    def subdivide_as(self, other: "OctreeBase"):
         """
         Subdivide octree using the subdivision scheme of a different octree.
         :param other: Octree to copy subdivision scheme from.

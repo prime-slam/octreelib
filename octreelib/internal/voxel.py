@@ -34,7 +34,7 @@ class VoxelBase(WithID):
     def __hash__(self):
         return hash((tuple(self._corner_min), self._edge_length))
 
-    def __eq__(self, other: 'VoxelBase'):
+    def __eq__(self, other: "VoxelBase"):
         return (
             all(self.corner_min == other.corner_min)
             and self.edge_length == other.edge_length

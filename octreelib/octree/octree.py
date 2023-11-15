@@ -31,7 +31,7 @@ class OctreeNode(OctreeNodeBase):
             for child in self._children:
                 child.subdivide(subdivision_criteria)
 
-    def subdivide_as(self, other: 'OctreeNode'):
+    def subdivide_as(self, other: "OctreeNode"):
         """
         Subdivide octree node using the subdivision scheme of a different octree node.
         :param other: Octree node to copy subdivision scheme from.
@@ -192,7 +192,7 @@ class Octree(OctreeBase, Generic[T]):
         """
         self._root.subdivide(subdivision_criteria)
 
-    def subdivide_as(self, other_octree: Octree):
+    def subdivide_as(self, other_octree: "Octree"):
         """
         Subdivide octree using the subdivision scheme of a different octree.
         :param other_octree: Octree to copy subdivision scheme from.
