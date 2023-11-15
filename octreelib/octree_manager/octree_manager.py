@@ -3,9 +3,8 @@ from typing import List, Callable, Optional, Dict
 import numpy as np
 
 from octreelib.internal.point import PointCloud, Point
-from octreelib.internal.typing import T
 from octreelib.internal.voxel import Voxel, VoxelBase
-from octreelib.octree.octree import Octree, OctreeConfig
+from octreelib.octree.octree_base import OctreeBase, OctreeConfigBase
 
 __all__ = ["OctreeManager"]
 
@@ -21,8 +20,8 @@ class OctreeManager(VoxelBase):
 
     def __init__(
         self,
-        octree_type: T,
-        octree_config: OctreeConfig,
+        octree_type: OctreeBase,
+        octree_config: OctreeConfigBase,
         corner_min: Point,
         edge_length: float,
     ):
