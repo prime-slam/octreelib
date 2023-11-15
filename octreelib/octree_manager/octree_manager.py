@@ -150,7 +150,14 @@ class OctreeManager(VoxelBase):
         :param points: Points to insert
         """
         if pose_number not in self._octrees:
-            self._octrees[pose_number] = self._octree_type(
-                self._octree_config, self._corner_min, self._edge_length
-            )
+            if len(self._octrees) != 0:
+                subdivision_scheme_octree = list(self._octrees.values())[0]
+                self._octrees[pose_number] = self._octree_type(
+                    self._octree_config, self._corner_min, self._edge_length
+                )
+                self._octrees[pose_number].subdivide_as(subdivision_scheme_octree)
+            else:
+                self._octrees[pose_number] = self._octree_type(
+                    self._octree_config, self._corner_min, self._edge_length
+                )
         self._octrees[pose_number].insert_points(points)
