@@ -69,10 +69,7 @@ class Grid(GridBase):
 
         # distribute points to voxels
         voxel_indices = (
-            (
-                (points - self._grid_config.corner)
-                // self._grid_config.voxel_edge_length
-            )
+            ((points - self._grid_config.corner) // self._grid_config.voxel_edge_length)
             * self._grid_config.voxel_edge_length
         ).astype(int)
         distributed_points = {}
