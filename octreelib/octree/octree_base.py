@@ -69,7 +69,8 @@ class OctreeNodeBase(Voxel, ABC):
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
-        :param filtering_criteria: List of filtering criteria functions
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         pass
 
@@ -92,7 +93,8 @@ class OctreeNodeBase(Voxel, ABC):
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
-        :param subdivision_criteria: list of criteria for subdivision
+        :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
+        If any of the criteria returns **true**, the octree node is subdivided.
         """
         pass
 
@@ -160,7 +162,8 @@ class OctreeBase(Voxel, ABC):
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         filter nodes with points by criterion
-        :param filtering_criteria:
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         pass
 

@@ -22,7 +22,8 @@ class OctreeNode(OctreeNodeBase):
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
-        :param subdivision_criteria: list of criteria for subdivision
+        :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
+        If any of the criteria returns **true**, the octree node is subdivided.
         """
         if any([criterion(self._points) for criterion in subdivision_criteria]):
             self._children = self._generate_children()
@@ -89,7 +90,8 @@ class OctreeNode(OctreeNodeBase):
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
-        :param filtering_criteria: List of filtering criteria functions.
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         if self._has_children:
             for child in self._children:
@@ -187,7 +189,8 @@ class Octree(OctreeBase, Generic[T]):
     def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
-        :param subdivision_criteria: list of criteria for subdivision
+        :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
+        If any of the criteria returns **true**, the octree node is subdivided.
         """
         self._root.subdivide(subdivision_criteria)
 
@@ -213,7 +216,8 @@ class Octree(OctreeBase, Generic[T]):
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
-        :param filtering_criteria: List of filtering criteria functions
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         self._root.filter(filtering_criteria)
 
