@@ -1,4 +1,4 @@
-from typing import List, Callable, Optional, Dict
+from typing import List, Callable, Optional, Dict, Type
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class OctreeManager(VoxelBase):
 
     def __init__(
         self,
-        octree_type: OctreeBase,
+        octree_type: Type[OctreeBase],
         octree_config: OctreeConfigBase,
         corner_min: Point,
         edge_length: float,
