@@ -28,7 +28,7 @@ class GridConfig(GridConfigBase):
     octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
     debug: debug mode
-    grid_voxel_edge_length: initial size of voxels
+    voxel_edge_length: initial size of voxels
     corner: corner of a grid
     """
 

@@ -55,13 +55,13 @@ class GridConfigBase(ABC):
     octree_type: type of Octree used
     octree_config: config to be forwarded to the octrees
     debug: debug mode
-    grid_voxel_edge_length: initial size of voxels
+    voxel_edge_length: initial size of voxels
     corner: corner of a grid
     """
 
     octree_manager_type: Type[T] = OctreeManager
     octree_type: Type[T] = OctreeBase
-    octree_config: OctreeConfigBase = field(default_factory=OctreeConfig)
+    octree_config: OctreeConfigBase = field(default_factory=OctreeConfigBase)
     debug: bool = False
     voxel_edge_length: float = 1
     corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
