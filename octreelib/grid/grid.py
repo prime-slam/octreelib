@@ -24,12 +24,14 @@ class GridConfig(GridConfigBase):
     """
     Config for Grid
 
-    octree_manager_type: type of OctreeManager used
+    octree_manager_type: type of OctreeManager used.
+        OctreeManager is responsible for managing octrees for different poses.
     octree_type: type of Octree used
-    octree_config: config to be forwarded to the octrees
-    debug: debug mode
-    voxel_edge_length: initial size of voxels
-    corner: corner of a grid
+        Octree is the data structure used for storing points.
+    octree_config: This config will be forwarded to the octrees.
+    debug: True enables debug mode.
+    voxel_edge_length: Initial size of voxels.
+    corner: Corner of a grid.
     """
 
     octree_type: Type[T] = Octree
@@ -57,9 +59,10 @@ class Grid(GridBase):
 
     def insert_points(self, pose_number: int, points: PointCloud):
         """
-        Insert points to the grid
-        :param pose_number: pose to which the cloud is inserted
-        :param points: point cloud
+        Insert points to the according octree.
+        If an octree for this pos does not exist, a new octree is created
+        :param pose_number: Pose number to which the cloud is inserted.
+        :param points: Point cloud to be inserted.
         """
         if pose_number in self.__pose_voxel_coordinates:
             raise ValueError(f"Cannot insert points to existing pose {pose_number}")
@@ -97,15 +100,15 @@ class Grid(GridBase):
 
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
-        Transforms point cloud in each leaf node of each octree using the function
-        :param function: transformation function PointCloud -> PointCloud
+        Transform point cloud in each node of each octree using the function
+        :param function: Transformation function PointCloud -> PointCloud. It is applied to each leaf node.
         """
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].map_leaf_points(function)
 
     def get_leaf_points(self, pose_number: int) -> List[Voxel]:
         """
-        :param pose_number: Pose number.
+        :param pose_number: The desired pose number.
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
@@ -119,8 +122,9 @@ class Grid(GridBase):
 
     def get_points(self, pose_number: int) -> PointCloud:
         """
-        :param pose_number: Pose number.
-        :return: All points inside the grid.
+        Returns points for a specific pose number.
+        :param pose_number: The desired pose number.
+        :return: Points belonging to the pose.
         """
         return np.vstack(
             [octree.get_points(pose_number) for octree in self.__octrees.values()]
@@ -144,8 +148,9 @@ class Grid(GridBase):
 
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
-        Filters nodes of each octree with points by criteria
-        :param filtering_criteria: Filtering Criteria
+        Filters nodes of each octree with points by criterion
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].filter(filtering_criteria)
@@ -213,22 +218,21 @@ class Grid(GridBase):
 
     def n_leaves(self, pose_number: int) -> int:
         """
-        :param pose_number: Pose number.
-        :return: Number of leaves in all octrees, which store points for given pose.
+        :param pose_number: The desired pose number.
+        :return: Number of leaf nodes in the octree for given pose number.
         """
         return sum([octree.n_leaves(pose_number) for octree in self.__octrees.values()])
 
     def n_points(self, pose_number: int) -> int:
         """
-        :param pose_number: Pose number.
-        :return: Number of points for given pose.
+        :param pose_number: The desired pose number.
+        :return: Number of points of an octree for given pose number.
         """
         return sum([octree.n_points(pose_number) for octree in self.__octrees.values()])
 
     def n_nodes(self, pose_number: int) -> int:
         """
-        :param pose_number: Pose number.
-        :return: Number of nodes in all octrees, which store points for given pose
-        (either themselves, or through their child nodes).
+        :param pose_number: The desired pose number.
+        :return: Number of nodes of an octree for given pose number.
         """
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])

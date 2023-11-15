@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Generic, List, Type
+from typing import Callable, Generic, List, Type, Optional
 
 import numpy as np
 
@@ -51,12 +51,14 @@ class GridConfigBase(ABC):
     """
     Config for Grid
 
-    octree_manager_type: type of OctreeManager used
+    octree_manager_type: type of OctreeManager used.
+        OctreeManager is responsible for managing octrees for different poses.
     octree_type: type of Octree used
-    octree_config: config to be forwarded to the octrees
-    debug: debug mode
-    voxel_edge_length: initial size of voxels
-    corner: corner of a grid
+        Octree is the data structure used for storing points.
+    octree_config: This config will be forwarded to the octrees.
+    debug: True enables debug mode.
+    voxel_edge_length: Initial size of voxels.
+    corner: Corner of a grid.
     """
 
     octree_manager_type: Type[T] = OctreeManager
@@ -105,26 +107,31 @@ class GridBase(ABC, Generic[T]):
         """
         Insert points to the according octree.
         If an octree for this pos does not exist, a new octree is created
-        :param pose_number: pos to which the cloud is inserted
-        :param points: point cloud
+        :param pose_number: Pose number to which the cloud is inserted.
+        :param points: Point cloud to be inserted.
         """
         pass
 
     @abstractmethod
     def get_points(self, pose_number: int) -> List[Point]:
         """
-        Returns points for a specific pos
-        :param pose_number: the desired pos
-        :return: point cloud
+        Returns points for a specific pose number.
+        :param pose_number: The desired pose number.
+        :return: Points belonging to the pose.
         """
         pass
 
     @abstractmethod
-    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
+    def subdivide(
+        self,
+        subdivision_criteria: List[Callable[[PointCloud], bool]],
+        pose_numbers: Optional[List[int]] = None,
+    ):
         """
-        Subdivides all octrees
-        :param subdivision_criteria: criteria for subdivision.
-        If any of the criteria returns **true**, the octree node is subdivided
+        Subdivides all octrees based on all points and given subdivision criteria.
+        :param pose_numbers: List of pose numbers to subdivide.
+        :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
+        If any of the criteria returns **true**, the octree node is subdivided.
         """
         pass
 
@@ -132,7 +139,8 @@ class GridBase(ABC, Generic[T]):
     def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filters nodes of each octree with points by criterion
-        :param filtering_criteria:
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         pass
 
@@ -140,14 +148,14 @@ class GridBase(ABC, Generic[T]):
     def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         Transform point cloud in each node of each octree using the function
-        :param function: transformation function PointCloud -> PointCloud
+        :param function: Transformation function PointCloud -> PointCloud. It is applied to each leaf node.
         """
         pass
 
     @abstractmethod
     def get_leaf_points(self, pose_number: int) -> List[Voxel]:
         """
-        :param pose_number: the desired pose number
+        :param pose_number: The desired pose number.
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
@@ -164,23 +172,23 @@ class GridBase(ABC, Generic[T]):
     @abstractmethod
     def n_nodes(self, pose_number: int):
         """
-        :param pose_number: desired pose number.
-        :return: number of nodes of an octree for given pose number
+        :param pose_number: The desired pose number.
+        :return: Number of nodes of an octree for given pose number.
         """
         pass
 
     @abstractmethod
     def n_points(self, pose_number: int):
         """
-        :param pose_number: desired pose number.
-        :return: number of points of an octree for given pose number
+        :param pose_number: The desired pose number.
+        :return: Number of points of an octree for given pose number.
         """
         pass
 
     @abstractmethod
     def n_leaves(self, pose_number: int):
         """
-        :param pose_number: the desired pose number.
-        :return: number of leaf nodes in the octree for given pose number
+        :param pose_number: The desired pose number.
+        :return: Number of leaf nodes in the octree for given pose number.
         """
         pass
