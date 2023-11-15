@@ -34,8 +34,7 @@ class GridConfig(GridConfigBase):
     corner: Corner of a grid.
     """
 
-    octree_type: Type[T] = Octree
-    octree_config: OctreeConfig = field(default_factory=OctreeConfig)
+    pass
 
 
 class Grid(GridBase):

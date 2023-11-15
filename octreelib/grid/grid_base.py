@@ -8,7 +8,7 @@ import numpy as np
 from octreelib.internal.point import Point, PointCloud
 from octreelib.internal.voxel import Voxel
 from octreelib.internal.typing import T
-from octreelib.octree import OctreeConfigBase, OctreeBase
+from octreelib.octree import OctreeConfigBase, OctreeBase, Octree, OctreeConfig
 from octreelib.octree_manager import OctreeManager
 
 __all__ = ["GridVisualizationType", "VisualizationConfig", "GridConfigBase", "GridBase"]
@@ -61,9 +61,9 @@ class GridConfigBase(ABC):
     corner: Corner of a grid.
     """
 
-    octree_manager_type: Type[T] = OctreeManager
-    octree_type: Type[T] = OctreeBase
-    octree_config: OctreeConfigBase = field(default_factory=OctreeConfigBase)
+    octree_manager_type: Type[OctreeManager] = OctreeManager
+    octree_type: Type[OctreeBase] = Octree
+    octree_config: OctreeConfigBase = field(default_factory=OctreeConfig)
     debug: bool = False
     voxel_edge_length: float = 1
     corner: Point = field(default_factory=lambda: np.array(([0.0, 0.0, 0.0])))
