@@ -6,7 +6,7 @@ To install the latest version of the library, run
 pip install git+https://github.com/true-real-michael/octreelib
 ```
 
-To install a specific version, use **tags**, for example tag `v0.0.1-alpha`
+To install a specific version, use **tags**, for example tag `v0.0.3`
 ```shell
-pip install git+https://github.com/true-real-michael/octreelib@v0.0.1-alpha
+pip install git+https://github.com/true-real-michael/octreelib@v0.0.3
 ```
