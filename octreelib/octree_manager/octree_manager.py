@@ -151,8 +151,8 @@ class OctreeManager(VoxelBase):
 
     def insert_points(self, pose_number: int, points: PointCloud):
         """
-        :param pose_number:
-        :param points: Points to insert
+        :param pose_number: Desired pose number.
+        :param points: Points to insert.
         """
         if pose_number not in self._octrees:
             self._octrees[pose_number] = self._octree_type(
