@@ -160,10 +160,10 @@ class Grid(GridBase):
         """
         plot = k3d.Plot()
         random.seed(config.seed)
-        poses_number = len(self.__octrees.keys()) + 1
+        poses_numbers = self.__pose_voxel_coordinates.keys()
 
         if config.type is GridVisualizationType.POSE:
-            for pose_number in range(poses_number):
+            for pose_number in poses_numbers:
                 color = random.randrange(0, 0xFFFFFF)
                 points = self.get_points(pose_number=pose_number)
 
@@ -174,7 +174,7 @@ class Grid(GridBase):
                 )
         elif config.type is GridVisualizationType.VOXEL:
             voxels_colors = {}
-            for pose_number in range(poses_number):
+            for pose_number in poses_numbers:
                 leaves = self.get_leaf_points(pose_number=pose_number)
                 for leaf in leaves:
                     if leaf.id not in voxels_colors.keys():
@@ -188,7 +188,7 @@ class Grid(GridBase):
                     )
 
         vertices = []
-        for pose_number in range(poses_number):
+        for pose_number in poses_numbers:
             # TODO: Draw full grid including empty voxels
             leaves = self.get_leaf_points(pose_number=pose_number)
             for leaf in leaves:
