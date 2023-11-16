@@ -94,9 +94,6 @@ class OctreeNode(OctreeNodeBase):
         if self._has_children:
             for child in self._children:
                 child.filter(filtering_criteria)
-            if all([child.n_points == 0 for child in self._children]):
-                self._children = []
-                self._has_children = False
         elif not all([criterion(self._points) for criterion in filtering_criteria]):
             self._points = np.empty((0, 3), dtype=float)
 

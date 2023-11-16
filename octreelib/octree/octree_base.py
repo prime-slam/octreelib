@@ -96,6 +96,7 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
+    @abstractmethod
     def subdivide_as(self, other: "OctreeNodeBase"):
         """
         Subdivide octree node using the subdivision scheme of a different octree node.
@@ -189,6 +190,7 @@ class OctreeBase(Voxel, ABC):
         """
         pass
 
+    @abstractmethod
     def subdivide_as(self, other: "OctreeBase"):
         """
         Subdivide octree using the subdivision scheme of a different octree.
