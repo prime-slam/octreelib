@@ -29,7 +29,8 @@ class OctreeManager(VoxelBase):
         self._octree_type = octree_type
         self._octree_config = octree_config
         self._octrees: Dict[int, octree_type] = {}
-        # all octrees are subdivided as the scheme octree
+        # All octrees are subdivided as the scheme octree
+        # Create a default scheme octree without subdivision
         self._scheme_octree = octree_type(octree_config, corner_min, edge_length)
 
     def subdivide(
