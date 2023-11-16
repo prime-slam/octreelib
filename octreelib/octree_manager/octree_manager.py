@@ -29,6 +29,8 @@ class OctreeManager(VoxelBase):
         self._octree_type = octree_type
         self._octree_config = octree_config
         self._octrees: Dict[int, octree_type] = {}
+        # all octrees are subdivided as the scheme octree
+        self._scheme_octree = octree_type(octree_config, corner_min, edge_length)
 
     def subdivide(
         self,
@@ -43,10 +45,11 @@ class OctreeManager(VoxelBase):
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
-        scheme_octree = self._octree_type(
+        # Create a scheme octree from all points for given poses
+        self._scheme_octree = self._octree_type(
             self._octree_config, self._corner_min, self._edge_length
         )
-        scheme_octree.insert_points(
+        self._scheme_octree.insert_points(
             np.vstack(
                 [
                     self._octrees[pose_number].get_points()
@@ -54,10 +57,12 @@ class OctreeManager(VoxelBase):
                 ]
             )
         )
-        scheme_octree.subdivide(subdivision_criteria)
+        self._scheme_octree.subdivide(subdivision_criteria)
+        # Remove all points from the scheme octree
+        self._scheme_octree.filter([lambda _: False])
 
         for pose_number in self._octrees:
-            self._octrees[pose_number].subdivide_as(scheme_octree)
+            self._octrees[pose_number].subdivide_as(self._scheme_octree)
 
     def map_leaf_points(
         self,
@@ -150,14 +155,8 @@ class OctreeManager(VoxelBase):
         :param points: Points to insert
         """
         if pose_number not in self._octrees:
-            if len(self._octrees) != 0:
-                subdivision_scheme_octree = list(self._octrees.values())[0]
-                self._octrees[pose_number] = self._octree_type(
-                    self._octree_config, self._corner_min, self._edge_length
-                )
-                self._octrees[pose_number].subdivide_as(subdivision_scheme_octree)
-            else:
-                self._octrees[pose_number] = self._octree_type(
-                    self._octree_config, self._corner_min, self._edge_length
-                )
+            self._octrees[pose_number] = self._octree_type(
+                self._octree_config, self._corner_min, self._edge_length
+            )
         self._octrees[pose_number].insert_points(points)
+        self._octrees[pose_number].subdivide_as(self._scheme_octree)
