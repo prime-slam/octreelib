@@ -4,11 +4,7 @@ from typing import Optional
 import numpy as np
 
 from octreelib.internal.interfaces import WithID
-from octreelib.internal.point import (
-    RawPoint,
-    RawPointCloud,
-    PointCloud,
-)
+from octreelib.internal.point import Point, PointCloud
 
 __all__ = ["Voxel", "VoxelBase"]
 
@@ -24,31 +20,24 @@ class VoxelBase(WithID):
 
     def __init__(
         self,
-        corner_min: RawPoint,
+        corner_min: Point,
         edge_length: float,
     ):
         self._corner_min = corner_min
         self._edge_length = edge_length
 
-        voxel_position_hash = hash(
-            PointCloud(np.vstack([corner_min, corner_min + edge_length]))
-        )
+        if self not in self._static_voxel_id_map:
+            self._static_voxel_id_map[self] = len(self._static_voxel_id_map)
 
-        if voxel_position_hash not in self._static_voxel_id_map:
-            self._static_voxel_id_map[voxel_position_hash] = len(
-                self._static_voxel_id_map
-            )
+        WithID.__init__(self, self._static_voxel_id_map[self])
 
-        WithID.__init__(self, self._static_voxel_id_map[voxel_position_hash])
+    def __hash__(self):
+        return hash((tuple(self._corner_min), self._edge_length))
 
-    def is_point_geometrically_inside(self, point: RawPoint) -> bool:
-        """
-        This method checks if the point is inside the voxel geometrically.
-        :param point: Point to check.
-        :return: True if point is inside the bounding box of a voxel, False if outside.
-        """
-        return bool((point >= self.corner_min).all()) and bool(
-            (point <= self.corner_max).all()
+    def __eq__(self, other: "VoxelBase"):
+        return (
+            all(self.corner_min == other.corner_min)
+            and self.edge_length == other.edge_length
         )
 
     @property
@@ -83,22 +72,24 @@ class Voxel(VoxelBase):
 
     def __init__(
         self,
-        corner_min: RawPoint,
+        corner_min: Point,
         edge_length: float,
-        points: Optional[RawPointCloud] = None,
+        points: Optional[PointCloud] = None,
     ):
         super().__init__(corner_min, edge_length)
 
-        self._points: PointCloud = points if points is not None else PointCloud.empty()
+        self._points: PointCloud = (
+            points if points is not None else np.empty((0, 3), dtype=float)
+        )
 
-    def get_points(self) -> RawPointCloud:
+    def get_points(self) -> PointCloud:
         """
         :return: Points, which are stored inside the voxel.
         """
         return self._points.copy()
 
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         """
         :param points: Points to insert
         """
-        self._points = self._points.extend(points)
+        self._points = np.vstack([self._points, points])

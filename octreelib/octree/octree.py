@@ -5,7 +5,7 @@ from typing import Callable, List, Generic
 
 import numpy as np
 
-from octreelib.internal import RawPointCloud, T, Voxel, PointCloud
+from octreelib.internal import PointCloud, T, Voxel
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
@@ -17,77 +17,95 @@ class OctreeConfig(OctreeConfigBase):
 
 
 class OctreeNode(OctreeNodeBase):
-    _point_cloud_type = PointCloud
-
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
-        :param subdivision_criteria: list of criteria for subdivision
+        :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
+        If any of the criteria returns **true**, the octree node is subdivided.
         """
         if any([criterion(self._points) for criterion in subdivision_criteria]):
-            child_edge_length = self.edge_length / np.float_(2)
-            children_corners_offsets = itertools.product(
-                [0, child_edge_length], repeat=3
-            )
-            self._children = [
-                OctreeNode(self.corner_min + offset, child_edge_length)
-                for offset in children_corners_offsets
-            ]
+            self._children = self._generate_children()
             self._has_children = True
             self.insert_points(self._points.copy())
-            self._points = self._point_cloud_type.empty()
+            self._points = np.empty((0, 3), dtype=float)
             for child in self._children:
                 child.subdivide(subdivision_criteria)
 
-    def get_points(self) -> RawPointCloud:
+    def subdivide_as(self, other: "OctreeNode"):
+        """
+        Subdivide octree node using the subdivision scheme of a different octree node.
+        :param other: Octree node to copy subdivision scheme from.
+        """
+        if other._has_children and not self._has_children:
+            self._children = self._generate_children()
+            self._has_children = True
+            self.insert_points(self._points.copy())
+            self._points = np.empty((0, 3), dtype=float)
+
+        if other._has_children:
+            for self_child, other_child in zip(self._children, other._children):
+                self_child.subdivide_as(other_child)
+        elif self._has_children:
+            self._points = self.get_points()
+            self._has_children = False
+            self._children = []
+
+    def get_points(self) -> PointCloud:
         """
         :return: Points inside the octree node.
         """
         if not self._has_children:
             return self._points.copy()
 
-        points = self._point_cloud_type.empty()
+        points = np.empty((0, 3), dtype=float)
         for child in self._children:
             points = np.vstack((points, child.get_points()))
         return points
 
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         """
         :param points: Points to insert.
         """
-        # convert to internal type
-        points = self._point_cloud_type(points)
         if self._has_children:
-            for point in points:
-                for child in self._children:
-                    if child.is_point_geometrically_inside(point):
-                        child.insert_points(point)
-        else:
-            self._points = self._points.extend(points)
+            # distribute points to children
+            clouds = []
+            for offset in itertools.product([0, self.edge_length / 2], repeat=3):
+                child_corner_min = self.corner_min + np.array(offset)
+                child_corner_max = child_corner_min + self.edge_length / 2
+                # find points in the child
+                mask = np.all(
+                    (points >= child_corner_min) & (points < child_corner_max), axis=1
+                )
+                child_points = points[mask]
+                clouds.append(child_points)
 
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+            # insert points to children
+            for child, cloud in zip(self._children, clouds):
+                child.insert_points(cloud)
+        else:
+            self._points = np.vstack([self._points, points])
+
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
-        :param filtering_criteria: List of filtering criteria functions.
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         if self._has_children:
             for child in self._children:
                 child.filter(filtering_criteria)
-            if all([child.n_points == 0 for child in self._children]):
-                self._children = []
-                self._has_children = False
         elif not all([criterion(self._points) for criterion in filtering_criteria]):
-            self._points = self._point_cloud_type.empty()
+            self._points = np.empty((0, 3), dtype=float)
 
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         Transform point cloud in the node using the function.
-        :param function: Transformation function RawPointCloud -> RawPointCloud.
+        :param function: Transformation function PointCloud -> PointCloud.
         """
         if self._has_children:
             for child in self._children:
                 child.map_leaf_points(function)
-        elif self._points:
+        elif len(self._points):
             self._points = function(self._points.copy())
 
     def get_leaf_points(self) -> List[Voxel]:
@@ -96,7 +114,11 @@ class OctreeNode(OctreeNodeBase):
         """
         if self._has_children:
             return sum([child.get_leaf_points() for child in self._children], [])
-        return [self] if len(self._points) else []
+        return (
+            [Voxel(self.corner_min, self.edge_length, self._points)]
+            if len(self._points)
+            else []
+        )
 
     @property
     def n_leaves(self):
@@ -107,6 +129,8 @@ class OctreeNode(OctreeNodeBase):
             sum([child.n_leaves for child in self._children])
             if self._has_children
             else 1
+            if len(self._points) != 0
+            else 0
         )
 
     @property
@@ -115,7 +139,7 @@ class OctreeNode(OctreeNodeBase):
         :return: number of nodes
         """
         return (
-            len(self._children) + sum([child.n_nodes for child in self._children])
+            sum([child.n_nodes for child in self._children]) + 1
             if self._has_children
             else 1
         )
@@ -131,6 +155,20 @@ class OctreeNode(OctreeNodeBase):
             else len(self._points)
         )
 
+    def _generate_children(self):
+        """
+        Generate children of the node.
+        """
+        child_edge_length = self.edge_length / np.float_(2)
+        children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
+        return [
+            OctreeNode(
+                self.corner_min + offset,
+                child_edge_length,
+            )
+            for internal_position, offset in enumerate(children_corners_offsets)
+        ]
+
 
 class Octree(OctreeBase, Generic[T]):
     """
@@ -143,36 +181,45 @@ class Octree(OctreeBase, Generic[T]):
 
     _node_type = OctreeNode
 
-    def subdivide(self, subdivision_criteria: List[Callable[[RawPointCloud], bool]]):
+    def subdivide(self, subdivision_criteria: List[Callable[[PointCloud], bool]]):
         """
         Subdivide node based on the subdivision criteria.
-        :param subdivision_criteria: list of criteria for subdivision
+        :param subdivision_criteria: List of bool functions which represent criteria for subdivision.
+        If any of the criteria returns **true**, the octree node is subdivided.
         """
         self._root.subdivide(subdivision_criteria)
 
-    def get_points(self) -> RawPointCloud:
+    def subdivide_as(self, other_octree: "Octree"):
+        """
+        Subdivide octree using the subdivision scheme of a different octree.
+        :param other_octree: Octree to copy subdivision scheme from.
+        """
+        self._root.subdivide_as(other_octree._root)
+
+    def get_points(self) -> PointCloud:
         """
         :return: Points, which are stored inside the Octree.
         """
         return self._root.get_points()
 
-    def insert_points(self, points: RawPointCloud):
+    def insert_points(self, points: PointCloud):
         """
         :param points: Points to insert
         """
         self._root.insert_points(points)
 
-    def filter(self, filtering_criteria: List[Callable[[RawPointCloud], bool]]):
+    def filter(self, filtering_criteria: List[Callable[[PointCloud], bool]]):
         """
         Filter nodes with points by filtering criteria
-        :param filtering_criteria: List of filtering criteria functions
+        :param filtering_criteria: List of bool functions which represent criteria for filtering.
+            If any of the criteria returns **false**, the point cloud in octree leaf is removed.
         """
         self._root.filter(filtering_criteria)
 
-    def map_leaf_points(self, function: Callable[[RawPointCloud], RawPointCloud]):
+    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
         """
         transform point cloud in the node using the function
-        :param function: transformation function RawPointCloud -> RawPointCloud
+        :param function: transformation function PointCloud -> PointCloud
         """
         self._root.map_leaf_points(function)
 

@@ -1,29 +1,19 @@
 import numpy as np
 import pytest
 
-from octreelib.internal import RawPointCloud
+from octreelib.internal import PointCloud
 from octreelib.grid import Grid, GridConfig
-from octreelib.octree import (
-    MultiPoseOctree,
-    MultiPoseOctreeConfig,
-    OctreeConfig,
-    Octree,
-)
+from octreelib.octree import OctreeConfig, Octree
+from octreelib.octree_manager import OctreeManager
 
 
-def points_are_same(points_first: RawPointCloud, points_second: RawPointCloud):
+def points_are_same(points_first: PointCloud, points_second: PointCloud):
     return set(map(str, points_first.tolist())) == set(map(str, points_second.tolist()))
 
 
 @pytest.fixture()
 def generated_grid():
-    grid = Grid(
-        GridConfig(
-            octree_type=MultiPoseOctree,
-            octree_config=MultiPoseOctreeConfig(),
-            grid_voxel_edge_length=5,
-        )
-    )
+    grid = Grid(GridConfig(voxel_edge_length=5))
     points_0 = np.array(
         [
             [0, 0, 1],  # voxel 0,0,0
@@ -53,31 +43,31 @@ def generated_grid():
 def test_n_leaves(generated_grid):
     grid, pose_points = generated_grid
 
-    assert 2 == grid.n_leaves(0)
-    assert 3 == grid.n_leaves(1)
+    assert grid.n_leaves(0) == 2
+    assert grid.n_leaves(1) == 3
     grid.subdivide([lambda points: len(points) > 2])
-    assert 4 == grid.n_leaves(0)
-    assert 5 == grid.n_leaves(1)
+    assert grid.n_leaves(0) == 4
+    assert grid.n_leaves(1) == 5
 
 
 def test_n_points(generated_grid):
     grid, pose_points = generated_grid
 
-    assert 5 == grid.n_points(0)
-    assert 5 == grid.n_points(1)
+    assert grid.n_points(0) == 5
+    assert grid.n_points(1) == 5
     grid.subdivide([lambda points: len(points) > 2])
-    assert 5 == grid.n_points(0)
-    assert 5 == grid.n_points(1)
+    assert grid.n_points(0) == 5
+    assert grid.n_points(1) == 5
 
 
 def test_n_nodes(generated_grid):
     grid, pose_points = generated_grid
 
-    assert 2 == grid.n_nodes(0)
-    assert 3 == grid.n_nodes(1)
+    assert grid.n_nodes(0) == 2
+    assert grid.n_nodes(1) == 3
     grid.subdivide([lambda points: len(points) > 2])
-    assert 7 == grid.n_nodes(0)
-    assert 8 == grid.n_nodes(1)
+    assert grid.n_nodes(0) == 26
+    assert grid.n_nodes(1) == 27
 
 
 def test_get_points(generated_grid):
@@ -90,19 +80,16 @@ def test_get_points(generated_grid):
 
 
 @pytest.mark.parametrize(
-    "subdivision_criteria, nodes_expected, leaves_expected",
+    "subdivision_criteria, leaves_expected",
     [
-        ([lambda points: len(points) > 2], [7, 8], [4, 5]),
-        ([lambda points: len(points) > 3], [4, 6], [3, 5]),
+        ([lambda points: len(points) > 2], [4, 5]),
+        ([lambda points: len(points) > 3], [3, 5]),
     ],
 )
-def test_subdivide(
-    generated_grid, subdivision_criteria, nodes_expected, leaves_expected
-):
+def test_subdivide(generated_grid, subdivision_criteria, leaves_expected):
     grid, pose_points = generated_grid
 
     grid.subdivide(subdivision_criteria)
-    assert nodes_expected == [grid.n_nodes(0), grid.n_nodes(1)]
     assert leaves_expected == [grid.n_leaves(0), grid.n_leaves(1)]
 
 
@@ -134,8 +121,12 @@ def test_get_leaf_points(generated_grid):
         )
         == 3
     )
-    assert leaf_points_pos_0[0].id == leaf_points_pos_1[0].id
-    assert leaf_points_pos_0[1].id == leaf_points_pos_1[1].id
+
+    assert {
+        leaf_points_pos_0_voxel.id for leaf_points_pos_0_voxel in leaf_points_pos_0
+    }.issubset(
+        {leaf_points_pos_1_voxel.id for leaf_points_pos_1_voxel in leaf_points_pos_1}
+    )
 
     assert set(map(str, leaf_points_pos_0[0].get_points())) == set(
         map(str, pose_points[0][:3])
@@ -147,26 +138,45 @@ def test_get_leaf_points(generated_grid):
         map(str, pose_points[1][:3])
     )
     assert set(map(str, leaf_points_pos_1[1].get_points())) == set(
-        map(str, pose_points[1][3:4])
+        map(str, pose_points[1][4:])
     )
     assert set(map(str, leaf_points_pos_1[2].get_points())) == set(
-        map(str, pose_points[1][4:])
+        map(str, pose_points[1][3:4])
     )
 
 
 def test_invalid_octree_type():
     try:
-        grid = Grid(
+        Grid(
             GridConfig(
-                octree_type=Octree,
+                octree_manager_type=type(None),
                 octree_config=OctreeConfig(),
-                grid_voxel_edge_length=5,
+                voxel_edge_length=5,
             )
         )
     except TypeError as e:
         assert str(e) == (
-            "Cannot use the provided octree type Octree. "
-            "The compatible octree types are [MultiPoseOctree]."
+            "Cannot use the provided octree manager type NoneType. "
+            "It has to be a subclass of octree_manager.OctreeManager."
+        )
+    else:
+        raise AssertionError(
+            "This type of octree manager should have caused an exception"
+        )
+
+    try:
+        Grid(
+            GridConfig(
+                octree_manager_type=OctreeManager,
+                octree_type=type(None),
+                octree_config=OctreeConfig(),
+                voxel_edge_length=5,
+            )
+        )
+    except TypeError as e:
+        assert str(e) == (
+            "Cannot use the provided octree type NoneType. "
+            "It has to be a subclass of octree.OctreeBase."
         )
     else:
         raise AssertionError("This type of octree should have caused an exception")
