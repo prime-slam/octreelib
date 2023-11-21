@@ -36,6 +36,7 @@ class VisualizationConfig:
     line_color: Represents color of voxels lines in Grid
     visualization_filepath: Path to produced `.html` file
     visualization_seed: Represents random seed for generating colors
+    voxels_mask: Represents mask of voxels which were used on optimisation stage
     """
 
     type: GridVisualizationType = GridVisualizationType.VOXEL
@@ -44,6 +45,7 @@ class VisualizationConfig:
     line_color: int = 0xFF0000
     filepath: str = "visualization.html"
     seed: int = 0
+    voxels_mask: List[bool] = field(default_factory=list)
 
 
 @dataclass
