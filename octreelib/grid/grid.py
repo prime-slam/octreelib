@@ -168,7 +168,10 @@ class Grid(GridBase):
                 color = random.randrange(0, 0xFFFFFF)
                 leaves = self.get_leaf_points(pose_number=pose_number)
                 for leaf in leaves:
-                    if leaf.id < len(config.voxels_mask) and not config.voxels_mask[leaf.id]:
+                    if (
+                        leaf.id < len(config.voxels_mask)
+                        and not config.voxels_mask[leaf.id]
+                    ):
                         color = unused_voxel_color
 
                     plot += k3d.points(
@@ -183,7 +186,10 @@ class Grid(GridBase):
                 for leaf in leaves:
                     if leaf.id not in voxels_colors.keys():
                         color = random.randrange(0, 0xFFFFFF)
-                        if leaf.id < len(config.voxels_mask) and not config.voxels_mask[leaf.id]:
+                        if (
+                            leaf.id < len(config.voxels_mask)
+                            and not config.voxels_mask[leaf.id]
+                        ):
                             color = unused_voxel_color
 
                         voxels_colors[leaf.id] = color
