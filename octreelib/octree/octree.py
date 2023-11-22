@@ -71,6 +71,8 @@ class OctreeNode(OctreeNodeBase):
             child_indices_for_points = (
                 (points - self.corner_min) // (self.edge_length / 2)
             ).astype(int)
+
+            # Create a unique identifier for each voxel based on its indices
             unique_indices, inverse_indices = np.unique(
                 child_indices_for_points, axis=0, return_inverse=True
             )

@@ -67,7 +67,7 @@ class Grid(GridBase):
         # Register pose
         self.__pose_voxel_coordinates[pose_number] = []
 
-        # Distribute points to voxels using numpy operations
+        # Distribute points to voxels
         voxel_indices = (
             (points - self._grid_config.corner) // self._grid_config.voxel_edge_length
         ) * self._grid_config.voxel_edge_length
