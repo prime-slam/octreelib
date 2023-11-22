@@ -79,7 +79,10 @@ class Grid(GridBase):
             voxel_indices, axis=0, return_inverse=True
         )
 
-        # Use numpy advanced indexing to group points by voxel
+        # Points are reordered based on the `point_inverse_indices`, so that they can be split
+        # into groups of points, where each group is inserted into the corresponding voxel.
+        # The indices for splitting are calculated using `np.cumsum()` based on the number
+        # of points which would be distributed into each voxel.
         grouped_points = np.split(
             points[point_inverse_indices.argsort()],
             np.cumsum(np.bincount(point_inverse_indices))[:-1],
