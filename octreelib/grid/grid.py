@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import random
-from typing import List, Dict, Callable, Optional, Type
+from typing import List, Dict, Callable, Optional
 
 import k3d
 import numpy as np
