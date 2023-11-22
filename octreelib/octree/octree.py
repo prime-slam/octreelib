@@ -68,20 +68,21 @@ class OctreeNode(OctreeNodeBase):
         """
         if self._has_children:
             # distribute points to children
-            clouds = []
-            for offset in itertools.product([0, self.edge_length / 2], repeat=3):
-                child_corner_min = self.corner_min + np.array(offset)
-                child_corner_max = child_corner_min + self.edge_length / 2
-                # find points in the child
-                mask = np.all(
-                    (points >= child_corner_min) & (points < child_corner_max), axis=1
+            child_indices_for_points = (
+                (points - self.corner_min) // (self.edge_length / 2)
+            ).astype(int)
+            unique_indices, inverse_indices = np.unique(
+                child_indices_for_points, axis=0, return_inverse=True
+            )
+            grouped_points = np.split(
+                points[inverse_indices.argsort()],
+                np.cumsum(np.bincount(inverse_indices))[:-1],
+            )
+            for child_index, child_points in zip(unique_indices, grouped_points):
+                child_internal_id = (
+                    child_index[0] * 4 + child_index[1] * 2 + child_index[2]
                 )
-                child_points = points[mask]
-                clouds.append(child_points)
-
-            # insert points to children
-            for child, cloud in zip(self._children, clouds):
-                child.insert_points(cloud)
+                self._children[child_internal_id].insert_points(child_points)
         else:
             self._points = np.vstack([self._points, points])
 
