@@ -67,27 +67,30 @@ class OctreeNode(OctreeNodeBase):
         :param points: Points to insert.
         """
         if self._has_children:
-            # For all points calculate the child to insert in
-            child_indices_for_points = (
+            # For all points calculate the voxel to insert in
+            voxel_indices = (
                 (points - self.corner_min) // (self.edge_length / 2)
             ).astype(int)
 
             # Create a unique identifier for each voxel based on its indices
-            unique_indices, inverse_indices = np.unique(
-                child_indices_for_points, axis=0, return_inverse=True
+            unique_voxel_indices, point_inverse_indices = np.unique(
+                voxel_indices, axis=0, return_inverse=True
             )
 
-            # Reorder and group points by the child to insert in
+            # Reorder and group points by the voxel
             grouped_points = np.split(
-                points[inverse_indices.argsort()],
-                np.cumsum(np.bincount(inverse_indices))[:-1],
+                points[point_inverse_indices.argsort()],
+                np.cumsum(np.bincount(point_inverse_indices))[:-1],
             )
-            for child_index, child_points in zip(unique_indices, grouped_points):
+            for unique_voxel_index, child_points in zip(
+                unique_voxel_indices, grouped_points
+            ):
                 # Calculate the internal child id from its binary representation
-                child_internal_id = (
-                    child_index[0] * 4 + child_index[1] * 2 + child_index[2]
+                child_id = sum(
+                    2**i * exists_offset
+                    for i, exists_offset in enumerate(unique_voxel_index[::-1])
                 )
-                self._children[child_internal_id].insert_points(child_points)
+                self._children[child_id].insert_points(child_points)
         else:
             self._points = np.vstack([self._points, points])
 

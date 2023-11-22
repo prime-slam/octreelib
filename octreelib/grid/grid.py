@@ -75,18 +75,20 @@ class Grid(GridBase):
         ).astype(int)
 
         # Create a unique identifier for each voxel based on its indices
-        unique_indices, inverse_indices = np.unique(
+        unique_voxel_indices, point_inverse_indices = np.unique(
             voxel_indices, axis=0, return_inverse=True
         )
 
         # Use numpy advanced indexing to group points by voxel
         grouped_points = np.split(
-            points[inverse_indices.argsort()],
-            np.cumsum(np.bincount(inverse_indices))[:-1],
+            points[point_inverse_indices.argsort()],
+            np.cumsum(np.bincount(point_inverse_indices))[:-1],
         )
 
         # Insert points to octrees
-        for voxel_coordinates, voxel_points in zip(unique_indices, grouped_points):
+        for voxel_coordinates, voxel_points in zip(
+            unique_voxel_indices, grouped_points
+        ):
             target_voxel = VoxelBase(
                 np.array(voxel_coordinates),
                 self._grid_config.voxel_edge_length,
