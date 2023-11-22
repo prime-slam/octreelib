@@ -59,29 +59,35 @@ class Grid(GridBase):
     def insert_points(self, pose_number: int, points: PointCloud):
         """
         Insert points to the according octree.
-        If an octree for this pos does not exist, a new octree is created
+        If an octree for this pose does not exist, a new octree is created
         :param pose_number: Pose number to which the cloud is inserted.
         :param points: Point cloud to be inserted.
         """
         if pose_number in self.__pose_voxel_coordinates:
             raise ValueError(f"Cannot insert points to existing pose {pose_number}")
 
-        # register pose
+        # Register pose
         self.__pose_voxel_coordinates[pose_number] = []
 
-        # distribute points to voxels
+        # Distribute points to voxels using numpy operations
         voxel_indices = (
-            ((points - self._grid_config.corner) // self._grid_config.voxel_edge_length)
-            * self._grid_config.voxel_edge_length
-        ).astype(int)
-        distributed_points = {}
-        unique_indices = np.unique(voxel_indices, axis=0)
-        for unique_id in unique_indices:
-            mask = np.where((voxel_indices == unique_id).all(axis=1))
-            distributed_points[tuple(unique_id)] = points[mask]
+            (points - self._grid_config.corner) // self._grid_config.voxel_edge_length
+        ) * self._grid_config.voxel_edge_length
+        voxel_indices = voxel_indices.astype(int)
 
-        # insert points to octrees
-        for voxel_coordinates, voxel_points in distributed_points.items():
+        # Create a unique identifier for each voxel based on its indices
+        unique_indices, inverse_indices = np.unique(
+            voxel_indices, axis=0, return_inverse=True
+        )
+
+        # Use numpy advanced indexing to group points by voxel
+        grouped_points = np.split(
+            points[inverse_indices.argsort()],
+            np.cumsum(np.bincount(inverse_indices))[:-1],
+        )
+
+        # Insert points to octrees
+        for voxel_coordinates, voxel_points in zip(unique_indices, grouped_points):
             target_voxel = VoxelBase(
                 np.array(voxel_coordinates),
                 self._grid_config.voxel_edge_length,
