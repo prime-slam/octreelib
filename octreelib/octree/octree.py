@@ -67,18 +67,21 @@ class OctreeNode(OctreeNodeBase):
         :param points: Points to insert.
         """
         if self._has_children:
-            # distribute points to children
+            # For all points calculate the child to insert in
             child_indices_for_points = (
                 (points - self.corner_min) // (self.edge_length / 2)
             ).astype(int)
             unique_indices, inverse_indices = np.unique(
                 child_indices_for_points, axis=0, return_inverse=True
             )
+
+            # Reorder and group points by the child to insert in
             grouped_points = np.split(
                 points[inverse_indices.argsort()],
                 np.cumsum(np.bincount(inverse_indices))[:-1],
             )
             for child_index, child_points in zip(unique_indices, grouped_points):
+                # Calculate the internal child id from its binary representation
                 child_internal_id = (
                     child_index[0] * 4 + child_index[1] * 2 + child_index[2]
                 )

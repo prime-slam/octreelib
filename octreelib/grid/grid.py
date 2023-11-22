@@ -11,10 +11,8 @@ from octreelib.grid.grid_base import (
     GridVisualizationType,
     VisualizationConfig,
 )
-from octreelib.internal.typing import T
 from octreelib.internal.point import PointCloud
 from octreelib.internal.voxel import Voxel, VoxelBase
-from octreelib.octree import Octree, OctreeConfig
 
 __all__ = ["Grid", "GridConfig"]
 
