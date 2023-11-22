@@ -69,9 +69,10 @@ class Grid(GridBase):
 
         # Distribute points to voxels
         voxel_indices = (
-            (points - self._grid_config.corner) // self._grid_config.voxel_edge_length
-        ) * self._grid_config.voxel_edge_length
-        voxel_indices = voxel_indices.astype(int)
+            (points - self._grid_config.corner)
+            // self._grid_config.voxel_edge_length
+            * self._grid_config.voxel_edge_length
+        ).astype(int)
 
         # Create a unique identifier for each voxel based on its indices
         unique_indices, inverse_indices = np.unique(
