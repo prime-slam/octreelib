@@ -67,21 +67,33 @@ class OctreeNode(OctreeNodeBase):
         :param points: Points to insert.
         """
         if self._has_children:
-            # distribute points to children
-            clouds = []
-            for offset in itertools.product([0, self.edge_length / 2], repeat=3):
-                child_corner_min = self.corner_min + np.array(offset)
-                child_corner_max = child_corner_min + self.edge_length / 2
-                # find points in the child
-                mask = np.all(
-                    (points >= child_corner_min) & (points < child_corner_max), axis=1
-                )
-                child_points = points[mask]
-                clouds.append(child_points)
+            # For all points calculate the voxel to insert in
+            voxel_indices = (
+                (points - self.corner_min) // (self.edge_length / 2)
+            ).astype(int)
 
-            # insert points to children
-            for child, cloud in zip(self._children, clouds):
-                child.insert_points(cloud)
+            # Create a unique identifier for each voxel based on its indices
+            unique_voxel_indices, point_inverse_indices = np.unique(
+                voxel_indices, axis=0, return_inverse=True
+            )
+
+            # Points are reordered based on the `point_inverse_indices`, so that they can be split
+            # into groups of points, where each group is inserted into the corresponding voxel.
+            # The indices for splitting are calculated using `np.cumsum()` based on the number
+            # of points which would be distributed into each voxel.
+            grouped_points = np.split(
+                points[point_inverse_indices.argsort()],
+                np.cumsum(np.bincount(point_inverse_indices))[:-1],
+            )
+            for unique_voxel_index, child_points in zip(
+                unique_voxel_indices, grouped_points
+            ):
+                # Calculate the internal child id from its binary representation
+                child_id = sum(
+                    2**i * exists_offset
+                    for i, exists_offset in enumerate(unique_voxel_index[::-1])
+                )
+                self._children[child_id].insert_points(child_points)
         else:
             self._points = np.vstack([self._points, points])
 
