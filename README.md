@@ -1,12 +1,29 @@
-# OcTree Library
+# Octreelib
+
+Octreelib is a Python library for working with octrees.
+It is capable of processing point clouds and using octrees to store them.
+It is also capable of working with a grid of octrees of fixed resolution and processing multiple distinct point clouds
+in the same grid synchronizing their subdivision schemes.
+
+
+[![tests](https://github.com/prime-slam/octreelib/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/prime-slam/octreelib/actions/workflows/python-package.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-black)]()
+[![Code style: black](https://img.shields.io/badge/code%20style-flake8-black)]()
+[![License: Apache License 2.0](https://img.shields.io/github/license/saltstack/salt)](https://opensource.org/license/apache-2-0/)
+
+
 
 ## Installation
+
 To install the latest version of the library, run
+
 ```shell
 pip install git+https://github.com/prime-slam/octreelib
 ```
 
 To install a specific version, use **tags**, for example tag `v0.0.3`
+
 ```shell
 pip install git+https://github.com/prime-slam/octreelib@v0.0.3
 ```
+
