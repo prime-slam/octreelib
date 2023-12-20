@@ -5,7 +5,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-flake8-black)]()
 [![License: Apache License 2.0](https://img.shields.io/github/license/saltstack/salt)](https://opensource.org/license/apache-2-0/)
 
-<image src="./.github/image.png" height="180">
+<image src="assets/image.png" height="180">
 
 Octreelib is a Python library for working with octrees.
 It is capable of processing point clouds and using octrees to store them.
