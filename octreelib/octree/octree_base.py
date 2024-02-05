@@ -175,6 +175,16 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
+    def map_leaf_points_cuda(self, function, n_blocks, n_threads_per_block):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
+        :param n_threads_per_block: Number of threads for the CUDA kernel.
+        """
+        pass
+
+    @abstractmethod
     def get_leaf_points(self) -> List[Voxel]:
         """
         :return: List of PointClouds where each PointCloud

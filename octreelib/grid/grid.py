@@ -115,6 +115,20 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].map_leaf_points(function)
 
+    def map_leaf_points_cuda(
+        self, function, n_blocks: int = 8, n_threads_per_block: int = 256
+    ):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
+        :param n_threads_per_block: Number of threads for the CUDA kernel.
+        """
+        for voxel_coordinates in self.__octrees:
+            self.__octrees[voxel_coordinates].map_leaf_points_cuda(
+                function, n_blocks, n_threads_per_block
+            )
+
     def get_leaf_points(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: The desired pose number.
