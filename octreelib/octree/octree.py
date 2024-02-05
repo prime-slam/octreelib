@@ -142,17 +142,18 @@ class OctreeNode(OctreeNodeBase):
             block_sizes = np.array(
                 [len(v.get_points()) for v in self.get_leaf_points()], dtype=np.int32
             )
-            # block_start_indices_1 = np.cumsum(np.insert(block_sizes, 0, 0))[:-1]
             block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
-            result_mask = np.zeros(len(points), dtype=bool)
 
-            function.fit(
+            maximum_mask = function.fit(
                 points,
                 block_sizes,
                 block_start_indices,
-                n_blocks,
+                len(block_sizes),
                 n_threads_per_block,
             )
+
+            self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float))
+            self.insert_points(points[maximum_mask.astype(bool)])
 
     def get_leaf_points(self) -> List[Voxel]:
         """

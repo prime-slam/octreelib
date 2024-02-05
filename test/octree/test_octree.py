@@ -11,7 +11,11 @@ __all__ = ["test_octree", "test_octree_node"]
 @pytest.fixture()
 def generated_multi_pose_large():
     def generate_planar_cloud(N, A, B, C, D, voxel_corner, edge_length, sigma):
-        voxel_points = np.random.rand(N, 3) * np.array([edge_length] * 3) + voxel_corner
+        voxel_points = (
+            np.random.rand(N, 3) * np.array([edge_length - 6 * sigma] * 3)
+            + voxel_corner
+            + 3 * sigma
+        )
         noise = np.random.normal(0, sigma, (N,))
         plane_points_z = (-A * voxel_points[:, 0] - B * voxel_points[:, 1] - D) / C
         noisy_plane_points_z = plane_points_z + noise

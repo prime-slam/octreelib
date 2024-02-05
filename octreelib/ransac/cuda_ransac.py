@@ -86,7 +86,7 @@ def _do_fit(
         distance = math.fabs(_cu_dot(w[0], w[1], w[2], p[0], p[1], p[2]) + w[3])
         sum = sum + distance
         if distance < threshold:
-            result_mask[block_start_indices[j] + jj] = 1
+            result_mask[i][block_start_indices[j] + jj] = 1
 
 
 class CudaRansac:
@@ -120,7 +120,7 @@ class CudaRansac:
         best_model = np.zeros(5, dtype=np.float32)
         best_model[0] = 0
 
-        result_mask = np.zeros(len(point_cloud), dtype=np.int32)
+        result_mask = np.zeros((n_threads_per_block, len(point_cloud)), dtype=np.int32)
         result_mask_cuda = cuda.to_device(result_mask)
 
         rng_states = create_xoroshiro128p_states(n_threads_per_block * n_blocks, seed=0)
@@ -132,7 +132,8 @@ class CudaRansac:
             result_mask,
             rng_states,
         )
-        return result_mask
+        maximum_mask = result_mask[np.argmax(result_mask.sum(axis=1), axis=0)]
+        return maximum_mask
 
     @cuda.jit
     def my_RANSAC(
