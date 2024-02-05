@@ -50,6 +50,45 @@ def _process_inliers(inlier_count, this_model, best_model):
         best_model[4] = this_model[3]
 
 
+@cuda.jit
+def _do_fit(
+    points: PointCloud,
+    block_sizes: npt.NDArray,
+    block_start_indices: npt.NDArray,
+    threshold: float,
+    result_mask: npt.NDArray,
+    rng_states,
+):
+    thread_id = cuda.grid(1)
+
+    (i, j, k) = (cuda.threadIdx.x, cuda.blockIdx.x, cuda.blockDim.x)
+
+    i1 = _cuRand(rng_states, 0, block_sizes[j])
+    i2 = _cuRand(rng_states, 0, block_sizes[j])
+    i3 = _cuRand(rng_states, 0, block_sizes[j])
+
+    (p1, p2, p3) = (
+        points[block_start_indices[j] + i1],
+        points[block_start_indices[j] + i2],
+        points[block_start_indices[j] + i3],
+    )
+    # w = plane_coefficients[j, i]  # cuda.local.array(shape=4, dtype=nb.float32)
+    w = cuda.local.array(shape=4, dtype=nb.float32)
+    ux, uy, uz = _cu_subtract_point(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2])
+    vx, vy, vz = _cu_subtract_point(p2[0], p2[1], p2[2], p3[0], p3[1], p3[2])
+    w[0], w[1], w[2] = _crossNormal(ux, uy, uz, vx, vy, vz)
+    w[3] = -_cu_dot(w[0], w[1], w[2], p1[0], p1[1], p1[2])
+
+    cc = 0.0
+    sum = 0
+    for jj in range(block_sizes[j]):
+        p = points[block_start_indices[j] + jj]
+        distance = math.fabs(_cu_dot(w[0], w[1], w[2], p[0], p[1], p[2]) + w[3])
+        sum = sum + distance
+        if distance < threshold:
+            result_mask[block_start_indices[j] + jj] = 1
+
+
 class CudaRansac:
     def __init__(
         self,
@@ -70,44 +109,6 @@ class CudaRansac:
         self.__iterations: int = iterations
         self.__debug: bool = debug
 
-    @cuda.jit
-    def _do_fit(
-        self,
-        points: PointCloud,
-        block_sizes: npt.NDArray,
-        block_start_indices: npt.NDArray,
-        result_mask: npt.NDArray,
-        rng_states,
-    ):
-        thread_id = cuda.grid(1)
-
-        (i, j, k) = (cuda.threadIdx.x, cuda.blockIdx.x, cuda.blockDim.x)
-
-        i1 = _cuRand(rng_states, 0, block_sizes[j])
-        i2 = _cuRand(rng_states, 0, block_sizes[j])
-        i3 = _cuRand(rng_states, 0, block_sizes[j])
-
-        (p1, p2, p3) = (
-            points[block_start_indices[j] + i1],
-            points[block_start_indices[j] + i2],
-            points[block_start_indices[j] + i3],
-        )
-        # w = plane_coefficients[j, i]  # cuda.local.array(shape=4, dtype=nb.float32)
-        w = cuda.local.array(shape=4, dtype=nb.float32)
-        ux, uy, uz = _cu_subtract_point(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2])
-        vx, vy, vz = _cu_subtract_point(p2[0], p2[1], p2[2], p3[0], p3[1], p3[2])
-        w[0], w[1], w[2] = _crossNormal(ux, uy, uz, vx, vy, vz)
-        w[3] = -_cu_dot(w[0], w[1], w[2], p1[0], p1[1], p1[2])
-
-        cc = 0.0
-        sum = 0
-        for jj in range(block_sizes[j]):
-            p = points[block_start_indices[j] + jj]
-            distance = math.fabs(_cu_dot(w[0], w[1], w[2], p[0], p[1], p[2]) + w[3])
-            sum = sum + distance
-            if distance < self.__threshold:
-                result_mask[block_start_indices[j] + jj] = 1
-
     def fit(
         self,
         point_cloud: PointCloud,
@@ -123,11 +124,11 @@ class CudaRansac:
         result_mask_cuda = cuda.to_device(result_mask)
 
         rng_states = create_xoroshiro128p_states(n_threads_per_block * n_blocks, seed=0)
-        self._do_fit[n_blocks, n_threads_per_block](
-            self,
+        _do_fit[n_blocks, n_threads_per_block](
             point_cloud,
             block_sizes,
             block_start_indices,
+            self.__threshold,
             result_mask,
             rng_states,
         )
