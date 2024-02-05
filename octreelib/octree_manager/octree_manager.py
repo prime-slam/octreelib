@@ -81,6 +81,28 @@ class OctreeManager(VoxelBase):
         for pose_number in pose_numbers:
             self._octrees[pose_number].map_leaf_points(function)
 
+    def map_leaf_points_cuda(
+        self,
+        function,
+        pose_numbers: Optional[List[int]] = None,
+        n_blocks: int = 8,
+        n_threads_per_block: int = 256,
+    ):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        :param pose_numbers: List of pose numbers to filter
+        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
+        :param n_threads_per_block: Number of threads for the CUDA kernel.
+        """
+        if pose_numbers is None:
+            pose_numbers = self._octrees.keys()
+
+        for pose_number in pose_numbers:
+            self._octrees[pose_number].map_leaf_points_cuda(
+                function, n_blocks, n_threads_per_block
+            )
+
     def filter(
         self,
         filtering_criteria: List[Callable[[PointCloud], bool]],
