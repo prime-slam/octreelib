@@ -2,11 +2,10 @@ import numpy as np
 import pytest
 
 from octreelib.octree import OctreeNode, Octree, OctreeConfig
+from octreelib.ransac.cuda_ransac import CudaRansac
 
 
 __all__ = ["test_octree", "test_octree_node"]
-
-from ransac.cuda_ransac import CudaRansac
 
 
 @pytest.fixture()

@@ -1,12 +1,13 @@
-import numpy as np
-import numpy.typing as npt
-from numba import cuda
-from numba.cuda.random import xoroshiro128p_uniform_float32
-import numba as nb
 import math
 
-from internal import PointCloud
+import numpy as np
+import numpy.typing as npt
+import numba as nb
+from numba import cuda
 from numba.cuda.random import create_xoroshiro128p_states
+from numba.cuda.random import xoroshiro128p_uniform_float32
+
+from octreelib.internal import PointCloud
 
 
 @cuda.jit(device=True, inline=True)
