@@ -84,9 +84,9 @@ class OctreeManager(VoxelBase):
     def map_leaf_points_cuda(
         self,
         function,
-        pose_numbers: Optional[List[int]] = None,
         n_blocks: int = 8,
         n_threads_per_block: int = 256,
+        pose_numbers: Optional[List[int]] = None,
     ):
         """
         transform point cloud in the node using the function
