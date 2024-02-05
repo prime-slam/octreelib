@@ -4,11 +4,14 @@ from dataclasses import dataclass
 from typing import Callable, List, Generic
 
 import numpy as np
+from numba.cuda.random import create_xoroshiro128p_states
 
 from octreelib.internal import PointCloud, T, Voxel
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
+
+from ransac.cuda_ransac import CudaRansac
 
 
 @dataclass
@@ -119,6 +122,39 @@ class OctreeNode(OctreeNodeBase):
                 child.map_leaf_points(function)
         elif len(self._points):
             self._points = function(self._points.copy())
+
+    def map_leaf_points_cuda(
+        self,
+        function: CudaRansac,
+        n_blocks: int,
+        n_threads_per_block: int = 256,
+    ):
+        """
+        Transform point cloud in the node using the function.
+        :param function: Transformation function PointCloud -> PointCloud.
+        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
+        :param n_threads_per_block: Number of threads for the CUDA kernel.
+        """
+
+        if self.n_leaves > n_blocks:
+            for child in self._children:
+                child.map_leaf_points_cuda(function, n_blocks, n_threads_per_block)
+        else:
+            points = np.vstack([v.get_points() for v in self.get_leaf_points()])
+            block_sizes = np.array(
+                [len(v.get_points()) for v in self.get_leaf_points()], dtype=np.int32
+            )
+            # block_start_indices_1 = np.cumsum(np.insert(block_sizes, 0, 0))[:-1]
+            block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+            result_mask = np.zeros(len(points), dtype=bool)
+
+            function.fit(
+                points,
+                block_sizes,
+                block_start_indices,
+                n_blocks,
+                n_threads_per_block,
+            )
 
     def get_leaf_points(self) -> List[Voxel]:
         """
@@ -232,6 +268,17 @@ class Octree(OctreeBase, Generic[T]):
         :param function: transformation function PointCloud -> PointCloud
         """
         self._root.map_leaf_points(function)
+
+    def map_leaf_points_cuda(
+        self, function: CudaRansac, n_blocks: int = 8, n_threads_per_block: int = 256
+    ):
+        """
+        transform point cloud in the node using the function
+        :param function: transformation function PointCloud -> PointCloud
+        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
+        :param n_threads_per_block: Number of threads for the CUDA kernel.
+        """
+        self._root.map_leaf_points_cuda(function, n_blocks, n_threads_per_block)
 
     def get_leaf_points(self) -> List[Voxel]:
         """
