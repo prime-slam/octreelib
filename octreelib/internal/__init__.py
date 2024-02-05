@@ -1,6 +1,7 @@
 """
 This module contains library's internal classes, functions and definitions
 """
+
 import octreelib.internal.interfaces as interfaces_module
 import octreelib.internal.point as point_module
 import octreelib.internal.typing as typing_module
