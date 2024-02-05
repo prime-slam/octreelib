@@ -44,3 +44,5 @@ jobs:
       run: |
         pip install .
         pytest
+      env:
+        NUMBA_ENABLE_CUDASIM: 1
