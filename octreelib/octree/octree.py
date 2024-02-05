@@ -4,14 +4,12 @@ from dataclasses import dataclass
 from typing import Callable, List, Generic
 
 import numpy as np
-from numba.cuda.random import create_xoroshiro128p_states
 
 from octreelib.internal import PointCloud, T, Voxel
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
+from octreelib.ransac.cuda_ransac import CudaRansac
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
-
-from ransac.cuda_ransac import CudaRansac
 
 
 @dataclass
