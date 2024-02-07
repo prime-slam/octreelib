@@ -117,21 +117,22 @@ class CudaRansac:
         n_blocks: int,
         n_threads_per_block: int,
     ):
-        best_model = np.zeros(5, dtype=np.float32)
-        best_model[0] = 0
-
         result_mask = np.zeros((n_threads_per_block, len(point_cloud)), dtype=np.int32)
         result_mask_cuda = cuda.to_device(result_mask)
+        point_cloud_cuda = cuda.to_device(point_cloud)
+        block_sizes_cuda = cuda.to_device(block_sizes)
+        block_start_indices_cuda = cuda.to_device(block_start_indices)
 
         rng_states = create_xoroshiro128p_states(n_threads_per_block * n_blocks, seed=0)
         _do_fit[n_blocks, n_threads_per_block](
-            point_cloud,
-            block_sizes,
-            block_start_indices,
+            point_cloud_cuda,
+            block_sizes_cuda,
+            block_start_indices_cuda,
             self.__threshold,
-            result_mask,
+            result_mask_cuda,
             rng_states,
         )
+        result_mask = result_mask_cuda.copy_to_host()
         maximum_mask = result_mask[np.argmax(result_mask.sum(axis=1), axis=0)]
         return maximum_mask
 
