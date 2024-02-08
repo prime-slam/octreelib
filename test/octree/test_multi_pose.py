@@ -4,10 +4,51 @@ import pytest
 from octreelib.internal import PointCloud, Voxel
 from octreelib.octree import OctreeConfig, Octree
 from octreelib.octree_manager import OctreeManager
+from octreelib.ransac.cuda_ransac import CudaRansac
 
 
 def points_are_same(points_first: PointCloud, points_second: PointCloud):
     return set(map(str, points_first.tolist())) == set(map(str, points_second.tolist()))
+
+
+@pytest.fixture()
+def generated_multi_pose_large():
+    def generate_planar_cloud(N, A, B, C, D, voxel_corner, edge_length, sigma):
+        voxel_points = (
+            np.random.rand(N, 3) * np.array([edge_length - 6 * sigma] * 3)
+            + voxel_corner
+            + 3 * sigma
+        )
+        noise = np.random.normal(0, sigma, (N,))
+        plane_points_z = (-A * voxel_points[:, 0] - B * voxel_points[:, 1] - D) / C
+        noisy_plane_points_z = plane_points_z + noise
+        return np.column_stack((voxel_points[:, :2], noisy_plane_points_z))
+
+    N = 100
+    A, B, C, D = 1, 2, 3, 0.5
+    corner = np.array([0, 0, 0])
+    edge_length = 5
+    sigma = 0.5
+
+    octree_manager = OctreeManager(Octree, OctreeConfig(), corner, edge_length * 2)
+    octree_manager.insert_points(
+        0, generate_planar_cloud(N, A, B, C, D, corner, edge_length, sigma)
+    )
+    octree_manager.insert_points(
+        0,
+        generate_planar_cloud(N, -A, B, C, D, corner + edge_length, edge_length, sigma),
+    )
+    octree_manager.insert_points(
+        1, generate_planar_cloud(N, A, B, C, D, corner, edge_length, sigma)
+    )
+    octree_manager.insert_points(
+        1,
+        generate_planar_cloud(N, -A, B, C, D, corner + edge_length, edge_length, sigma),
+    )
+
+    octree_manager.subdivide([lambda points: len(points) > 150], [0])
+
+    return octree_manager
 
 
 @pytest.fixture()
@@ -186,3 +227,8 @@ def test_n_points(generated_multi_pose):
     multi_pose, clouds = generated_multi_pose
     assert multi_pose.n_points(0) == 3
     assert multi_pose.n_points(1) == 3
+
+
+def test_map_leaf_points_cuda(generated_multi_pose_large):
+    octree_manager = generated_multi_pose_large
+    octree_manager.map_leaf_points_cuda(CudaRansac(), 8**2, 16)

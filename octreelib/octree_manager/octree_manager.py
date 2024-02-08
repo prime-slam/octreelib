@@ -81,6 +81,42 @@ class OctreeManager(VoxelBase):
         for pose_number in pose_numbers:
             self._octrees[pose_number].map_leaf_points(function)
 
+    def _do_map_leaf_points_cuda(
+        self, function, n_blocks, n_threads_per_block, pose_numbers
+    ):
+        # combined_point_cloud = [self._octrees[pose_number].get_leaf_points() for pose_number in pose_numbers]
+        # combined_cloud = np.vstack([point.get_points() for point in combined_point_cloud])
+
+        combined_point_cloud = np.vstack(
+            [v.get_points() for v in self.get_leaf_points()]
+        )
+        block_sizes = np.array(
+            [len(v.get_points()) for v in self.get_leaf_points()], dtype=np.int32
+        )
+        block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+        octree_dividers = [self._octrees[i].n_points for i in pose_numbers]
+
+        maximum_mask = function.fit(
+            combined_point_cloud,
+            block_sizes,
+            block_start_indices,
+            len(block_sizes),
+            n_threads_per_block,
+        )
+
+        self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float))
+
+        divided_point_cloud = np.split(
+            combined_point_cloud, np.cumsum(octree_dividers)[:-1]
+        )
+        divided_mask = np.split(maximum_mask, np.cumsum(octree_dividers)[:-1])
+        for i, (point_cloud, mask) in enumerate(zip(divided_point_cloud, divided_mask)):
+            if mask.sum() > 0:
+                self._octrees[pose_numbers[i]].insert_points(
+                    point_cloud[mask.astype(bool)]
+                )
+        # self.insert_points(combined_point_cloud[maximum_mask.astype(bool)])
+
     def map_leaf_points_cuda(
         self,
         function,
@@ -98,9 +134,25 @@ class OctreeManager(VoxelBase):
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
+        current_leaves = 0
+        current_poses = []
         for pose_number in pose_numbers:
-            self._octrees[pose_number].map_leaf_points_cuda(
-                function, n_blocks, n_threads_per_block
+            if current_leaves == 0 and self._octrees[pose_number].n_leaves > n_blocks:
+                self._octrees[pose_number].map_leaf_points_cuda(
+                    function, n_blocks, n_threads_per_block
+                )
+            elif current_leaves + self._octrees[pose_number].n_leaves > n_blocks:
+                self._do_map_leaf_points_cuda(
+                    function, n_blocks, n_threads_per_block, current_poses
+                )
+                current_leaves = 0
+                current_poses = []
+            else:
+                current_leaves += self._octrees[pose_number].n_leaves
+                current_poses.append(pose_number)
+        if current_leaves > 0:
+            self._do_map_leaf_points_cuda(
+                function, n_blocks, n_threads_per_block, current_poses
             )
 
     def filter(
