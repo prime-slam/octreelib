@@ -163,7 +163,7 @@ class Grid(GridBase):
         for pose_number in self.__pose_voxel_coordinates:
             combined_point_cloud = self.get_points(pose_number)
             block_sizes = np.array(
-                [len(v.get_points()) for v in self.get_leaf_points(pose_number)],
+                [len(v.get_points()) for v in self.get_leaf_points(pose_number, non_empty=False)],
                 dtype=np.int32,
             )
             block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
@@ -201,15 +201,16 @@ class Grid(GridBase):
         # for voxel_coordinates in self.__octrees:
         #     self.__octrees[voxel_coordinates].map_leaf_points_cuda(function)
 
-    def get_leaf_points(self, pose_number: int) -> List[Voxel]:
+    def get_leaf_points(self, pose_number: int, non_empty: bool = True) -> List[Voxel]:
         """
         :param pose_number: The desired pose number.
+        :param non_empty: If True, returns only non-empty voxels.
         :return: List of voxels. Each voxel is a representation of a leaf node.
         Each voxel has the same corner, edge_length and points as one of the leaf nodes.
         """
         return sum(
             [
-                self.__octrees[voxel_coordinates].get_leaf_points(pose_number)
+                self.__octrees[voxel_coordinates].get_leaf_points(non_empty, pose_number)
                 for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]
             ],
             [],

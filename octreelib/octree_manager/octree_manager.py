@@ -5,7 +5,6 @@ import numpy as np
 from octreelib.internal.point import PointCloud, Point
 from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.octree.octree_base import OctreeBase, OctreeConfigBase
-from octreelib.ransac.cuda_ransac import CudaRansac
 
 __all__ = ["OctreeManager"]
 
@@ -83,87 +82,6 @@ class OctreeManager(VoxelBase):
             if pose_number in self._octrees:
                 self._octrees[pose_number].map_leaf_points(function)
 
-    def _do_map_leaf_points_cuda(self, function, pose_numbers):
-        # combined_point_cloud = [self._octrees[pose_number].get_leaf_points() for pose_number in pose_numbers]
-        # combined_cloud = np.vstack([point.get_points() for point in combined_point_cloud])
-
-        combined_point_cloud = np.vstack(
-            [v.get_points() for v in self.get_leaf_points()]
-        )
-        block_sizes = np.array(
-            [len(v.get_points()) for v in self.get_leaf_points()], dtype=np.int32
-        )
-        block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
-        octree_dividers = [self._octrees[i].n_points for i in pose_numbers]
-
-        block_sizes = np.pad(block_sizes, (0, function.n_blocks - len(block_sizes)))
-        block_start_indices = np.pad(
-            block_start_indices, (0, function.n_blocks - len(block_start_indices))
-        )
-
-        maximum_mask = function.fit(
-            combined_point_cloud,
-            block_sizes,
-            block_start_indices,
-        )
-
-        self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float))
-
-        divided_point_cloud = np.split(
-            combined_point_cloud, np.cumsum(octree_dividers)[:-1]
-        )
-        divided_mask = np.split(maximum_mask, np.cumsum(octree_dividers)[:-1])
-        for i, (point_cloud, mask) in enumerate(zip(divided_point_cloud, divided_mask)):
-            if mask.sum() > 0:
-                self._octrees[pose_numbers[i]].insert_points(
-                    point_cloud[mask.astype(bool)]
-                )
-        # self.insert_points(combined_point_cloud[maximum_mask.astype(bool)])
-
-    def map_leaf_points_cuda(
-        self,
-        function: CudaRansac,
-        pose_numbers: Optional[List[int]] = None,
-    ):
-        """
-        transform point cloud in the node using the function
-        :param function: transformation function PointCloud -> PointCloud
-        :param pose_numbers: List of pose numbers to filter
-        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
-        :param n_threads_per_block: Number of threads for the CUDA kernel.
-        """
-        if pose_numbers is None:
-            pose_numbers = self._octrees.keys()
-
-        USE_OCTREE_MANAGER_PARALLELIZATION = False
-        if USE_OCTREE_MANAGER_PARALLELIZATION:
-            # print("Using octree manager parallelization")
-            current_leaves = 0
-            current_poses = []
-            for pose_number in pose_numbers:
-                if (
-                    current_leaves == 0
-                    and self._octrees[pose_number].n_leaves > function.n_blocks
-                ):
-                    self._octrees[pose_number].map_leaf_points_cuda(function)
-                elif (
-                    current_leaves + self._octrees[pose_number].n_leaves
-                    > function.n_blocks
-                ):
-                    self._do_map_leaf_points_cuda(function, current_poses)
-                    current_leaves = 0
-                    current_poses = []
-                else:
-                    current_leaves += self._octrees[pose_number].n_leaves
-                    current_poses.append(pose_number)
-            if current_leaves > 0:
-                self._do_map_leaf_points_cuda(function, current_poses)
-        else:
-            for pose_number in pose_numbers:
-                self._octrees[pose_number].map_leaf_points_cuda(
-                    function,
-                )
-
     def filter(
         self,
         filtering_criteria: List[Callable[[PointCloud], bool]],
@@ -180,17 +98,18 @@ class OctreeManager(VoxelBase):
         for pose_number in pose_numbers:
             self._octrees[pose_number].filter(filtering_criteria)
 
-    def get_leaf_points(self, pose_number: Optional[int] = None) -> List[Voxel]:
+    def get_leaf_points(self, non_empty: bool = True, pose_number: Optional[int] = None) -> List[Voxel]:
         """
+        :param non_empty: If True, only non-empty leaf nodes are returned.
         :param pose_number: Desired pose number.
         :return: List of leaf voxels with points for this pose.
         """
         if pose_number is None:
             return sum(
-                [octree.get_leaf_points() for octree in self._octrees.values()], []
+                [octree.get_leaf_points(non_empty) for octree in self._octrees.values()], []
             )
         if pose_number in self._octrees:
-            return self._octrees[pose_number].get_leaf_points()
+            return self._octrees[pose_number].get_leaf_points(non_empty)
         return []
 
     def get_points(self, pose_number: Optional[int] = None) -> PointCloud:
