@@ -98,7 +98,9 @@ class OctreeManager(VoxelBase):
         for pose_number in pose_numbers:
             self._octrees[pose_number].filter(filtering_criteria)
 
-    def get_leaf_points(self, non_empty: bool = True, pose_number: Optional[int] = None) -> List[Voxel]:
+    def get_leaf_points(
+        self, non_empty: bool = True, pose_number: Optional[int] = None
+    ) -> List[Voxel]:
         """
         :param non_empty: If True, only non-empty leaf nodes are returned.
         :param pose_number: Desired pose number.
@@ -106,7 +108,11 @@ class OctreeManager(VoxelBase):
         """
         if pose_number is None:
             return sum(
-                [octree.get_leaf_points(non_empty) for octree in self._octrees.values()], []
+                [
+                    octree.get_leaf_points(non_empty)
+                    for octree in self._octrees.values()
+                ],
+                [],
             )
         if pose_number in self._octrees:
             return self._octrees[pose_number].get_leaf_points(non_empty)

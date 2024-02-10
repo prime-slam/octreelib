@@ -159,34 +159,6 @@ class Grid(GridBase):
             self.insert_points(pose_number, point_cloud[mask == 1])
         # grid_timer_b.stop()
 
-    def _do_map_leaf_points_cuda_old(self, function):
-        for pose_number in self.__pose_voxel_coordinates:
-            combined_point_cloud = self.get_points(pose_number)
-            block_sizes = np.array(
-                [len(v.get_points()) for v in self.get_leaf_points(pose_number, non_empty=False)],
-                dtype=np.int32,
-            )
-            block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
-            # pad block_sizes and block_start_indices
-            block_sizes = np.pad(block_sizes, (0, function.n_blocks - len(block_sizes)))
-            block_start_indices = np.pad(
-                block_start_indices, (0, function.n_blocks - len(block_start_indices))
-            )
-
-            # print('bytes:', combined_point_cloud.nbytes, block_sizes.nbytes, block_start_indices.nbytes, function.n_blocks, function.n_threads_per_block)
-
-            # timer.start()
-            maximum_mask = function.fit(
-                combined_point_cloud,
-                block_sizes,
-                block_start_indices,
-            )
-            # timer.stop()
-
-            self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float), [pose_number])
-
-            self.insert_points(pose_number, combined_point_cloud[maximum_mask == 1])
-
     def map_leaf_points_cuda(
         self, function, n_blocks: int = 8, n_threads_per_block: int = 256
     ):
@@ -210,7 +182,9 @@ class Grid(GridBase):
         """
         return sum(
             [
-                self.__octrees[voxel_coordinates].get_leaf_points(non_empty, pose_number)
+                self.__octrees[voxel_coordinates].get_leaf_points(
+                    non_empty, pose_number
+                )
                 for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]
             ],
             [],
@@ -347,6 +321,4 @@ class Grid(GridBase):
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
 
     def sum_of_leaves(self) -> int:
-        return sum(
-            [octree.sum_of_leaves() for octree in self.__octrees.values()]
-        )
+        return sum([octree.sum_of_leaves() for octree in self.__octrees.values()])

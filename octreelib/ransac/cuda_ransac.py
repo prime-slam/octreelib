@@ -121,7 +121,9 @@ class CudaRansac:
         block_sizes: npt.NDArray,
         block_start_indices: npt.NDArray,
     ):
-        result_mask = np.zeros((self.n_threads_per_block, len(point_cloud)), dtype=np.bool_)
+        result_mask = np.zeros(
+            (self.n_threads_per_block, len(point_cloud)), dtype=np.bool_
+        )
         result_mask_cuda = cuda.to_device(result_mask)
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
