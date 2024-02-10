@@ -8,6 +8,7 @@ import numpy as np
 from octreelib.internal import PointCloud, T, Voxel
 from octreelib.octree.octree_base import OctreeBase, OctreeNodeBase, OctreeConfigBase
 from octreelib.ransac.cuda_ransac import CudaRansac
+from octreelib.internal.tweaks import USE_OCTREE_LEAF_CACHING
 
 __all__ = ["OctreeNode", "Octree", "OctreeConfig"]
 
@@ -49,6 +50,8 @@ class OctreeNode(OctreeNodeBase):
         elif self._has_children:
             self._points = self.get_points()
             self._has_children = False
+            for child in self._children:
+                child._remove_from_cache()
             self._children = []
 
     def get_points(self) -> PointCloud:
@@ -175,7 +178,9 @@ class OctreeNode(OctreeNodeBase):
         return (
             sum([child.n_leaves for child in self._children])
             if self._has_children
-            else 1 if len(self._points) != 0 else 0
+            else 1
+            if len(self._points) != 0
+            else 0
         )
 
     @property
@@ -206,13 +211,24 @@ class OctreeNode(OctreeNodeBase):
         """
         child_edge_length = self.edge_length / np.float_(2)
         children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
+        self._cached_leaves.remove(self)
         return [
             OctreeNode(
                 self.corner_min + offset,
                 child_edge_length,
+                self._cached_leaves,
             )
             for internal_position, offset in enumerate(children_corners_offsets)
         ]
+
+    def _remove_from_cache(self):
+        """
+        Remove the node and its children from the cached leaves.
+        """
+        self._cached_leaves.remove(self)
+        if self._has_children:
+            for child in self._children:
+                child._remove_from_cache()
 
 
 class Octree(OctreeBase, Generic[T]):
@@ -268,22 +284,45 @@ class Octree(OctreeBase, Generic[T]):
         """
         self._root.map_leaf_points(function)
 
-    def map_leaf_points_cuda(
-        self, function: CudaRansac, n_blocks: int = 8, n_threads_per_block: int = 256
-    ):
+    def map_leaf_points_cuda(self, function: CudaRansac):
         """
         transform point cloud in the node using the function
         :param function: transformation function PointCloud -> PointCloud
-        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
-        :param n_threads_per_block: Number of threads for the CUDA kernel.
         """
-        self._root.map_leaf_points_cuda(function, n_blocks, n_threads_per_block)
+
+        if not USE_OCTREE_LEAF_CACHING:
+            self._root.map_leaf_points_cuda(function)
+        else:
+            cached_non_empty_leaves = [
+                leaf
+                for leaf in self._cached_leaves
+                if len(leaf.get_points()) > 0
+            ]
+            points = np.vstack([v.get_points() for v in cached_non_empty_leaves])
+            block_sizes = np.array(
+                [len(v.get_points()) for v in cached_non_empty_leaves], dtype=np.int32
+            )
+            block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+
+            block_sizes = np.pad(block_sizes, (0, function.n_blocks - len(block_sizes)))
+            block_start_indices = np.pad(
+                block_start_indices, (0, function.n_blocks - len(block_start_indices))
+            )
+
+            maximum_mask = function.fit(
+                points,
+                block_sizes,
+                block_start_indices,
+            )
+
+            self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float))
+            self.insert_points(points[maximum_mask.astype(bool)])
 
     def get_leaf_points(self) -> List[Voxel]:
         """
         :return: List of voxels where each voxel represents a leaf node with points.
         """
-        return self._root.get_leaf_points()
+        return self._cached_leaves
 
     @property
     def n_points(self):

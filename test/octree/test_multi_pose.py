@@ -231,4 +231,4 @@ def test_n_points(generated_multi_pose):
 
 def test_map_leaf_points_cuda(generated_multi_pose_large):
     octree_manager = generated_multi_pose_large
-    octree_manager.map_leaf_points_cuda(CudaRansac(), 8**2, 16)
+    octree_manager.map_leaf_points_cuda(CudaRansac(n_blocks=8**2, n_threads_per_block=2))

@@ -79,7 +79,6 @@ def _do_fit(
     w[0], w[1], w[2] = _crossNormal(ux, uy, uz, vx, vy, vz)
     w[3] = -_cu_dot(w[0], w[1], w[2], p1[0], p1[1], p1[2])
 
-    cc = 0.0
     sum = 0
     for jj in range(block_sizes[j]):
         p = points[block_start_indices[j] + jj]
@@ -95,6 +94,8 @@ class CudaRansac:
         threshold: float = 0.1,
         initial_points: int = 3,
         iterations: int = 5000,
+        n_blocks: int = 1,
+        n_threads_per_block: int = 1,
         debug: bool = False,
     ) -> None:
         if threshold <= 0:
@@ -108,29 +109,31 @@ class CudaRansac:
         self.__initial_points: int = initial_points
         self.__iterations: int = iterations
         self.__debug: bool = debug
+        self.rng_states = create_xoroshiro128p_states(
+            n_threads_per_block * n_blocks, seed=0
+        )
+        self.n_blocks = n_blocks
+        self.n_threads_per_block = n_threads_per_block
 
     def fit(
         self,
         point_cloud: PointCloud,
         block_sizes: npt.NDArray,
         block_start_indices: npt.NDArray,
-        n_blocks: int,
-        n_threads_per_block: int,
     ):
-        result_mask = np.zeros((n_threads_per_block, len(point_cloud)), dtype=np.int32)
+        result_mask = np.zeros((self.n_threads_per_block, len(point_cloud)), dtype=np.bool_)
         result_mask_cuda = cuda.to_device(result_mask)
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
         block_start_indices_cuda = cuda.to_device(block_start_indices)
 
-        rng_states = create_xoroshiro128p_states(n_threads_per_block * n_blocks, seed=0)
-        _do_fit[n_blocks, n_threads_per_block](
+        _do_fit[self.n_blocks, self.n_threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__threshold,
             result_mask_cuda,
-            rng_states,
+            self.rng_states,
         )
         result_mask = result_mask_cuda.copy_to_host()
         maximum_mask = result_mask[np.argmax(result_mask.sum(axis=1), axis=0)]

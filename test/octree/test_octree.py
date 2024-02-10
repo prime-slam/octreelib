@@ -41,7 +41,8 @@ def generated_multi_pose_large():
 
 
 def test_octree_node():
-    node = OctreeNode(np.array([0, 0, 0]), np.float_(10))
+    cached_leaves = []
+    node = OctreeNode(np.array([0, 0, 0]), np.float_(10), cached_leaves)
 
     point_cloud = np.array(
         [
@@ -61,6 +62,7 @@ def test_octree_node():
     assert node.n_points == 5
     node.filter([lambda points: len(points) >= 2])
     assert node.n_points == 4
+    assert len(cached_leaves) == 15
 
 
 def test_octree():
@@ -97,6 +99,6 @@ def test_octree():
 
 def test_cuda_ransac(generated_multi_pose_large):
     octree = generated_multi_pose_large
-    ransac = CudaRansac()
+    ransac = CudaRansac(n_blocks=8, n_threads_per_block=2)
 
-    octree.map_leaf_points_cuda(ransac, 8)
+    octree.map_leaf_points_cuda(ransac)

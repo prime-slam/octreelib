@@ -61,8 +61,8 @@ class Grid(GridBase):
         :param pose_number: Pose number to which the cloud is inserted.
         :param points: Point cloud to be inserted.
         """
-        if pose_number in self.__pose_voxel_coordinates:
-            raise ValueError(f"Cannot insert points to existing pose {pose_number}")
+        # if pose_number in self.__pose_voxel_coordinates:
+        #     raise ValueError(f"Cannot insert points to existing pose {pose_number}")
 
         # Register pose
         self.__pose_voxel_coordinates[pose_number] = []
@@ -107,13 +107,85 @@ class Grid(GridBase):
             self.__pose_voxel_coordinates[pose_number].append(target_voxel)
             self.__octrees[target_voxel].insert_points(pose_number, voxel_points)
 
-    def map_leaf_points(self, function: Callable[[PointCloud], PointCloud]):
+    def map_leaf_points(
+        self,
+        function: Callable[[PointCloud], PointCloud],
+        pose_numbers: Optional[List[int]] = None,
+    ):
         """
         Transform point cloud in each node of each octree using the function
         :param function: Transformation function PointCloud -> PointCloud. It is applied to each leaf node.
+        :param pose_numbers: List of pose numbers to map.
         """
         for voxel_coordinates in self.__octrees:
-            self.__octrees[voxel_coordinates].map_leaf_points(function)
+            self.__octrees[voxel_coordinates].map_leaf_points(function, pose_numbers)
+
+    def _do_map_leaf_points_cuda(self, function):
+        # grid_timer_b.start()
+        point_clouds = []
+        block_sizes = []
+        pose_dividers = [0]
+        for pose_number in self.__pose_voxel_coordinates:
+            combined_point_cloud = self.get_points(pose_number)
+            point_clouds.append(combined_point_cloud)
+            block_sizes.append(
+                np.array(
+                    [len(v.get_points()) for v in self.get_leaf_points(pose_number)],
+                    dtype=np.int32,
+                )
+            )
+            pose_dividers.append(pose_dividers[-1] + block_sizes[-1].sum())
+
+        combined_point_cloud = np.vstack(point_clouds)
+        block_sizes = np.concatenate(block_sizes)
+        block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+        # print(pose_dividers)
+        pose_dividers = np.cumsum(pose_dividers)
+        # grid_timer_b.stop()
+
+        maximum_mask = function.fit(
+            combined_point_cloud,
+            block_sizes,
+            block_start_indices,
+        )
+
+        # grid_timer_b.start()
+
+        # print(combined_point_cloud.shape, maximum_mask.shape, pose_dividers.shape, block_sizes.shape, block_start_indices.shape)
+        self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float))
+        for i, pose_number in enumerate(self.__pose_voxel_coordinates):
+            mask = maximum_mask[pose_dividers[i] : pose_dividers[i + 1]]
+            point_cloud = combined_point_cloud[pose_dividers[i] : pose_dividers[i + 1]]
+            self.insert_points(pose_number, point_cloud[mask == 1])
+        # grid_timer_b.stop()
+
+    def _do_map_leaf_points_cuda_old(self, function):
+        for pose_number in self.__pose_voxel_coordinates:
+            combined_point_cloud = self.get_points(pose_number)
+            block_sizes = np.array(
+                [len(v.get_points()) for v in self.get_leaf_points(pose_number)],
+                dtype=np.int32,
+            )
+            block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+            # pad block_sizes and block_start_indices
+            block_sizes = np.pad(block_sizes, (0, function.n_blocks - len(block_sizes)))
+            block_start_indices = np.pad(
+                block_start_indices, (0, function.n_blocks - len(block_start_indices))
+            )
+
+            # print('bytes:', combined_point_cloud.nbytes, block_sizes.nbytes, block_start_indices.nbytes, function.n_blocks, function.n_threads_per_block)
+
+            # timer.start()
+            maximum_mask = function.fit(
+                combined_point_cloud,
+                block_sizes,
+                block_start_indices,
+            )
+            # timer.stop()
+
+            self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float), [pose_number])
+
+            self.insert_points(pose_number, combined_point_cloud[maximum_mask == 1])
 
     def map_leaf_points_cuda(
         self, function, n_blocks: int = 8, n_threads_per_block: int = 256
@@ -124,10 +196,10 @@ class Grid(GridBase):
         :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
         :param n_threads_per_block: Number of threads for the CUDA kernel.
         """
-        for voxel_coordinates in self.__octrees:
-            self.__octrees[voxel_coordinates].map_leaf_points_cuda(
-                function, n_blocks, n_threads_per_block
-            )
+        self._do_map_leaf_points_cuda(function)
+
+        # for voxel_coordinates in self.__octrees:
+        #     self.__octrees[voxel_coordinates].map_leaf_points_cuda(function)
 
     def get_leaf_points(self, pose_number: int) -> List[Voxel]:
         """
@@ -272,3 +344,8 @@ class Grid(GridBase):
         :return: Number of nodes of an octree for given pose number.
         """
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
+
+    def sum_of_leaves(self) -> int:
+        return sum(
+            [octree.sum_of_leaves() for octree in self.__octrees.values()]
+        )

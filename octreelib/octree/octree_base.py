@@ -33,11 +33,13 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    def __init__(self, corner_min: Point, edge_length: float):
+    def __init__(self, corner_min: Point, edge_length: float, octree_cached_leaves: List["OctreeNodeBase"]):
         super().__init__(corner_min, edge_length)
         self._points: np.empty((0, 3), dtype=float)
         self._children: Optional[List["OctreeNodeBase"]] = []
         self._has_children: bool = False
+        self._cached_leaves = octree_cached_leaves
+        self._cached_leaves.append(self)
 
     @property
     @abstractmethod
@@ -131,7 +133,8 @@ class OctreeBase(Voxel, ABC):
     ):
         super().__init__(corner_min, edge_length)
         self._config = octree_config
-        self._root = self._node_type(self.corner_min, self.edge_length)
+        self._cached_leaves = []
+        self._root = self._node_type(self.corner_min, self.edge_length, self._cached_leaves)
 
     @property
     @abstractmethod
@@ -175,7 +178,7 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def map_leaf_points_cuda(self, function, n_blocks, n_threads_per_block):
+    def map_leaf_points_cuda(self, function):
         """
         transform point cloud in the node using the function
         :param function: transformation function PointCloud -> PointCloud
