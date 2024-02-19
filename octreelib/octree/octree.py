@@ -142,9 +142,7 @@ class OctreeNode(OctreeNodeBase):
         return (
             sum([child.n_leaves for child in self._children])
             if self._has_children
-            else 1
-            if len(self._points) != 0
-            else 0
+            else 1 if len(self._points) != 0 else 0
         )
 
     @property
