@@ -23,6 +23,6 @@ pip install octreelib
 To install a specific version, use **tags**, for example tag `0.0.1`
 
 ```shell
-pip install octreelib==v0.0.1
+pip install octreelib==0.0.1
 ```
 
