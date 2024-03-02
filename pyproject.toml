@@ -3,7 +3,7 @@ name = "octreelib"
 version = "0.0.0"
 description = "Library for representing point clouds as OcTrees in SLAM"
 authors = [
-  "Kiselyov Mikhail <email@email.email>",
+  "Kiselyov Mikhail <kiselev.0353@gmail.com>",
   "Pavel Mokeev <pav3l.mokeev@gmail.com>"
 ]
 license = "APACHE"
@@ -15,6 +15,7 @@ classifiers = [
   "Intended Audience :: Developers",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+exclude = ["test"]
 
 [tool.poetry.dependencies]
 python = "^3.9.0"
