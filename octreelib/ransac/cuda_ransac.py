@@ -210,9 +210,7 @@ def _do_fit(
             initial_points[ii][2] = points[initial_points_indices[ii]][2]
 
         # calculate the plane coefficients
-        w[0], w[1], w[2], w[3] = get_plane_from_points(
-            points, initial_points_indices
-        )
+        w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_points_indices)
         # w[0], w[1], w[2], w[3] = get_plane_from_points_new(initial_points)
 
     # for each point in the block check if it is an inlier
