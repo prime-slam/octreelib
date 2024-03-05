@@ -10,6 +10,9 @@ from numba.cuda.random import xoroshiro128p_uniform_float32
 from octreelib.internal import PointCloud
 
 
+N_INITIAL_POINTS = 3
+
+
 @cuda.jit(device=True, inline=True)
 def _cu_subtract_point(ax, ay, az, bx, by, bz):
     """
@@ -88,12 +91,11 @@ def get_plane_from_points(points, inliers):
     centroid_z = 0.0
 
     for idx in inliers:
-        for i in range(3):
-            centroid_x += points[idx][0]
-            centroid_y += points[idx][1]
-            centroid_z += points[idx][2]
+        centroid_x += points[idx][0]
+        centroid_y += points[idx][1]
+        centroid_z += points[idx][2]
 
-    num_inliers = len(inliers)
+    num_inliers = N_INITIAL_POINTS
     centroid_x /= num_inliers
     centroid_y /= num_inliers
     centroid_z /= num_inliers
@@ -140,7 +142,7 @@ def get_plane_from_points(points, inliers):
     abc_x /= norm
     abc_y /= norm
     abc_z /= norm
-    d = -(abc_x * centroid_x + abc_y * centroid_y + abc_z * centroid_z)
+    d = -(abc_x * centroid_x + abc_y * centroid_y + abc_z * centroid_z) / norm
     return abc_x, abc_y, abc_z, d
 
 
@@ -222,7 +224,6 @@ def _do_fit(
     block_sizes: npt.NDArray,
     block_start_indices: npt.NDArray,
     threshold: float,
-    n_initial_points: int,
     result_mask: npt.NDArray,
     rng_states,
 ):
@@ -230,14 +231,14 @@ def _do_fit(
 
     (i, j, k) = (cuda.threadIdx.x, cuda.blockIdx.x, cuda.blockDim.x)
 
-    if block_sizes[j] < 3:
+    if block_sizes[j] < N_INITIAL_POINTS:
         result_mask[i][
             block_start_indices[j] : block_start_indices[j] + block_sizes[j]
-        ] = 1
+        ] = 0
         return
 
     w = cuda.local.array(shape=4, dtype=nb.float32)
-    if n_initial_points == 3:
+    if N_INITIAL_POINTS == 3:
         # !! this is the original implementation !!
         # !! original implementation only works with 3 initial points !!
 
@@ -267,20 +268,29 @@ def _do_fit(
         # !! it is supposed to work with any number of initial points but does not work yet !!
 
         # choose n_initial_points random points (does not work yet)
-        initial_points_indices = cuda.local.array(shape=6, dtype=nb.size_t)
-        for ii in range(n_initial_points):
+        initial_points_indices = cuda.local.array(
+            shape=N_INITIAL_POINTS, dtype=nb.size_t
+        )
+        for ii in range(N_INITIAL_POINTS):
             initial_points_indices[ii] = (
                 _cuRand(rng_states, 0, block_sizes[j]) + block_start_indices[j]
             )
+        initial_points = cuda.local.array(shape=(N_INITIAL_POINTS, 3), dtype=nb.float32)
+        for ii in range(N_INITIAL_POINTS):
+            initial_points[ii][0] = points[initial_points_indices[ii]][0]
+            initial_points[ii][1] = points[initial_points_indices[ii]][1]
+            initial_points[ii][2] = points[initial_points_indices[ii]][2]
 
         # calculate the plane coefficients
         w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_points_indices)
+        # w[0], w[1], w[2], w[3] = get_plane_from_points_new(initial_points)
 
     # for each point in the block check if it is an inlier
     for jj in range(block_sizes[j]):
         p = points[block_start_indices[j] + jj]
-        distance = math.fabs(_cu_dot(w[0], w[1], w[2], p[0], p[1], p[2]) + w[3]) / (
-            w[0] ** 2 + w[1] ** 2 + w[2] ** 2
+        distance = (
+            math.fabs(_cu_dot(w[0], w[1], w[2], p[0], p[1], p[2]) + w[3])
+            / (w[0] ** 2 + w[1] ** 2 + w[2] ** 2) ** 0.5
         )
         if distance < threshold:
             result_mask[i][block_start_indices[j] + jj] = 1
@@ -296,8 +306,7 @@ class CudaRansac:
     def __init__(
         self,
         threshold: float = 0.01,
-        initial_points: int = 6,
-        iterations: int = 5000,
+        iterations: int = 1024,
         n_blocks: int = 1,
         n_threads_per_block: int = 1,
         debug: bool = False,
@@ -306,13 +315,10 @@ class CudaRansac:
         # the alternative would be to set them in the fit method
         if threshold <= 0:
             raise ValueError("Threshold must be positive")
-        if initial_points < 3:
-            raise ValueError("Initial points count must be more or equal than three")
         if iterations < 1:
             raise ValueError("Number of RANSAC iterations must be positive")
 
         self.__threshold: float = threshold
-        self.__initial_points: int = initial_points
         self.__iterations: int = iterations
         self.__debug: bool = debug
         self.rng_states = create_xoroshiro128p_states(
@@ -351,7 +357,6 @@ class CudaRansac:
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__threshold,
-            self.__initial_points,
             result_mask_cuda,
             self.rng_states,
         )
