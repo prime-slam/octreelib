@@ -10,7 +10,7 @@ from numba.cuda.random import xoroshiro128p_uniform_float32
 from octreelib.internal import PointCloud
 
 
-N_INITIAL_POINTS = 3
+N_INITIAL_POINTS = 6
 
 
 @cuda.jit(device=True, inline=True)
@@ -146,78 +146,6 @@ def get_plane_from_points(points, inliers):
     return abc_x, abc_y, abc_z, d
 
 
-@cuda.jit(device=True, inline=True)
-def get_plane_from_points_old(points, inliers):
-    """
-    Calculate the plane coefficients from the given points.
-    :param points: Point cloud.
-    :param inliers: Inliers to calculate the plane coefficients from.
-    """
-    # This implementation works the same way as open3d implementation
-
-    # centroid = np.zeros(3, np.float64)
-    centroid = cuda.local.array(shape=3, dtype=nb.float32)
-    centroid[0] = 0
-    centroid[1] = 0
-    centroid[2] = 0
-    for idx in inliers:
-        # centroid += points[idx]
-        centroid[0] += points[idx][0]
-        centroid[1] += points[idx][1]
-        centroid[2] += points[idx][2]
-    centroid[0] /= len(inliers)
-    centroid[1] /= len(inliers)
-    centroid[2] /= len(inliers)
-
-    xx = 0.0
-    xy = 0.0
-    xz = 0.0
-    yy = 0.0
-    yz = 0.0
-    zz = 0.0
-
-    for idx in inliers:
-        r = cuda.local.array(shape=3, dtype=nb.float32)
-        r[0] = points[idx][0] - centroid[0]
-        r[1] = points[idx][1] - centroid[1]
-        r[2] = points[idx][2] - centroid[2]
-        # r = points[idx] - centroid
-        xx += r[0] * r[0]
-        xy += r[0] * r[1]
-        xz += r[0] * r[2]
-        yy += r[1] * r[1]
-        yz += r[1] * r[2]
-        zz += r[2] * r[2]
-
-    det_x = yy * zz - yz * yz
-    det_y = xx * zz - xz * xz
-    det_z = xx * yy - xy * xy
-
-    if det_x > det_y and det_x > det_z:
-        abc = np.array([det_x, xz * yz - xy * zz, xy * yz - xz * yy])
-    elif det_y > det_z:
-        abc = np.array([xz * yz - xy * zz, det_y, xy * xz - yz * xx])
-    else:
-        abc = np.array([xy * yz - xz * yy, xy * xz - yz * xx, det_z])
-
-    norm = np.linalg.norm(abc)
-    if norm == 0:
-        # plane_coefficients[0] = 0
-        # plane_coefficients[1] = 0
-        # plane_coefficients[2] = 0
-        # plane_coefficients[3] = 0
-        return 0, 0, 0, 0
-    else:
-        abc /= norm
-        d = -np.dot(abc, centroid)
-
-        # plane_coefficients[0] = abc[0]
-        # plane_coefficients[1] = abc[1]
-        # plane_coefficients[2] = abc[2]
-        # plane_coefficients[3] = d
-        return abc[0], abc[1], abc[2], d
-
-
 @cuda.jit
 def _do_fit(
     points: PointCloud,
@@ -265,7 +193,7 @@ def _do_fit(
         w[3] = -_cu_dot(w[0], w[1], w[2], p1[0], p1[1], p1[2])
     else:
         # !! this is the new implementation !!
-        # !! it is supposed to work with any number of initial points but does not work yet !!
+        # !! it is supposed to work with any number of initial points, but it works poorly !!
 
         # choose n_initial_points random points (does not work yet)
         initial_points_indices = cuda.local.array(
@@ -282,7 +210,9 @@ def _do_fit(
             initial_points[ii][2] = points[initial_points_indices[ii]][2]
 
         # calculate the plane coefficients
-        w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_points_indices)
+        w[0], w[1], w[2], w[3] = get_plane_from_points_old(
+            points, initial_points_indices
+        )
         # w[0], w[1], w[2], w[3] = get_plane_from_points_new(initial_points)
 
     # for each point in the block check if it is an inlier
