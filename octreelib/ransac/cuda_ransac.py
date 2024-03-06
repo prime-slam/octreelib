@@ -142,7 +142,7 @@ def get_plane_from_points(points, inliers):
     abc_x /= norm
     abc_y /= norm
     abc_z /= norm
-    d = -(abc_x * centroid_x + abc_y * centroid_y + abc_z * centroid_z) / norm
+    d = -(abc_x * centroid_x + abc_y * centroid_y + abc_z * centroid_z)
     return abc_x, abc_y, abc_z, d
 
 
@@ -196,22 +196,39 @@ def _do_fit(
         # !! it is supposed to work with any number of initial points, but it works poorly !!
 
         # choose n_initial_points random points (does not work yet)
-        initial_points_indices = cuda.local.array(
+        initial_point_indices = cuda.local.array(
             shape=N_INITIAL_POINTS, dtype=nb.size_t
         )
+
+        # for ii in range(N_INITIAL_POINTS):
+        #     initial_point_indices[ii] = (
+        #         _cuRand(rng_states, 0, block_sizes[j] - ii)
+        #     )
+        #     for _ in range(ii):
+        #         for jj in range(ii):
+        #             if initial_point_indices[ii] >= initial_point_indices[jj]:
+        #                 initial_point_indices[ii] = (initial_point_indices[ii] + 1) % block_sizes[j]
+        #     initial_point_indices_global[i + 1024 * j][ii] = initial_point_indices[ii]
+
         for ii in range(N_INITIAL_POINTS):
-            initial_points_indices[ii] = (
-                _cuRand(rng_states, 0, block_sizes[j]) + block_start_indices[j]
+            initial_point_indices[ii] = _cuRand(rng_states, 0, block_sizes[j])
+            unique = False
+            while not unique:
+                unique = True
+                for jj in range(ii):
+                    if initial_point_indices[ii] == initial_point_indices[jj]:
+                        unique = False
+                if not unique:
+                    initial_point_indices[ii] = (
+                        initial_point_indices[ii] + 1
+                    ) % block_sizes[j]
+        for ii in range(N_INITIAL_POINTS):
+            initial_point_indices[ii] = (
+                block_start_indices[j] + initial_point_indices[ii]
             )
-        initial_points = cuda.local.array(shape=(N_INITIAL_POINTS, 3), dtype=nb.float32)
-        for ii in range(N_INITIAL_POINTS):
-            initial_points[ii][0] = points[initial_points_indices[ii]][0]
-            initial_points[ii][1] = points[initial_points_indices[ii]][1]
-            initial_points[ii][2] = points[initial_points_indices[ii]][2]
 
         # calculate the plane coefficients
-        w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_points_indices)
-        # w[0], w[1], w[2], w[3] = get_plane_from_points_new(initial_points)
+        w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_point_indices)
 
     # for each point in the block check if it is an inlier
     for jj in range(block_sizes[j]):
