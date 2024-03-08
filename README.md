@@ -1,6 +1,6 @@
 # Octreelib
 
-[![tests](https://github.com/prime-slam/octreelib/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/prime-slam/octreelib/actions/workflows/python-package.yml)
+[![tests](https://github.com/prime-slam/octreelib/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/prime-slam/octreelib/actions/workflows/python-package.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-black)]()
 [![Code style: black](https://img.shields.io/badge/code%20style-flake8-black)]()
 [![License: Apache License 2.0](https://img.shields.io/github/license/saltstack/salt)](https://opensource.org/license/apache-2-0/)
