@@ -15,8 +15,6 @@ from octreelib.internal.point import PointCloud
 from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.ransac.cuda_ransac import CudaRansac
 
-from octreelib.internal.util import Timer
-
 __all__ = ["Grid", "GridConfig"]
 
 
