@@ -13,8 +13,14 @@ from octreelib.grid.grid_base import (
 )
 from octreelib.internal.point import PointCloud
 from octreelib.internal.voxel import Voxel, VoxelBase
+from octreelib.ransac.cuda_ransac import CudaRansac
+
+from octreelib.internal.util import Timer
 
 __all__ = ["Grid", "GridConfig"]
+
+
+CUDA_RANSAC_BATCH_SIZE_POSES = 10
 
 
 @dataclass
@@ -120,61 +126,76 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].map_leaf_points(function, pose_numbers)
 
-    def map_leaf_points_cuda(
-        self, function, n_blocks: int = 8, n_threads_per_block: int = 256
-    ):
+    def map_leaf_points_cuda(self):
         """
         transform point cloud in the node using the function
-        :param function: transformation function PointCloud -> PointCloud
-        :param n_blocks: Number of blocks for the CUDA kernel. (should equal the number of leaf voxels)
-        :param n_threads_per_block: Number of threads for the CUDA kernel.
         """
-        # grid_timer_b.start()
 
-        # `combined_point_cloud` is a concatenation of ALL point clouds
-        # `block_sizes` is a list of sizes of point clouds for each leaf node
-        # `pose_dividers` is a list of indices where combined_point_cloud is divided by pose
-        # these are used to split the combined_point_cloud into separate point clouds
-        # for each pose after the kernel is done
-        point_clouds = []
-        block_sizes = []
-        pose_dividers = [0]
-        for pose_number in self.__pose_voxel_coordinates:
-            combined_point_cloud = self.get_points(pose_number)
-            point_clouds.append(combined_point_cloud)
-            block_sizes.append(
-                np.array(
-                    [len(v.get_points()) for v in self.get_leaf_points(pose_number)],
-                    dtype=np.int32,
-                )
+        # The processing is done in batches to avoid running out of memory
+
+        pose_batches = [
+            range(
+                i,
+                min(
+                    i + CUDA_RANSAC_BATCH_SIZE_POSES, len(self.__pose_voxel_coordinates)
+                ),
             )
-            pose_dividers.append(pose_dividers[-1] + block_sizes[-1].sum())
+            for i in range(
+                0, len(self.__pose_voxel_coordinates), CUDA_RANSAC_BATCH_SIZE_POSES
+            )
+        ]
 
-        combined_point_cloud = np.vstack(point_clouds)
-        block_sizes = np.concatenate(block_sizes)
-        block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
-        pose_dividers = np.cumsum(pose_dividers)
-        # grid_timer_b.stop()
+        n_blocks = max([self.sum_of_leaves(pose_batch) for pose_batch in pose_batches])
 
-        # run the kernel
-        maximum_mask = function.fit(
-            combined_point_cloud,
-            block_sizes,
-            block_start_indices,
-        )
+        ransac = CudaRansac(n_blocks=n_blocks, n_threads_per_block=1024)
 
-        # grid_timer_b.start()
-        # print(combined_point_cloud.shape, maximum_mask.shape, pose_dividers.shape, block_sizes.shape, block_start_indices.shape)
+        for pose_batch in pose_batches:
+            # `combined_point_cloud` is a concatenation of ALL point clouds
+            # `block_sizes` is a list of sizes of point clouds for each leaf node
+            # `pose_dividers` is a list of indices where combined_point_cloud is divided by pose
+            # these are used to split the combined_point_cloud into separate point clouds
+            # for each pose after the kernel is done
+            point_clouds = []
+            block_sizes = []
+            pose_dividers = [0]
+            for pose_number in pose_batch:
+                combined_point_cloud = self.get_points(pose_number)
+                point_clouds.append(combined_point_cloud)
+                block_sizes.append(
+                    np.array(
+                        [
+                            len(v.get_points())
+                            for v in self.get_leaf_points(pose_number)
+                        ],
+                        dtype=np.int32,
+                    )
+                )
+                pose_dividers.append(pose_dividers[-1] + block_sizes[-1].sum())
 
-        # split the combined point cloud into separate point clouds for each pose,
-        # apply the masks from the kernel
-        # and insert them into the octrees
-        self.map_leaf_points(lambda x: np.empty((0, 3), dtype=float))
-        for i, pose_number in enumerate(self.__pose_voxel_coordinates):
-            mask = maximum_mask[pose_dividers[i] : pose_dividers[i + 1]]
-            point_cloud = combined_point_cloud[pose_dividers[i] : pose_dividers[i + 1]]
-            self.insert_points(pose_number, point_cloud[mask == 1])
-        # grid_timer_b.stop()
+            combined_point_cloud = np.vstack(point_clouds)
+            block_sizes = np.concatenate(block_sizes)
+            block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+            pose_dividers = np.cumsum(pose_dividers)
+
+            # run the kernel
+            maximum_mask = ransac.fit(
+                combined_point_cloud,
+                block_sizes,
+                block_start_indices,
+            )
+
+            # split the combined point cloud into separate point clouds for each pose,
+            # apply the masks from the kernel
+            # and insert them into the octrees
+            self.map_leaf_points(
+                lambda x: np.empty((0, 3), dtype=float), pose_numbers=pose_batch
+            )
+            for i, pose_number in enumerate(pose_batch):
+                mask = maximum_mask[pose_dividers[i] : pose_dividers[i + 1]]
+                point_cloud = combined_point_cloud[
+                    pose_dividers[i] : pose_dividers[i + 1]
+                ]
+                self.insert_points(pose_number, point_cloud[mask == 1])
 
     def get_leaf_points(self, pose_number: int, non_empty: bool = True) -> List[Voxel]:
         """
@@ -323,5 +344,7 @@ class Grid(GridBase):
         """
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
 
-    def sum_of_leaves(self) -> int:
-        return sum([octree.sum_of_leaves() for octree in self.__octrees.values()])
+    def sum_of_leaves(self, pose_numbers: Optional[List[int]] = None) -> int:
+        return sum(
+            [octree.sum_of_leaves(pose_numbers) for octree in self.__octrees.values()]
+        )

@@ -146,7 +146,7 @@ def test_map_leaf_points(generated_grid):
 
 def test_map_leaf_points_cuda(generated_grid):
     grid, pose_points = generated_grid
-    grid.map_leaf_points_cuda(CudaRansac())
+    grid.map_leaf_points_cuda()
 
 
 def test_get_leaf_points(generated_grid):
