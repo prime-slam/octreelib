@@ -18,9 +18,6 @@ from octreelib.ransac.cuda_ransac import CudaRansac
 __all__ = ["Grid", "GridConfig"]
 
 
-CUDA_RANSAC_BATCH_SIZE_POSES = 10
-
-
 @dataclass
 class GridConfig(GridConfigBase):
     """
@@ -124,7 +121,7 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].map_leaf_points(function, pose_numbers)
 
-    def map_leaf_points_cuda(self):
+    def map_leaf_points_cuda(self, n_poses_per_batch: int = 10):
         """
         transform point cloud in the node using the function
         """
@@ -134,13 +131,9 @@ class Grid(GridBase):
         pose_batches = [
             range(
                 i,
-                min(
-                    i + CUDA_RANSAC_BATCH_SIZE_POSES, len(self.__pose_voxel_coordinates)
-                ),
+                min(i + n_poses_per_batch, len(self.__pose_voxel_coordinates)),
             )
-            for i in range(
-                0, len(self.__pose_voxel_coordinates), CUDA_RANSAC_BATCH_SIZE_POSES
-            )
+            for i in range(0, len(self.__pose_voxel_coordinates), n_poses_per_batch)
         ]
 
         n_blocks = max([self.sum_of_leaves(pose_batch) for pose_batch in pose_batches])

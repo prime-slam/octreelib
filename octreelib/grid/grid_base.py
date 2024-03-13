@@ -155,7 +155,7 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def map_leaf_points_cuda(self):
+    def map_leaf_points_cuda(self, n_poses_per_batch: int = 10):
         """
         transform point cloud in the node using the function
         """
