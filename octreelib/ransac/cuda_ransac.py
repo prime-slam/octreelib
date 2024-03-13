@@ -8,6 +8,7 @@ from numba.cuda.random import create_xoroshiro128p_states
 from numba.cuda.random import xoroshiro128p_uniform_float32
 
 from octreelib.internal import PointCloud
+from octreelib.internal.util import Timer
 
 
 N_INITIAL_POINTS = 6
@@ -200,32 +201,29 @@ def _do_fit(
             shape=N_INITIAL_POINTS, dtype=nb.size_t
         )
 
+        for ii in range(N_INITIAL_POINTS):
+            initial_point_indices[ii] = _cuRand(rng_states, 0, block_sizes[j]) + block_start_indices[j]
+
+        # # !! code below assures that the initial points are unique         !!
+        # # !! however, i'm not sure if it is optimal for the GPU            !!
+        # # !! current implementation does not assure that points are unique !!
+
+        # for ii in range(N_INITIAL_POINTS):
+        #     initial_point_indices[ii] = _cuRand(rng_states, 0, block_sizes[j]) + block_start_indices[j]
+        #     unique = False
+        #     while not unique:
+        #         unique = True
+        #         for jj in range(ii):
+        #             if initial_point_indices[ii] == initial_point_indices[jj]:
+        #                 unique = False
+        #         if not unique:
+        #             initial_point_indices[ii] = (
+        #                 initial_point_indices[ii] + 1
+        #             ) % block_sizes[j]
         # for ii in range(N_INITIAL_POINTS):
         #     initial_point_indices[ii] = (
-        #         _cuRand(rng_states, 0, block_sizes[j] - ii)
+        #         block_start_indices[j] + initial_point_indices[ii]
         #     )
-        #     for _ in range(ii):
-        #         for jj in range(ii):
-        #             if initial_point_indices[ii] >= initial_point_indices[jj]:
-        #                 initial_point_indices[ii] = (initial_point_indices[ii] + 1) % block_sizes[j]
-        #     initial_point_indices_global[i + 1024 * j][ii] = initial_point_indices[ii]
-
-        for ii in range(N_INITIAL_POINTS):
-            initial_point_indices[ii] = _cuRand(rng_states, 0, block_sizes[j])
-            unique = False
-            while not unique:
-                unique = True
-                for jj in range(ii):
-                    if initial_point_indices[ii] == initial_point_indices[jj]:
-                        unique = False
-                if not unique:
-                    initial_point_indices[ii] = (
-                        initial_point_indices[ii] + 1
-                    ) % block_sizes[j]
-        for ii in range(N_INITIAL_POINTS):
-            initial_point_indices[ii] = (
-                block_start_indices[j] + initial_point_indices[ii]
-            )
 
         # calculate the plane coefficients
         w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_point_indices)
@@ -284,7 +282,6 @@ class CudaRansac:
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
         :param block_start_indices: Array of block start indices (leaf voxel separators).
         """
-
         # create result mask and copy it to the device
         result_mask = np.zeros(
             (self.n_threads_per_block, len(point_cloud)), dtype=np.bool_
