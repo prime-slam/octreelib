@@ -30,10 +30,9 @@ def get_plane_from_points(points, initial_point_indices):
         centroid_y += points[idx][1]
         centroid_z += points[idx][2]
 
-    num_inliers = N_INITIAL_POINTS
-    centroid_x /= num_inliers
-    centroid_y /= num_inliers
-    centroid_z /= num_inliers
+    centroid_x /= N_INITIAL_POINTS
+    centroid_y /= N_INITIAL_POINTS
+    centroid_z /= N_INITIAL_POINTS
 
     xx, xy, xz, yy, yz, zz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
