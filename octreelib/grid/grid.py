@@ -5,6 +5,7 @@ from typing import List, Dict, Callable, Optional
 import k3d
 import numpy as np
 
+from octreelib.internal.util import Timer
 from octreelib.grid.grid_base import (
     GridBase,
     GridConfigBase,

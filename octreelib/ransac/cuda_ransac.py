@@ -194,9 +194,9 @@ def _do_fit(
     threshold: float,
     result_mask: npt.NDArray,
     rng_states,
+    max_n_inliers,
+    best_mask_indices,
 ):
-    # thread_id = cuda.grid(1)
-
     (i, j, k) = (cuda.threadIdx.x, cuda.blockIdx.x, cuda.blockDim.x)
 
     if block_sizes[j] < N_INITIAL_POINTS:
@@ -218,6 +218,7 @@ def _do_fit(
     w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_point_indices)
 
     # for each point in the block check if it is an inlier
+    n_inliers_local = 0
     for jj in range(block_sizes[j]):
         p = points[block_start_indices[j] + jj]
         distance = (
@@ -226,8 +227,14 @@ def _do_fit(
         )
         if distance < threshold:
             result_mask[i][block_start_indices[j] + jj] = 1
+            n_inliers_local += 1
         else:
             result_mask[i][block_start_indices[j] + jj] = 0
+
+    cuda.atomic.max(max_n_inliers, j, n_inliers_local)
+    cuda.syncthreads()
+    if n_inliers_local == max_n_inliers[j]:
+        cuda.atomic.exch(best_mask_indices, j, i)
 
 
 class CudaRansac:
@@ -283,6 +290,8 @@ class CudaRansac:
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
         block_start_indices_cuda = cuda.to_device(block_start_indices)
+        max_n_inliers = cuda.to_device(np.zeros(n_actual_blocks, dtype=np.int32))
+        best_mask_indices = cuda.to_device(np.zeros(n_actual_blocks, dtype=np.int32))
 
         # call the kernel
         _do_fit[n_actual_blocks, self.n_threads_per_block](
@@ -292,23 +301,23 @@ class CudaRansac:
             self.__threshold,
             result_mask_cuda,
             self.rng_states,
+            max_n_inliers,
+            best_mask_indices,
         )
 
         # copy result mask back to the host
         result_mask = result_mask_cuda.copy_to_host()
+        best_mask_indices = best_mask_indices.copy_to_host()
 
         # find the maximum mask individually for each leaf voxel and concatenate them
         maximum_mask = np.concatenate(
             [
-                result_mask[:, block_start : block_start + block_size][
-                    np.argmax(
-                        result_mask[:, block_start : block_start + block_size].sum(
-                            axis=1
-                        ),
-                        axis=0,
-                    )
+                result_mask[
+                    best_mask_indices[j], block_start : block_start + block_size
                 ]
-                for block_start, block_size in zip(block_start_indices, block_sizes)
+                for j, block_start, block_size in zip(
+                    range(n_actual_blocks), block_start_indices, block_sizes
+                )
             ]
         )
         return maximum_mask
