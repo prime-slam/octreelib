@@ -8,7 +8,6 @@ from numba.cuda.random import create_xoroshiro128p_states
 from numba.cuda.random import xoroshiro128p_uniform_float32
 
 from octreelib.internal import PointCloud
-from octreelib.internal.util import Timer
 
 
 N_INITIAL_POINTS = 6
