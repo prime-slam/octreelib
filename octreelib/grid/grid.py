@@ -126,8 +126,7 @@ class Grid(GridBase):
         transform point cloud in the node using the function
         """
 
-        # The processing is done in batches to avoid running out of memory
-
+        # processing is done in batches to avoid running out of memory
         batches = [
             list(
                 range(
@@ -138,15 +137,14 @@ class Grid(GridBase):
             for i in range(0, len(self.__pose_voxel_coordinates), n_poses_per_batch)
         ]
 
-        max_n_blocks = max(
-            [
-                self.sum_of_leaves(batch_pose_numbers)
-                for batch_pose_numbers in batches
-            ]
+        # find the maximum number of leaf voxels across all batches
+        # this is needed to initialize the random number generators on the GPU
+        max_leaf_voxels = max(
+            [self.sum_of_leaves(batch_pose_numbers) for batch_pose_numbers in batches]
         )
+        ransac = CudaRansac(max_n_blocks=max_leaf_voxels, n_threads_per_block=1024)
 
-        ransac = CudaRansac(max_n_blocks=max_n_blocks, n_threads_per_block=1024)
-
+        # process each batch
         for batch_pose_numbers in batches:
             # `combined_point_cloud` is a concatenation of ALL point clouds
             # `block_sizes` is a list of sizes of point clouds for each leaf node
@@ -176,7 +174,7 @@ class Grid(GridBase):
             pose_dividers = np.cumsum(pose_dividers)
 
             # run the kernel
-            maximum_mask = ransac.fit(
+            maximum_mask = ransac.evaluate(
                 combined_point_cloud,
                 block_sizes,
                 block_start_indices,

@@ -76,7 +76,7 @@ def get_plane_from_points(points, initial_point_indices):
 
 
 @cuda.jit
-def _do_fit(
+def ransac_kernel(
     point_cloud: PointCloud,
     block_sizes: npt.NDArray,
     block_start_indices: npt.NDArray,
@@ -141,8 +141,15 @@ class CudaRansac:
         threshold: float = 0.01,
         iterations: int = 1024,
         max_n_blocks: int = 1,
-        n_threads_per_block: int = 1,
-    ) -> None:
+        n_threads_per_block: int = 1024,
+    ):
+        """
+        Initialize the RANSAC parameters.
+        :param threshold: Distance threshold.
+        :param iterations: Number of RANSAC iterations.
+        :param max_n_blocks: Maximum number of blocks.
+        :param n_threads_per_block: Number of threads per block.
+        """
         # in this implementation the parameters are set in the constructor
         # the alternative would be to set them in the fit method
         if threshold <= 0:
@@ -152,12 +159,13 @@ class CudaRansac:
 
         self.__threshold: float = threshold
         self.__iterations: int = iterations
+        # create random number generator states
         self.rng_states = create_xoroshiro128p_states(
             n_threads_per_block * max_n_blocks, seed=0
         )
         self.n_threads_per_block = n_threads_per_block
 
-    def fit(
+    def evaluate(
         self,
         point_cloud: PointCloud,
         block_sizes: npt.NDArray,
@@ -185,7 +193,7 @@ class CudaRansac:
         block_start_indices_cuda = cuda.to_device(block_start_indices)
 
         # call the kernel
-        _do_fit[n_blocks, self.n_threads_per_block](
+        ransac_kernel[n_blocks, self.n_threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
