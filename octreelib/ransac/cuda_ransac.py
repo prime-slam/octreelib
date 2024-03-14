@@ -146,7 +146,7 @@ class CudaRansac:
         """
         Initialize the RANSAC parameters.
         :param threshold: Distance threshold.
-        :param iterations: Number of RANSAC iterations.
+        :param iterations: Number of RANSAC iterations. (has no effect in this implementation)
         :param max_n_blocks: Maximum number of blocks.
         :param n_threads_per_block: Number of threads per block.
         """
@@ -172,7 +172,7 @@ class CudaRansac:
         block_start_indices: npt.NDArray,
     ):
         """
-        Fit the model to the point cloud.
+        Evaluate the RANSAC model.
         :param point_cloud: Point cloud to fit the model to.
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
         :param block_start_indices: Array of block start indices (leaf voxel separators).
@@ -184,10 +184,12 @@ class CudaRansac:
         result_mask_cuda = cuda.to_device(
             np.zeros((self.n_threads_per_block, len(point_cloud)), dtype=np.bool_)
         )
+
+        # create arrays to store the maximum number of inliers and the best mask indices
         max_n_inliers_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
         best_mask_indices_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
-        # copy point cloud, block sizes and block start indices to the device
+        # copy point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
         block_start_indices_cuda = cuda.to_device(block_start_indices)
@@ -208,7 +210,7 @@ class CudaRansac:
         result_mask = result_mask_cuda.copy_to_host()
         best_mask_indices = best_mask_indices_cuda.copy_to_host()
 
-        # find the maximum mask individually for each leaf voxel and concatenate them
+        # concatenate the best masks for each voxel to get the final mask
         best_mask = np.concatenate(
             [
                 result_mask[
