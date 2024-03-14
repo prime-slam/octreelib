@@ -275,12 +275,14 @@ class CudaRansac:
         point_cloud: PointCloud,
         block_sizes: npt.NDArray,
         block_start_indices: npt.NDArray,
+        n_actual_blocks: int,
     ):
         """
         Fit the model to the point cloud.
         :param point_cloud: Point cloud to fit the model to.
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
         :param block_start_indices: Array of block start indices (leaf voxel separators).
+        :param n_actual_blocks: Actual number of voxels processed.
         """
         # create result mask and copy it to the device
         result_mask = np.zeros(
@@ -294,7 +296,7 @@ class CudaRansac:
         block_start_indices_cuda = cuda.to_device(block_start_indices)
 
         # call the kernel
-        _do_fit[self.n_blocks, self.n_threads_per_block](
+        _do_fit[n_actual_blocks, self.n_threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,

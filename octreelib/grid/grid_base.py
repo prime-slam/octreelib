@@ -155,14 +155,9 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def map_leaf_points_cuda(
-        self, function, n_blocks: int = 8, n_threads_per_block: int = 256
-    ):
+    def map_leaf_points_cuda(self, n_poses_per_batch: int = 10):
         """
         transform point cloud in the node using the function
-        :param function: transformation function PointCloud -> PointCloud
-        :param n_blocks: Number of blocks for the CUDA kernel. (a power of 8)
-        :param n_threads_per_block: Number of threads for the CUDA kernel.
         """
         pass
 
