@@ -176,7 +176,4 @@ class OctreeManager(VoxelBase):
         """
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
-        return sum(
-            [self.n_leaves(pose_number) for pose_number in pose_numbers]
-        )
-        # return sum([octree.n_leaves for octree in self._octrees.values()])
+        return sum([self.n_leaves(pose_number) for pose_number in pose_numbers])
