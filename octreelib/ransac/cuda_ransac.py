@@ -147,6 +147,45 @@ def get_plane_from_points(points, inliers):
     return abc_x, abc_y, abc_z, d
 
 
+@cuda.jit(device=True, inline=True)
+def generate_random_indices(initial_point_indices, rng_states, block_size, n_points):
+    """
+    Generate random points from the given block.
+    :param initial_point_indices: Array to store the initial point indices.
+    :param rng_states: Random number generator states.
+    :param block_size: Size of the block.
+    :param n_points: Number of points to generate.
+    """
+
+    for ii in range(n_points):
+        initial_point_indices[ii] = _cuRand(rng_states, 0, block_size)
+    return initial_point_indices
+
+
+@cuda.jit(device=True, inline=True)
+def generate_unique_random_indices(
+    initial_point_indices, rng_states, block_size, n_points
+):
+    """
+    Generate unique random points from the given block.
+    :param initial_point_indices: Array to store the initial point indices.
+    :param rng_states: Random number generator states.
+    :param block_size: Size of the block.
+    :param n_points: Number of points to generate.
+    """
+    for ii in range(n_points):
+        initial_point_indices[ii] = _cuRand(rng_states, 0, block_size)
+        unique = False
+        while not unique:
+            unique = True
+            for jj in range(ii):
+                if initial_point_indices[ii] == initial_point_indices[jj]:
+                    unique = False
+            if not unique:
+                initial_point_indices[ii] = (initial_point_indices[ii] + 1) % block_size
+    return initial_point_indices
+
+
 @cuda.jit
 def _do_fit(
     points: PointCloud,
@@ -167,66 +206,16 @@ def _do_fit(
         return
 
     w = cuda.local.array(shape=4, dtype=nb.float32)
-    if N_INITIAL_POINTS == 3:
-        # !! this is the original implementation !!
-        # !! original implementation only works with 3 initial points !!
 
-        # choose 3 random points
-        i1 = _cuRand(rng_states, 0, block_sizes[j])
-        i2 = _cuRand(rng_states, 0, block_sizes[j] - 1)
-        if i2 >= i1:
-            i2 = (i2 + 1) % block_sizes[j]
-        i3 = _cuRand(rng_states, 0, block_sizes[j] - 2)
-        if i3 >= i1:
-            i3 = (i3 + 1) % block_sizes[j]
-        if i3 >= i2:
-            i3 = (i3 + 1) % block_sizes[j]
-        (p1, p2, p3) = (
-            points[block_start_indices[j] + i1],
-            points[block_start_indices[j] + i2],
-            points[block_start_indices[j] + i3],
-        )
+    initial_point_indices = cuda.local.array(shape=N_INITIAL_POINTS, dtype=nb.size_t)
+    initial_point_indices = generate_random_indices(
+        initial_point_indices, rng_states, block_sizes[j], N_INITIAL_POINTS
+    )
+    for ii in range(N_INITIAL_POINTS):
+        initial_point_indices[ii] = block_start_indices[j] + initial_point_indices[ii]
 
-        # calculate the plane coefficients
-        ux, uy, uz = _cu_subtract_point(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2])
-        vx, vy, vz = _cu_subtract_point(p2[0], p2[1], p2[2], p3[0], p3[1], p3[2])
-        w[0], w[1], w[2] = _crossNormal(ux, uy, uz, vx, vy, vz)
-        w[3] = -_cu_dot(w[0], w[1], w[2], p1[0], p1[1], p1[2])
-    else:
-        # !! this is the new implementation !!
-        # !! it is supposed to work with any number of initial points, but it works poorly !!
-
-        # choose n_initial_points random points (does not work yet)
-        initial_point_indices = cuda.local.array(
-            shape=N_INITIAL_POINTS, dtype=nb.size_t
-        )
-
-        for ii in range(N_INITIAL_POINTS):
-            initial_point_indices[ii] = _cuRand(rng_states, 0, block_sizes[j]) + block_start_indices[j]
-
-        # # !! code below assures that the initial points are unique         !!
-        # # !! however, i'm not sure if it is optimal for the GPU            !!
-        # # !! current implementation does not assure that points are unique !!
-
-        # for ii in range(N_INITIAL_POINTS):
-        #     initial_point_indices[ii] = _cuRand(rng_states, 0, block_sizes[j]) + block_start_indices[j]
-        #     unique = False
-        #     while not unique:
-        #         unique = True
-        #         for jj in range(ii):
-        #             if initial_point_indices[ii] == initial_point_indices[jj]:
-        #                 unique = False
-        #         if not unique:
-        #             initial_point_indices[ii] = (
-        #                 initial_point_indices[ii] + 1
-        #             ) % block_sizes[j]
-        # for ii in range(N_INITIAL_POINTS):
-        #     initial_point_indices[ii] = (
-        #         block_start_indices[j] + initial_point_indices[ii]
-        #     )
-
-        # calculate the plane coefficients
-        w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_point_indices)
+    # calculate the plane coefficients
+    w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_point_indices)
 
     # for each point in the block check if it is an inlier
     for jj in range(block_sizes[j]):
