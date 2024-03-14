@@ -54,7 +54,9 @@ class OctreeManager(VoxelBase):
             np.vstack(
                 [
                     self._octrees[pose_number].get_points()
-                    for pose_number in pose_numbers
+                    for pose_number in filter(
+                        lambda i: i in self._octrees, pose_numbers
+                    )
                 ]
             )
         )
