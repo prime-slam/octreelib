@@ -14,6 +14,7 @@ from octreelib.grid.grid_base import (
 from octreelib.internal.point import PointCloud
 from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.ransac.cuda_ransac import CudaRansac
+from octreelib.internal.util import Timer
 
 __all__ = ["Grid", "GridConfig"]
 
@@ -136,11 +137,12 @@ class Grid(GridBase):
             for i in range(0, len(self.__pose_voxel_coordinates), n_poses_per_batch)
         ]
 
-        n_blocks = max([self.sum_of_leaves(pose_batch) for pose_batch in pose_batches])
+        n_blocks = [self.sum_of_leaves(pose_batch) for pose_batch in pose_batches]
+        max_n_blocks = max(n_blocks)
 
-        ransac = CudaRansac(n_blocks=n_blocks, n_threads_per_block=1024)
+        ransac = CudaRansac(n_blocks=max_n_blocks, n_threads_per_block=1024)
 
-        for pose_batch in pose_batches:
+        for pose_batch, n_blocks_in_batch in zip(pose_batches, n_blocks):
             # `combined_point_cloud` is a concatenation of ALL point clouds
             # `block_sizes` is a list of sizes of point clouds for each leaf node
             # `pose_dividers` is a list of indices where combined_point_cloud is divided by pose
@@ -173,6 +175,7 @@ class Grid(GridBase):
                 combined_point_cloud,
                 block_sizes,
                 block_start_indices,
+                n_blocks_in_batch,
             )
 
             # split the combined point cloud into separate point clouds for each pose,
