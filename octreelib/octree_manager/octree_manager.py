@@ -46,26 +46,27 @@ class OctreeManager(VoxelBase):
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
 
-        # Create a scheme octree from all points for given poses
-        self._scheme_octree = self._octree_type(
-            self._octree_config, self._corner_min, self._edge_length
-        )
-        self._scheme_octree.insert_points(
-            np.vstack(
-                [
-                    self._octrees[pose_number].get_points()
-                    for pose_number in filter(
-                        lambda i: i in self._octrees, pose_numbers
-                    )
-                ]
+        if list(filter(lambda i: i in self._octrees, pose_numbers)):
+            # Create a scheme octree from all points for given poses
+            self._scheme_octree = self._octree_type(
+                self._octree_config, self._corner_min, self._edge_length
             )
-        )
-        self._scheme_octree.subdivide(subdivision_criteria)
-        # Remove all points from the scheme octree
-        self._scheme_octree.filter([lambda _: False])
+            self._scheme_octree.insert_points(
+                np.vstack(
+                    [
+                        self._octrees[pose_number].get_points()
+                        for pose_number in filter(
+                            lambda i: i in self._octrees, pose_numbers
+                        )
+                    ]
+                )
+            )
+            self._scheme_octree.subdivide(subdivision_criteria)
+            # Remove all points from the scheme octree
+            self._scheme_octree.filter([lambda _: False])
 
-        for pose_number in self._octrees:
-            self._octrees[pose_number].subdivide_as(self._scheme_octree)
+            for pose_number in self._octrees:
+                self._octrees[pose_number].subdivide_as(self._scheme_octree)
 
     def map_leaf_points(
         self,
