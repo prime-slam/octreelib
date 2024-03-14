@@ -5,93 +5,27 @@ import numpy.typing as npt
 import numba as nb
 from numba import cuda
 from numba.cuda.random import create_xoroshiro128p_states
-from numba.cuda.random import xoroshiro128p_uniform_float32
 
 from octreelib.internal import PointCloud
-from octreelib.internal.util import Timer
+from octreelib.ransac.util import generate_random_indices, measure_distance
 
 
 N_INITIAL_POINTS = 6
 
 
 @cuda.jit(device=True, inline=True)
-def _cu_subtract_point(ax, ay, az, bx, by, bz):
-    """
-    Subtract two points. (better be rewritten)
-    :param ax: X component of the first point.
-    :param ay: Y component of the first vector.
-    :param az: Z component of the first vector.
-    :param bx: X component of the second vector.
-    :param by: Y component of the second vector.
-    :param bz: Z component of the second vector.
-    """
-    return ax - bx, ay - by, az - bz
-
-
-@cuda.jit(
-    "float32(float32, float32, float32, float32, float32, float32)",
-    device=True,
-    inline=True,
-)
-def _cu_dot(ax, ay, az, bx, by, bz):
-    """
-    Calculate the dot product of two vectors. (better be rewritten)
-    :param ax: X component of the first vector.
-    :param ay: Y component of the first vector.
-    :param az: Z component of the first vector.
-    :param bx: X component of the second vector.
-    :param by: Y component of the second vector.
-    :param bz: Z component of the second vector.
-    """
-    return ax * bx + ay * by + az * bz
-
-
-@cuda.jit(device=True, inline=True)
-def _crossNormal(ax, ay, az, bx, by, bz):
-    """
-    Calculate the cross product of two vectors and normalize the result. (better be rewritten)
-    :param ax: X component of the first vector.
-    :param ay: Y component of the first vector.
-    :param az: Z component of the first vector.
-    :param bx: X component of the second vector.
-    :param by: Y component of the second vector.
-    :param bz: Z component of the second vector.
-    """
-    cx = ay * bz - az * by
-    cy = az * bx - ax * bz
-    cz = ax * by - ay * bx
-    s = math.sqrt(cx * cx + cy * cy + cz * cz)
-    return cx / s, cy / s, cz / s
-
-
-@cuda.jit(device=True, inline=True)
-def _cuRand(rng_states, a, b):
-    """
-    Generate a random number between a and b.
-    :param rng_states: Random number generator states.
-    :param a: Lower bound.
-    :param b: Upper bound.
-    """
-    thread_id = cuda.grid(1)
-    x = xoroshiro128p_uniform_float32(rng_states, thread_id)
-    return (nb.int32)(x * (b - a) + a)
-
-
-@cuda.jit(device=True, inline=True)
-def get_plane_from_points(points, inliers):
+def get_plane_from_points(points, initial_point_indices):
     """
     Calculate the plane coefficients from the given points.
     :param points: Point cloud.
-    :param inliers: Inliers to calculate the plane coefficients from.
+    :param initial_point_indices: Inliers to calculate the plane coefficients from.
     """
     # This implementation works the same way as open3d implementation
     # ! but with some tweaks to make it work with numba and cuda !
 
-    centroid_x = 0.0
-    centroid_y = 0.0
-    centroid_z = 0.0
+    centroid_x, centroid_y, centroid_z = 0.0, 0.0, 0.0
 
-    for idx in inliers:
+    for idx in initial_point_indices:
         centroid_x += points[idx][0]
         centroid_y += points[idx][1]
         centroid_z += points[idx][2]
@@ -101,14 +35,9 @@ def get_plane_from_points(points, inliers):
     centroid_y /= num_inliers
     centroid_z /= num_inliers
 
-    xx = 0
-    xy = 0
-    xz = 0
-    yy = 0
-    yz = 0
-    zz = 0
+    xx, xy, xz, yy, yz, zz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
-    for idx in inliers:
+    for idx in initial_point_indices:
         r_x = points[idx][0] - centroid_x
         r_y = points[idx][1] - centroid_y
         r_z = points[idx][2] - centroid_z
@@ -147,48 +76,9 @@ def get_plane_from_points(points, inliers):
     return abc_x, abc_y, abc_z, d
 
 
-@cuda.jit(device=True, inline=True)
-def generate_random_indices(initial_point_indices, rng_states, block_size, n_points):
-    """
-    Generate random points from the given block.
-    :param initial_point_indices: Array to store the initial point indices.
-    :param rng_states: Random number generator states.
-    :param block_size: Size of the block.
-    :param n_points: Number of points to generate.
-    """
-
-    for ii in range(n_points):
-        initial_point_indices[ii] = _cuRand(rng_states, 0, block_size)
-    return initial_point_indices
-
-
-@cuda.jit(device=True, inline=True)
-def generate_unique_random_indices(
-    initial_point_indices, rng_states, block_size, n_points
-):
-    """
-    Generate unique random points from the given block.
-    :param initial_point_indices: Array to store the initial point indices.
-    :param rng_states: Random number generator states.
-    :param block_size: Size of the block.
-    :param n_points: Number of points to generate.
-    """
-    for ii in range(n_points):
-        initial_point_indices[ii] = _cuRand(rng_states, 0, block_size)
-        unique = False
-        while not unique:
-            unique = True
-            for jj in range(ii):
-                if initial_point_indices[ii] == initial_point_indices[jj]:
-                    unique = False
-            if not unique:
-                initial_point_indices[ii] = (initial_point_indices[ii] + 1) % block_size
-    return initial_point_indices
-
-
 @cuda.jit
 def _do_fit(
-    points: PointCloud,
+    point_cloud: PointCloud,
     block_sizes: npt.NDArray,
     block_start_indices: npt.NDArray,
     threshold: float,
@@ -197,44 +87,49 @@ def _do_fit(
     max_n_inliers,
     best_mask_indices,
 ):
-    (i, j, k) = (cuda.threadIdx.x, cuda.blockIdx.x, cuda.blockDim.x)
+    thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
-    if block_sizes[j] < N_INITIAL_POINTS:
-        result_mask[i][
-            block_start_indices[j] : block_start_indices[j] + block_sizes[j]
+    if block_sizes[block_id] < N_INITIAL_POINTS:
+        result_mask[thread_id][
+            block_start_indices[block_id] : block_start_indices[block_id]
+            + block_sizes[block_id]
         ] = 0
         return
 
-    w = cuda.local.array(shape=4, dtype=nb.float32)
+    plane = cuda.local.array(shape=4, dtype=nb.float32)
 
     initial_point_indices = cuda.local.array(shape=N_INITIAL_POINTS, dtype=nb.size_t)
     initial_point_indices = generate_random_indices(
-        initial_point_indices, rng_states, block_sizes[j], N_INITIAL_POINTS
+        initial_point_indices, rng_states, block_sizes[block_id], N_INITIAL_POINTS
     )
-    for ii in range(N_INITIAL_POINTS):
-        initial_point_indices[ii] = block_start_indices[j] + initial_point_indices[ii]
+    for i in range(N_INITIAL_POINTS):
+        initial_point_indices[i] = (
+            block_start_indices[block_id] + initial_point_indices[i]
+        )
 
     # calculate the plane coefficients
-    w[0], w[1], w[2], w[3] = get_plane_from_points(points, initial_point_indices)
+    plane[0], plane[1], plane[2], plane[3] = get_plane_from_points(
+        point_cloud, initial_point_indices
+    )
 
     # for each point in the block check if it is an inlier
     n_inliers_local = 0
-    for jj in range(block_sizes[j]):
-        p = points[block_start_indices[j] + jj]
-        distance = (
-            math.fabs(_cu_dot(w[0], w[1], w[2], p[0], p[1], p[2]) + w[3])
-            / (w[0] ** 2 + w[1] ** 2 + w[2] ** 2) ** 0.5
-        )
+    for i in range(block_sizes[block_id]):
+        point = point_cloud[block_start_indices[block_id] + i]
+        distance = measure_distance(plane, point)
         if distance < threshold:
-            result_mask[i][block_start_indices[j] + jj] = 1
+            result_mask[thread_id][block_start_indices[block_id] + i] = 1
             n_inliers_local += 1
         else:
-            result_mask[i][block_start_indices[j] + jj] = 0
+            result_mask[thread_id][block_start_indices[block_id] + i] = 0
 
-    cuda.atomic.max(max_n_inliers, j, n_inliers_local)
+    # replace the maximum number of inliers if the current number is greater
+    cuda.atomic.max(max_n_inliers, block_id, n_inliers_local)
     cuda.syncthreads()
-    if n_inliers_local == max_n_inliers[j]:
-        cuda.atomic.exch(best_mask_indices, j, i)
+    # set the best mask index for this block
+    # if this thread has the maximum number of inliers
+    if n_inliers_local == max_n_inliers[block_id]:
+        cuda.atomic.exch(best_mask_indices, block_id, thread_id)
 
 
 class CudaRansac:
@@ -246,9 +141,8 @@ class CudaRansac:
         self,
         threshold: float = 0.01,
         iterations: int = 1024,
-        n_blocks: int = 1,
+        max_n_blocks: int = 1,
         n_threads_per_block: int = 1,
-        debug: bool = False,
     ) -> None:
         # in this implementation the parameters are set in the constructor
         # the alternative would be to set them in the fit method
@@ -259,11 +153,9 @@ class CudaRansac:
 
         self.__threshold: float = threshold
         self.__iterations: int = iterations
-        self.__debug: bool = debug
         self.rng_states = create_xoroshiro128p_states(
-            n_threads_per_block * n_blocks, seed=0
+            n_threads_per_block * max_n_blocks, seed=0
         )
-        self.n_blocks = n_blocks
         self.n_threads_per_block = n_threads_per_block
 
     def fit(
@@ -271,53 +163,53 @@ class CudaRansac:
         point_cloud: PointCloud,
         block_sizes: npt.NDArray,
         block_start_indices: npt.NDArray,
-        n_actual_blocks: int,
     ):
         """
         Fit the model to the point cloud.
         :param point_cloud: Point cloud to fit the model to.
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
         :param block_start_indices: Array of block start indices (leaf voxel separators).
-        :param n_actual_blocks: Actual number of voxels processed.
         """
+
+        n_blocks = len(block_sizes)
+
         # create result mask and copy it to the device
-        result_mask = np.zeros(
-            (self.n_threads_per_block, len(point_cloud)), dtype=np.bool_
+        result_mask_cuda = cuda.to_device(
+            np.zeros((self.n_threads_per_block, len(point_cloud)), dtype=np.bool_)
         )
-        result_mask_cuda = cuda.to_device(result_mask)
+        max_n_inliers_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
+        best_mask_indices_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
         # copy point cloud, block sizes and block start indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
         block_start_indices_cuda = cuda.to_device(block_start_indices)
-        max_n_inliers = cuda.to_device(np.zeros(n_actual_blocks, dtype=np.int32))
-        best_mask_indices = cuda.to_device(np.zeros(n_actual_blocks, dtype=np.int32))
 
         # call the kernel
-        _do_fit[n_actual_blocks, self.n_threads_per_block](
+        _do_fit[n_blocks, self.n_threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__threshold,
             result_mask_cuda,
             self.rng_states,
-            max_n_inliers,
-            best_mask_indices,
+            max_n_inliers_cuda,
+            best_mask_indices_cuda,
         )
 
         # copy result mask back to the host
         result_mask = result_mask_cuda.copy_to_host()
-        best_mask_indices = best_mask_indices.copy_to_host()
+        best_mask_indices = best_mask_indices_cuda.copy_to_host()
 
         # find the maximum mask individually for each leaf voxel and concatenate them
-        maximum_mask = np.concatenate(
+        best_mask = np.concatenate(
             [
                 result_mask[
                     best_mask_indices[j], block_start : block_start + block_size
                 ]
                 for j, block_start, block_size in zip(
-                    range(n_actual_blocks), block_start_indices, block_sizes
+                    range(n_blocks), block_start_indices, block_sizes
                 )
             ]
         )
-        return maximum_mask
+        return best_mask

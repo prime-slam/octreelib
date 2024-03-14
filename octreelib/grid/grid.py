@@ -5,7 +5,6 @@ from typing import List, Dict, Callable, Optional
 import k3d
 import numpy as np
 
-from octreelib.internal.util import Timer
 from octreelib.grid.grid_base import (
     GridBase,
     GridConfigBase,
@@ -129,20 +128,26 @@ class Grid(GridBase):
 
         # The processing is done in batches to avoid running out of memory
 
-        pose_batches = [
-            range(
-                i,
-                min(i + n_poses_per_batch, len(self.__pose_voxel_coordinates)),
+        batches = [
+            list(
+                range(
+                    i,
+                    min(i + n_poses_per_batch, len(self.__pose_voxel_coordinates)),
+                )
             )
             for i in range(0, len(self.__pose_voxel_coordinates), n_poses_per_batch)
         ]
 
-        n_blocks = [self.sum_of_leaves(pose_batch) for pose_batch in pose_batches]
-        max_n_blocks = max(n_blocks)
+        max_n_blocks = max(
+            [
+                self.sum_of_leaves(batch_pose_numbers)
+                for batch_pose_numbers in batches
+            ]
+        )
 
-        ransac = CudaRansac(n_blocks=max_n_blocks, n_threads_per_block=1024)
+        ransac = CudaRansac(max_n_blocks=max_n_blocks, n_threads_per_block=1024)
 
-        for pose_batch, n_blocks_in_batch in zip(pose_batches, n_blocks):
+        for batch_pose_numbers in batches:
             # `combined_point_cloud` is a concatenation of ALL point clouds
             # `block_sizes` is a list of sizes of point clouds for each leaf node
             # `pose_dividers` is a list of indices where combined_point_cloud is divided by pose
@@ -151,7 +156,7 @@ class Grid(GridBase):
             point_clouds = []
             block_sizes = []
             pose_dividers = [0]
-            for pose_number in pose_batch:
+            for pose_number in batch_pose_numbers:
                 combined_point_cloud = self.get_points(pose_number)
                 point_clouds.append(combined_point_cloud)
                 block_sizes.append(
@@ -175,16 +180,15 @@ class Grid(GridBase):
                 combined_point_cloud,
                 block_sizes,
                 block_start_indices,
-                n_blocks_in_batch,
             )
 
             # split the combined point cloud into separate point clouds for each pose,
             # apply the masks from the kernel
             # and insert them into the octrees
             self.map_leaf_points(
-                lambda x: np.empty((0, 3), dtype=float), pose_numbers=pose_batch
+                lambda x: np.empty((0, 3), dtype=float), pose_numbers=batch_pose_numbers
             )
-            for i, pose_number in enumerate(pose_batch):
+            for i, pose_number in enumerate(batch_pose_numbers):
                 mask = maximum_mask[pose_dividers[i] : pose_dividers[i + 1]]
                 point_cloud = combined_point_cloud[
                     pose_dividers[i] : pose_dividers[i + 1]
