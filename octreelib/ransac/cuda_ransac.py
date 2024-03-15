@@ -84,15 +84,10 @@ def ransac_kernel(
     result_mask: npt.NDArray,
     rng_states,
     max_n_inliers,
-    best_mask_indices,
 ):
     thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
     if block_sizes[block_id] < N_INITIAL_POINTS:
-        result_mask[thread_id][
-            block_start_indices[block_id] : block_start_indices[block_id]
-            + block_sizes[block_id]
-        ] = 0
         return
 
     plane = cuda.local.array(shape=4, dtype=nb.float32)
@@ -117,10 +112,7 @@ def ransac_kernel(
         point = point_cloud[block_start_indices[block_id] + i]
         distance = measure_distance(plane, point)
         if distance < threshold:
-            result_mask[thread_id][block_start_indices[block_id] + i] = 1
             n_inliers_local += 1
-        else:
-            result_mask[thread_id][block_start_indices[block_id] + i] = 0
 
     # replace the maximum number of inliers if the current number is greater
     cuda.atomic.max(max_n_inliers, block_id, n_inliers_local)
@@ -128,8 +120,11 @@ def ransac_kernel(
     # set the best mask index for this block
     # if this thread has the maximum number of inliers
     if n_inliers_local == max_n_inliers[block_id]:
-        cuda.atomic.exch(best_mask_indices, block_id, thread_id)
-
+        # # possible data race here ⛄️
+        # # needs a mutex lock
+        for i in range(block_sizes[block_id]):
+            if measure_distance(plane, point_cloud[block_start_indices[block_id] + i]) < threshold:
+                result_mask[block_start_indices[block_id] + i] = True
 
 class CudaRansac:
     """
@@ -182,12 +177,11 @@ class CudaRansac:
 
         # create result mask and copy it to the device
         result_mask_cuda = cuda.to_device(
-            np.zeros((self.n_threads_per_block, len(point_cloud)), dtype=np.bool_)
+            np.zeros((len(point_cloud)), dtype=np.bool_)
         )
 
         # create arrays to store the maximum number of inliers and the best mask indices
         max_n_inliers_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
-        best_mask_indices_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
         # copy point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)
@@ -203,22 +197,8 @@ class CudaRansac:
             result_mask_cuda,
             self.rng_states,
             max_n_inliers_cuda,
-            best_mask_indices_cuda,
         )
 
         # copy result mask back to the host
         result_mask = result_mask_cuda.copy_to_host()
-        best_mask_indices = best_mask_indices_cuda.copy_to_host()
-
-        # concatenate the best masks for each voxel to get the final mask
-        best_mask = np.concatenate(
-            [
-                result_mask[
-                    best_mask_indices[j], block_start : block_start + block_size
-                ]
-                for j, block_start, block_size in zip(
-                    range(n_blocks), block_start_indices, block_sizes
-                )
-            ]
-        )
-        return best_mask
+        return result_mask
