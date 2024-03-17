@@ -83,7 +83,8 @@ def ransac_kernel(
     threshold: float,
     result_mask: npt.NDArray,
     rng_states,
-    max_n_inliers,
+    max_n_inliers: npt.NDArray,
+    mask_mutex: npt.NDArray,
 ):
     thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
@@ -119,12 +120,17 @@ def ransac_kernel(
     cuda.syncthreads()
     # set the best mask index for this block
     # if this thread has the maximum number of inliers
-    if n_inliers_local == max_n_inliers[block_id]:
-        # # possible data race here ⛄️
-        # # needs a mutex lock
+    if (
+        n_inliers_local == max_n_inliers[block_id]
+        and cuda.atomic.cas(mask_mutex, block_id, 0, 1) == 0
+    ):
         for i in range(block_sizes[block_id]):
-            if measure_distance(plane, point_cloud[block_start_indices[block_id] + i]) < threshold:
+            if (
+                measure_distance(plane, point_cloud[block_start_indices[block_id] + i])
+                < threshold
+            ):
                 result_mask[block_start_indices[block_id] + i] = True
+
 
 class CudaRansac:
     """
@@ -176,9 +182,7 @@ class CudaRansac:
         n_blocks = len(block_sizes)
 
         # create result mask and copy it to the device
-        result_mask_cuda = cuda.to_device(
-            np.zeros((len(point_cloud)), dtype=np.bool_)
-        )
+        result_mask_cuda = cuda.to_device(np.zeros((len(point_cloud)), dtype=np.bool_))
 
         # create arrays to store the maximum number of inliers and the best mask indices
         max_n_inliers_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
@@ -187,6 +191,9 @@ class CudaRansac:
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
         block_start_indices_cuda = cuda.to_device(block_start_indices)
+
+        # this mutex is needed to make sure that only one thread writes to the mask
+        mask_mutex = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
         # call the kernel
         ransac_kernel[n_blocks, self.n_threads_per_block](
@@ -197,6 +204,7 @@ class CudaRansac:
             result_mask_cuda,
             self.rng_states,
             max_n_inliers_cuda,
+            mask_mutex,
         )
 
         # copy result mask back to the host
