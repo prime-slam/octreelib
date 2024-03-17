@@ -151,32 +151,33 @@ class Grid(GridBase):
             # `pose_dividers` is a list of indices where combined_point_cloud is divided by pose
             # these are used to split the combined_point_cloud into separate point clouds
             # for each pose after the kernel is done
-            point_clouds = []
+            batch_point_clouds = []
             block_sizes = []
             pose_dividers = [0]
             for pose_number in batch_pose_numbers:
-                combined_point_cloud = self.get_points(pose_number)
-                point_clouds.append(combined_point_cloud)
+                pose_point_cloud = self.get_leaf_points(pose_number)
+                batch_point_clouds.append(
+                    np.vstack([v.get_points() for v in pose_point_cloud])
+                )
                 block_sizes.append(
                     np.array(
-                        [
-                            len(v.get_points())
-                            for v in self.get_leaf_points(pose_number)
-                        ],
+                        [len(v.get_points()) for v in pose_point_cloud],
                         dtype=np.int32,
                     )
                 )
                 pose_dividers.append(pose_dividers[-1] + block_sizes[-1].sum())
 
-            combined_point_cloud = np.vstack(point_clouds)
-            block_sizes = np.concatenate(block_sizes)
-            block_start_indices = np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+            combined_point_cloud = np.vstack(batch_point_clouds)
+            block_sizes_combined = np.concatenate(block_sizes)
+            block_start_indices = np.cumsum(
+                np.concatenate(([0], block_sizes_combined[:-1]))
+            )
             pose_dividers = np.cumsum(pose_dividers)
 
             # run the kernel
             maximum_mask = ransac.evaluate(
                 combined_point_cloud,
-                block_sizes,
+                block_sizes_combined,
                 block_start_indices,
             )
 
