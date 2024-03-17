@@ -118,6 +118,14 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
+    @abstractmethod
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree node
+        :param mask: Mask to apply
+        """
+        self._points = self._points[mask]
+
 
 class OctreeBase(Voxel, ABC):
     """
@@ -219,3 +227,10 @@ class OctreeBase(Voxel, ABC):
     @abstractmethod
     def insert_points(self, points: PointCloud):
         pass
+
+    @abstractmethod
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree
+        :param mask: Mask to apply
+        """

@@ -14,6 +14,7 @@ from octreelib.grid.grid_base import (
 from octreelib.internal.point import PointCloud
 from octreelib.internal.voxel import Voxel, VoxelBase
 from octreelib.ransac.cuda_ransac import CudaRansac
+from octreelib.internal.util import Timer
 
 __all__ = ["Grid", "GridConfig"]
 
@@ -172,7 +173,7 @@ class Grid(GridBase):
             block_start_indices = np.cumsum(
                 np.concatenate(([0], block_sizes_combined[:-1]))
             )
-            pose_dividers = np.cumsum(pose_dividers)
+            pose_dividers = np.array(pose_dividers)
 
             # run the kernel
             maximum_mask = ransac.evaluate(
@@ -184,15 +185,24 @@ class Grid(GridBase):
             # split the combined point cloud into separate point clouds for each pose,
             # apply the masks from the kernel
             # and insert them into the octrees
-            self.map_leaf_points(
-                lambda x: np.empty((0, 3), dtype=float), pose_numbers=batch_pose_numbers
-            )
-            for i, pose_number in enumerate(batch_pose_numbers):
+
+            for i, (pose_number, block_sizes_for_pose) in enumerate(
+                zip(batch_pose_numbers, block_sizes)
+            ):
                 mask = maximum_mask[pose_dividers[i] : pose_dividers[i + 1]]
-                point_cloud = combined_point_cloud[
-                    pose_dividers[i] : pose_dividers[i + 1]
-                ]
-                self.insert_points(pose_number, point_cloud[mask == 1])
+                point_start_index = 0
+                leaf_start_index = 0
+                for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]:
+                    octree = self.__octrees[voxel_coordinates]
+                    n_points = octree.n_points(pose_number)
+                    n_leaves = octree.n_leaves(pose_number)
+                    octree_block_sizes = block_sizes_for_pose[
+                        leaf_start_index : leaf_start_index + n_leaves
+                    ]
+                    octree_mask = mask[point_start_index : point_start_index + n_points]
+                    octree.apply_mask(octree_mask, pose_number, octree_block_sizes)
+                    point_start_index += n_points
+                    leaf_start_index += n_leaves
 
     def get_leaf_points(self, pose_number: int, non_empty: bool = True) -> List[Voxel]:
         """

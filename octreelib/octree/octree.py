@@ -134,6 +134,13 @@ class OctreeNode(OctreeNodeBase):
             else []
         )
 
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree node
+        :param mask: Mask to apply
+        """
+        self._points = self._points[mask]
+
     @property
     def n_leaves(self):
         """
@@ -254,6 +261,17 @@ class Octree(OctreeBase, Generic[T]):
         if non_empty:
             return list(filter(lambda v: v.n_points != 0, self._cached_leaves))
         return self._cached_leaves
+
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree
+        :param mask: Mask to apply
+        """
+        start_index = 0
+        for leaf in filter(lambda v: v.n_points != 0, self._cached_leaves):
+            n_points = leaf.n_points
+            leaf.apply_mask(mask[start_index : start_index + n_points])
+            start_index += n_points
 
     @property
     def n_points(self):

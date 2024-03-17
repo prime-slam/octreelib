@@ -177,3 +177,12 @@ class OctreeManager(VoxelBase):
         if pose_numbers is None:
             pose_numbers = self._octrees.keys()
         return sum([self.n_leaves(pose_number) for pose_number in pose_numbers])
+
+    def apply_mask(self, mask: np.ndarray, pose_number: int):
+        """
+        Apply mask to the point cloud in the octree
+        :param mask: Mask to apply
+        :param pose_number: Pose number
+        """
+        if pose_number in self._octrees:
+            self._octrees[pose_number].apply_mask(mask)
