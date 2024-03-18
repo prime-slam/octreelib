@@ -122,9 +122,17 @@ class Grid(GridBase):
         for voxel_coordinates in self.__octrees:
             self.__octrees[voxel_coordinates].map_leaf_points(function, pose_numbers)
 
-    def map_leaf_points_cuda(self, n_poses_per_batch: int = 10):
+    def map_leaf_points_cuda_ransac(
+        self,
+        n_poses_per_batch: int = 1,
+        threshold: int = 0.01,
+        n_iterations: int = 1024,
+    ):
         """
         transform point cloud in the node using the function
+        :param n_poses_per_batch: Number of poses per batch.
+        :param threshold: Distance threshold.
+        :param n_iterations: Number of RANSAC iterations (<= 1024).
         """
 
         # processing is done in batches to avoid running out of memory
@@ -143,7 +151,11 @@ class Grid(GridBase):
         max_leaf_voxels = max(
             [self.sum_of_leaves(batch_pose_numbers) for batch_pose_numbers in batches]
         )
-        ransac = CudaRansac(max_n_blocks=max_leaf_voxels, n_threads_per_block=1024)
+        ransac = CudaRansac(
+            max_n_blocks=max_leaf_voxels,
+            n_threads_per_block=n_iterations,
+            threshold=threshold,
+        )
 
         # process each batch
         for batch_pose_numbers in batches:

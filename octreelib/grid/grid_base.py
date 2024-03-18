@@ -155,9 +155,17 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def map_leaf_points_cuda(self, n_poses_per_batch: int = 10):
+    def map_leaf_points_cuda_ransac(
+        self,
+        n_poses_per_batch: int = 10,
+        threshold: int = 0.01,
+        n_iterations: int = 1024,
+    ):
         """
         transform point cloud in the node using the function
+        :param n_poses_per_batch: Number of poses per batch.
+        :param threshold: Distance threshold.
+        :param n_iterations: Number of RANSAC iterations (<= 1024).
         """
         pass
 

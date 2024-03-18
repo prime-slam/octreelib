@@ -144,9 +144,9 @@ def test_map_leaf_points(generated_grid):
     assert grid.n_points(1) == grid.n_leaves(1)
 
 
-def test_map_leaf_points_cuda(generated_grid):
+def test_map_leaf_points_cuda_ransac(generated_grid):
     grid, pose_points = generated_grid
-    grid.map_leaf_points_cuda()
+    grid.map_leaf_points_cuda_ransac()
 
 
 def test_get_leaf_points(generated_grid):
