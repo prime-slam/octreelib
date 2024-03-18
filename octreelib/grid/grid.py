@@ -125,7 +125,7 @@ class Grid(GridBase):
     def map_leaf_points_cuda_ransac(
         self,
         n_poses_per_batch: int = 1,
-        threshold: int = 0.01,
+        threshold: float = 0.01,
         n_hypotheses: int = 1024,
     ):
         """
