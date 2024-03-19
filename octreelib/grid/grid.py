@@ -211,7 +211,7 @@ class Grid(GridBase):
                         leaf_start_index : leaf_start_index + n_leaves
                     ]
                     octree_mask = mask[point_start_index : point_start_index + n_points]
-                    octree.apply_mask(octree_mask, pose_number, octree_block_sizes)
+                    octree.apply_mask(octree_mask, pose_number)
                     point_start_index += n_points
                     leaf_start_index += n_leaves
 
