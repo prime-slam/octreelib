@@ -43,6 +43,8 @@ class OctreeNodeBase(Voxel, ABC):
         self._points: np.empty((0, 3), dtype=float)
         self._children: Optional[List["OctreeNodeBase"]] = []
         self._has_children: bool = False
+        # `OctreeNodeBase_cached_leaves` references field `OctreeBase._cached_leaves`
+        # so that nodes can modify this field in the parent OctreeBase instance
         self._cached_leaves = octree_cached_leaves
         self._cached_leaves.append(self)
 
@@ -146,6 +148,10 @@ class OctreeBase(Voxel, ABC):
     ):
         super().__init__(corner_min, edge_length)
         self._config = octree_config
+
+        # cached leaves allow for fast retrieval of leaf nodes with points
+        # skipping the stage of finding them and returning through multiple
+        # layers of recursion
         self._cached_leaves = []
         self._root = self._node_type(
             self.corner_min, self.edge_length, self._cached_leaves

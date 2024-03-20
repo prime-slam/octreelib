@@ -3,53 +3,12 @@ import pytest
 
 from octreelib.internal import PointCloud
 from octreelib.grid import Grid, GridConfig
-from octreelib.octree import OctreeConfig, Octree
+from octreelib.octree import OctreeConfig
 from octreelib.octree_manager import OctreeManager
-from octreelib.ransac.cuda_ransac import CudaRansac
 
 
 def points_are_same(points_first: PointCloud, points_second: PointCloud):
     return set(map(str, points_first.tolist())) == set(map(str, points_second.tolist()))
-
-
-@pytest.fixture()
-def generated_grid_large():
-    def generate_planar_cloud(N, A, B, C, D, voxel_corner, edge_length, sigma):
-        voxel_points = (
-            np.random.rand(N, 3) * np.array([edge_length - 6 * sigma] * 3)
-            + voxel_corner
-            + 3 * sigma
-        )
-        noise = np.random.normal(0, sigma, (N,))
-        plane_points_z = (-A * voxel_points[:, 0] - B * voxel_points[:, 1] - D) / C
-        noisy_plane_points_z = plane_points_z + noise
-        return np.column_stack((voxel_points[:, :2], noisy_plane_points_z))
-
-    N = 100
-    A, B, C, D = 1, 2, 3, 0.5
-    corner = np.array([0, 0, 0])
-    edge_length = 5
-    sigma = 0.5
-
-    grid = Grid(GridConfig(voxel_edge_length=edge_length))
-    grid.insert_points(
-        0, generate_planar_cloud(N, A, B, C, D, corner, edge_length, sigma)
-    )
-    grid.insert_points(
-        0,
-        generate_planar_cloud(N, -A, B, C, D, corner + edge_length, edge_length, sigma),
-    )
-    grid.insert_points(
-        1, generate_planar_cloud(N, A, B, C, D, corner, edge_length, sigma)
-    )
-    grid.insert_points(
-        1,
-        generate_planar_cloud(N, -A, B, C, D, corner + edge_length, edge_length, sigma),
-    )
-
-    grid.subdivide([lambda points: len(points) > 150], [0])
-
-    return grid
 
 
 @pytest.fixture()
@@ -142,11 +101,6 @@ def test_map_leaf_points(generated_grid):
     grid.map_leaf_points(lambda cloud: [cloud[0]])
     assert grid.n_points(0) == grid.n_leaves(0)
     assert grid.n_points(1) == grid.n_leaves(1)
-
-
-def test_map_leaf_points_cuda_ransac(generated_grid):
-    grid, pose_points = generated_grid
-    grid.map_leaf_points_cuda_ransac()
 
 
 def test_get_leaf_points(generated_grid):

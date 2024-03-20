@@ -62,8 +62,8 @@ class Grid(GridBase):
         :param pose_number: Pose number to which the cloud is inserted.
         :param points: Point cloud to be inserted.
         """
-        # if pose_number in self.__pose_voxel_coordinates:
-        #     raise ValueError(f"Cannot insert points to existing pose {pose_number}")
+        if pose_number in self.__pose_voxel_coordinates:
+            raise ValueError(f"Cannot insert points to existing pose {pose_number}")
 
         # Register pose
         self.__pose_voxel_coordinates[pose_number] = []
