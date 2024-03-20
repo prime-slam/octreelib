@@ -1,0 +1,1 @@
+N_INITIAL_POINTS = 6
