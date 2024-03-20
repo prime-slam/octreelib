@@ -1,133 +1,17 @@
+import math
+
 import numpy as np
 import numpy.typing as npt
 import numba as nb
 from numba import cuda
-from numba.cuda.random import create_xoroshiro128p_states
+from numba.cuda.random import create_xoroshiro128p_states, xoroshiro128p_uniform_float32
 
 from octreelib.internal import PointCloud
-from octreelib.ransac.util import generate_random_indices, measure_distance
 
 __all__ = ["CudaRansac"]
 
 
 N_INITIAL_POINTS = 6
-
-
-@cuda.jit(device=True, inline=True)
-def get_plane_from_points(points, initial_point_indices):
-    """
-    Calculate the plane coefficients from the given points.
-    :param points: Point cloud.
-    :param initial_point_indices: Inliers to calculate the plane coefficients from.
-    """
-
-    centroid_x, centroid_y, centroid_z = 0.0, 0.0, 0.0
-
-    for idx in initial_point_indices:
-        centroid_x += points[idx][0]
-        centroid_y += points[idx][1]
-        centroid_z += points[idx][2]
-
-    centroid_x /= N_INITIAL_POINTS
-    centroid_y /= N_INITIAL_POINTS
-    centroid_z /= N_INITIAL_POINTS
-
-    xx, xy, xz, yy, yz, zz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-
-    for idx in initial_point_indices:
-        r_x = points[idx][0] - centroid_x
-        r_y = points[idx][1] - centroid_y
-        r_z = points[idx][2] - centroid_z
-        xx += r_x * r_x
-        xy += r_x * r_y
-        xz += r_x * r_z
-        yy += r_y * r_y
-        yz += r_y * r_z
-        zz += r_z * r_z
-
-    det_x = yy * zz - yz * yz
-    det_y = xx * zz - xz * xz
-    det_z = xx * yy - xy * xy
-
-    if det_x > det_y and det_x > det_z:
-        abc_x = det_x
-        abc_y = xz * yz - xy * zz
-        abc_z = xy * yz - xz * yy
-    elif det_y > det_z:
-        abc_x = xz * yz - xy * zz
-        abc_y = det_y
-        abc_z = xy * xz - yz * xx
-    else:
-        abc_x = xy * yz - xz * yy
-        abc_y = xy * xz - yz * xx
-        abc_z = det_z
-
-    norm = (abc_x**2 + abc_y**2 + abc_z**2) ** 0.5
-    if norm == 0:
-        return 0.0, 0.0, 0.0, 0.0
-
-    abc_x /= norm
-    abc_y /= norm
-    abc_z /= norm
-    d = -(abc_x * centroid_x + abc_y * centroid_y + abc_z * centroid_z)
-    return abc_x, abc_y, abc_z, d
-
-
-@cuda.jit
-def ransac_kernel(
-    point_cloud: PointCloud,
-    block_sizes: npt.NDArray,
-    block_start_indices: npt.NDArray,
-    threshold: float,
-    result_mask: npt.NDArray,
-    rng_states,
-    max_n_inliers: npt.NDArray,
-    mask_mutex: npt.NDArray,
-):
-    thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
-
-    if block_sizes[block_id] < N_INITIAL_POINTS:
-        return
-
-    # select random points as inliers
-    initial_point_indices = cuda.local.array(shape=N_INITIAL_POINTS, dtype=nb.size_t)
-    initial_point_indices = generate_random_indices(
-        initial_point_indices, rng_states, block_sizes[block_id], N_INITIAL_POINTS
-    )
-    for i in range(N_INITIAL_POINTS):
-        initial_point_indices[i] = (
-            block_start_indices[block_id] + initial_point_indices[i]
-        )
-
-    # calculate the plane coefficients
-    plane = cuda.local.array(shape=4, dtype=nb.float32)
-    plane[0], plane[1], plane[2], plane[3] = get_plane_from_points(
-        point_cloud, initial_point_indices
-    )
-
-    # for each point in the block check if it is an inlier
-    n_inliers_local = 0
-    for i in range(block_sizes[block_id]):
-        point = point_cloud[block_start_indices[block_id] + i]
-        distance = measure_distance(plane, point)
-        if distance < threshold:
-            n_inliers_local += 1
-
-    # replace the maximum number of inliers if the current number is greater
-    cuda.atomic.max(max_n_inliers, block_id, n_inliers_local)
-    cuda.syncthreads()
-    # set the best mask index for this block
-    # if this thread has the maximum number of inliers
-    if (
-        n_inliers_local == max_n_inliers[block_id]
-        and cuda.atomic.cas(mask_mutex, block_id, 0, 1) == 0
-    ):
-        for i in range(block_sizes[block_id]):
-            if (
-                measure_distance(plane, point_cloud[block_start_indices[block_id] + i])
-                < threshold
-            ):
-                result_mask[block_start_indices[block_id] + i] = True
 
 
 class CudaRansac:
@@ -195,7 +79,7 @@ class CudaRansac:
         mask_mutex = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
         # call the kernel
-        ransac_kernel[n_blocks, self.n_threads_per_block](
+        self._ransac_kernel[n_blocks, self.n_threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
@@ -209,3 +93,197 @@ class CudaRansac:
         # copy result mask back to the host
         result_mask = result_mask_cuda.copy_to_host()
         return result_mask
+
+    @cuda.jit
+    def _ransac_kernel(
+        self,
+        point_cloud: PointCloud,
+        block_sizes: npt.NDArray,
+        block_start_indices: npt.NDArray,
+        threshold: float,
+        result_mask: npt.NDArray,
+        rng_states,
+        max_n_inliers: npt.NDArray,
+        mask_mutex: npt.NDArray,
+    ):
+        thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
+
+        if block_sizes[block_id] < N_INITIAL_POINTS:
+            return
+
+        # select random points as inliers
+        initial_point_indices = cuda.local.array(
+            shape=N_INITIAL_POINTS, dtype=nb.size_t
+        )
+        initial_point_indices = self._generate_random_indices(
+            initial_point_indices, rng_states, block_sizes[block_id], N_INITIAL_POINTS
+        )
+        for i in range(N_INITIAL_POINTS):
+            initial_point_indices[i] = (
+                block_start_indices[block_id] + initial_point_indices[i]
+            )
+
+        # calculate the plane coefficients
+        plane = cuda.local.array(shape=4, dtype=nb.float32)
+        plane[0], plane[1], plane[2], plane[3] = self._get_plane_from_points(
+            point_cloud, initial_point_indices
+        )
+
+        # for each point in the block check if it is an inlier
+        n_inliers_local = 0
+        for i in range(block_sizes[block_id]):
+            point = point_cloud[block_start_indices[block_id] + i]
+            distance = self._measure_distance(plane, point)
+            if distance < threshold:
+                n_inliers_local += 1
+
+        # replace the maximum number of inliers if the current number is greater
+        cuda.atomic.max(max_n_inliers, block_id, n_inliers_local)
+        cuda.syncthreads()
+        # set the best mask index for this block
+        # if this thread has the maximum number of inliers
+        if (
+            n_inliers_local == max_n_inliers[block_id]
+            and cuda.atomic.cas(mask_mutex, block_id, 0, 1) == 0
+        ):
+            for i in range(block_sizes[block_id]):
+                if (
+                    self._measure_distance(
+                        plane, point_cloud[block_start_indices[block_id] + i]
+                    )
+                    < threshold
+                ):
+                    result_mask[block_start_indices[block_id] + i] = True
+
+    @cuda.jit(device=True, inline=True)
+    def _measure_distance(self, plane, point):
+        """
+        Measure the distance between a plane and a point.
+        :param plane: Plane coefficients.
+        :param point: Point coordinates.
+        """
+        return (
+            math.fabs(
+                plane[0] * point[0]
+                + plane[1] * point[1]
+                + plane[2] * point[2]
+                + plane[3]
+            )
+            / (plane[0] ** 2 + plane[1] ** 2 + plane[2] ** 2) ** 0.5
+        )
+
+    @cuda.jit(device=True, inline=True)
+    def _generate_random_int(self, rng_states, lower_bound, upper_bound):
+        """
+        Generate a random number between a and b.
+        :param rng_states: Random number generator states.
+        :param lower_bound: Lower bound.
+        :param upper_bound: Upper bound.
+        """
+        thread_id = cuda.grid(1)
+        x = xoroshiro128p_uniform_float32(rng_states, thread_id)
+        return (nb.int32)(x * (upper_bound - lower_bound) + lower_bound)
+
+    @cuda.jit(device=True, inline=True)
+    def _get_plane_from_points(self, points, initial_point_indices):
+        """
+        Calculate the plane coefficients from the given points.
+        :param points: Point cloud.
+        :param initial_point_indices: Inliers to calculate the plane coefficients from.
+        """
+
+        centroid_x, centroid_y, centroid_z = 0.0, 0.0, 0.0
+
+        for idx in initial_point_indices:
+            centroid_x += points[idx][0]
+            centroid_y += points[idx][1]
+            centroid_z += points[idx][2]
+
+        centroid_x /= N_INITIAL_POINTS
+        centroid_y /= N_INITIAL_POINTS
+        centroid_z /= N_INITIAL_POINTS
+
+        xx, xy, xz, yy, yz, zz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+
+        for idx in initial_point_indices:
+            r_x = points[idx][0] - centroid_x
+            r_y = points[idx][1] - centroid_y
+            r_z = points[idx][2] - centroid_z
+            xx += r_x * r_x
+            xy += r_x * r_y
+            xz += r_x * r_z
+            yy += r_y * r_y
+            yz += r_y * r_z
+            zz += r_z * r_z
+
+        det_x = yy * zz - yz * yz
+        det_y = xx * zz - xz * xz
+        det_z = xx * yy - xy * xy
+
+        if det_x > det_y and det_x > det_z:
+            abc_x = det_x
+            abc_y = xz * yz - xy * zz
+            abc_z = xy * yz - xz * yy
+        elif det_y > det_z:
+            abc_x = xz * yz - xy * zz
+            abc_y = det_y
+            abc_z = xy * xz - yz * xx
+        else:
+            abc_x = xy * yz - xz * yy
+            abc_y = xy * xz - yz * xx
+            abc_z = det_z
+
+        norm = (abc_x**2 + abc_y**2 + abc_z**2) ** 0.5
+        if norm == 0:
+            return 0.0, 0.0, 0.0, 0.0
+
+        abc_x /= norm
+        abc_y /= norm
+        abc_z /= norm
+        d = -(abc_x * centroid_x + abc_y * centroid_y + abc_z * centroid_z)
+        return abc_x, abc_y, abc_z, d
+
+    @cuda.jit(device=True, inline=True)
+    def _generate_random_indices(
+        self, initial_point_indices, rng_states, block_size, n_points
+    ):
+        """
+        Generate random points from the given block.
+        :param initial_point_indices: Array to store the initial point indices.
+        :param rng_states: Random number generator states.
+        :param block_size: Size of the block.
+        :param n_points: Number of points to generate.
+        """
+
+        for i in range(n_points):
+            initial_point_indices[i] = self._generate_random_int(
+                rng_states, 0, block_size
+            )
+        return initial_point_indices
+
+    @cuda.jit(device=True, inline=True)
+    def _generate_unique_random_indices(
+        self, initial_point_indices, rng_states, block_size, n_points
+    ):
+        """
+        Generate unique random points from the given block.
+        :param initial_point_indices: Array to store the initial point indices.
+        :param rng_states: Random number generator states.
+        :param block_size: Size of the block.
+        :param n_points: Number of points to generate.
+        """
+        for ii in range(n_points):
+            initial_point_indices[ii] = self._generate_random_int(
+                rng_states, 0, block_size
+            )
+            unique = False
+            while not unique:
+                unique = True
+                for jj in range(ii):
+                    if initial_point_indices[ii] == initial_point_indices[jj]:
+                        unique = False
+                if not unique:
+                    initial_point_indices[ii] = (
+                        initial_point_indices[ii] + 1
+                    ) % block_size
+        return initial_point_indices
