@@ -20,8 +20,6 @@ def get_plane_from_points(points, initial_point_indices):
     :param points: Point cloud.
     :param initial_point_indices: Inliers to calculate the plane coefficients from.
     """
-    # This implementation works the same way as open3d implementation
-    # ! but with some tweaks to make it work with numba and cuda !
 
     centroid_x, centroid_y, centroid_z = 0.0, 0.0, 0.0
 
@@ -91,8 +89,7 @@ def ransac_kernel(
     if block_sizes[block_id] < N_INITIAL_POINTS:
         return
 
-    plane = cuda.local.array(shape=4, dtype=nb.float32)
-
+    # select random points as inliers
     initial_point_indices = cuda.local.array(shape=N_INITIAL_POINTS, dtype=nb.size_t)
     initial_point_indices = generate_random_indices(
         initial_point_indices, rng_states, block_sizes[block_id], N_INITIAL_POINTS
@@ -103,6 +100,7 @@ def ransac_kernel(
         )
 
     # calculate the plane coefficients
+    plane = cuda.local.array(shape=4, dtype=nb.float32)
     plane[0], plane[1], plane[2], plane[3] = get_plane_from_points(
         point_cloud, initial_point_indices
     )
@@ -151,8 +149,6 @@ class CudaRansac:
         :param max_n_blocks: Maximum number of blocks.
         :param n_threads_per_block: Number of threads per block.
         """
-        # in this implementation the parameters are set in the constructor
-        # the alternative would be to set them in the fit method
         if threshold <= 0:
             raise ValueError("Threshold must be positive")
         if iterations < 1:
@@ -170,13 +166,11 @@ class CudaRansac:
         self,
         point_cloud: PointCloud,
         block_sizes: npt.NDArray,
-        block_start_indices: npt.NDArray,
     ):
         """
         Evaluate the RANSAC model.
         :param point_cloud: Point cloud to fit the model to.
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
-        :param block_start_indices: Array of block start indices (leaf voxel separators).
         """
 
         n_blocks = len(block_sizes)
@@ -190,7 +184,12 @@ class CudaRansac:
         # copy point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
-        block_start_indices_cuda = cuda.to_device(block_start_indices)
+        # block_start_indices is an array of indices where each cuda block should
+        # take data from this combined with block_sizes allows it to quickly
+        # find the desired part of the point cloud
+        block_start_indices_cuda = cuda.to_device(
+            np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+        )
 
         # this mutex is needed to make sure that only one thread writes to the mask
         mask_mutex = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))

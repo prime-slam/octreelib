@@ -181,16 +181,12 @@ class Grid(GridBase):
 
             combined_point_cloud = np.vstack(batch_point_clouds)
             block_sizes_combined = np.concatenate(block_sizes)
-            block_start_indices = np.cumsum(
-                np.concatenate(([0], block_sizes_combined[:-1]))
-            )
             pose_dividers = np.array(pose_dividers)
 
             # run the kernel
             maximum_mask = ransac.evaluate(
                 combined_point_cloud,
                 block_sizes_combined,
-                block_start_indices,
             )
 
             # split the combined point cloud into separate point clouds for each pose,
