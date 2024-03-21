@@ -201,18 +201,12 @@ class Grid(GridBase):
             ):
                 mask = maximum_mask[pose_dividers[i] : pose_dividers[i + 1]]
                 point_start_index = 0
-                leaf_start_index = 0
                 for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]:
                     octree = self.__octrees[voxel_coordinates]
                     n_points = octree.n_points(pose_number)
-                    n_leaves = octree.n_leaves(pose_number)
-                    octree_block_sizes = block_sizes_for_pose[
-                        leaf_start_index : leaf_start_index + n_leaves
-                    ]
                     octree_mask = mask[point_start_index : point_start_index + n_points]
                     octree.apply_mask(octree_mask, pose_number)
                     point_start_index += n_points
-                    leaf_start_index += n_leaves
 
     def get_leaf_points(self, pose_number: int, non_empty: bool = True) -> List[Voxel]:
         """
