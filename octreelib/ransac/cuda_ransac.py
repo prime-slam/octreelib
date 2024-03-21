@@ -15,14 +15,17 @@ from octreelib.ransac.util import (
 __all__ = ["CudaRansac"]
 
 
+N_CUDA_THREADS = 1024
+
+
 @cuda.jit
 def ransac_kernel(
     point_cloud: PointCloud,
     block_sizes: npt.NDArray,
     block_start_indices: npt.NDArray,
     threshold: float,
-    result_mask: npt.NDArray,
     rng_states,
+    result_mask: npt.NDArray,
     max_n_inliers: npt.NDArray,
     mask_mutex: npt.NDArray,
 ):
@@ -79,30 +82,32 @@ class CudaRansac:
 
     def __init__(
         self,
+        max_n_blocks: int,
         threshold: float = 0.01,
-        iterations: int = 1024,
-        max_n_blocks: int = 1,
-        n_threads_per_block: int = 1024,
+        n_hypotheses: int = 1024,
     ):
         """
         Initialize the RANSAC parameters.
         :param threshold: Distance threshold.
-        :param iterations: Number of RANSAC iterations. (has no effect in this implementation)
+        :param n_hypotheses: Number of RANSAC hypotheses. (<= 1024)
         :param max_n_blocks: Maximum number of blocks.
-        :param n_threads_per_block: Number of threads per block.
         """
         if threshold <= 0:
             raise ValueError("Threshold must be positive")
-        if iterations < 1:
-            raise ValueError("Number of RANSAC iterations must be positive")
+        if n_hypotheses < 1:
+            raise ValueError("Number of RANSAC hypotheses must be positive")
+        if n_hypotheses > 1024:
+            raise ValueError(
+                "Number of RANSAC hypotheses must be <= 1024 "
+                "because of the CUDA thread limit."
+            )
 
         self.__threshold: float = threshold
-        self.__iterations: int = iterations
         # create random number generator states
+        self.__n_threads_per_block = min(n_hypotheses, N_CUDA_THREADS)
         self.rng_states = create_xoroshiro128p_states(
-            n_threads_per_block * max_n_blocks, seed=0
+            self.__n_threads_per_block * max_n_blocks, seed=0
         )
-        self.n_threads_per_block = n_threads_per_block
 
     def evaluate(
         self,
@@ -137,13 +142,13 @@ class CudaRansac:
         mask_mutex = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
         # call the kernel
-        ransac_kernel[n_blocks, self.n_threads_per_block](
+        ransac_kernel[n_blocks, self.__n_threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__threshold,
-            result_mask_cuda,
             self.rng_states,
+            result_mask_cuda,
             max_n_inliers_cuda,
             mask_mutex,
         )

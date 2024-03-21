@@ -155,7 +155,7 @@ class Grid(GridBase):
         )
         ransac = CudaRansac(
             max_n_blocks=max_leaf_voxels,
-            n_threads_per_block=n_hypotheses,
+            n_hypotheses=n_hypotheses,
             threshold=threshold,
         )
 
