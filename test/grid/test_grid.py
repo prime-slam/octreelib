@@ -3,7 +3,7 @@ import pytest
 
 from octreelib.internal import PointCloud
 from octreelib.grid import Grid, GridConfig
-from octreelib.octree import OctreeConfig
+from octreelib.octree import OctreeConfig, Octree
 from octreelib.octree_manager import OctreeManager
 
 

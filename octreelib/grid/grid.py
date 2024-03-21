@@ -148,7 +148,10 @@ class Grid(GridBase):
         # find the maximum number of leaf voxels across all batches
         # this is needed to initialize the random number generators on the GPU
         max_leaf_voxels = max(
-            [self.sum_of_leaves(batch_pose_numbers) for batch_pose_numbers in batches]
+            [
+                sum([self.n_leaves(pose_number) for pose_number in batch_pose_numbers])
+                for batch_pose_numbers in batches
+            ]
         )
         ransac = CudaRansac(
             max_n_blocks=max_leaf_voxels,
@@ -357,8 +360,3 @@ class Grid(GridBase):
         :return: Number of nodes of an octree for given pose number.
         """
         return sum([octree.n_nodes(pose_number) for octree in self.__octrees.values()])
-
-    def sum_of_leaves(self, pose_numbers: Optional[List[int]] = None) -> int:
-        return sum(
-            [octree.sum_of_leaves(pose_numbers) for octree in self.__octrees.values()]
-        )

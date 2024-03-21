@@ -170,14 +170,6 @@ class OctreeManager(VoxelBase):
         self._octrees[pose_number].insert_points(points)
         self._octrees[pose_number].subdivide_as(self._scheme_octree)
 
-    def sum_of_leaves(self, pose_numbers: Optional[List[int]]) -> int:
-        """
-        :param pose_numbers: List of pose numbers to sum the leaves.
-        """
-        if pose_numbers is None:
-            pose_numbers = self._octrees.keys()
-        return sum([self.n_leaves(pose_number) for pose_number in pose_numbers])
-
     def apply_mask(self, mask: np.ndarray, pose_number: int):
         """
         Apply mask to the point cloud in the octree
