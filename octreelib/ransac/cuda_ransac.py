@@ -84,7 +84,7 @@ class CudaRansac:
         self,
         max_n_blocks: int,
         threshold: float = 0.01,
-        n_hypotheses: int = 1024,
+        n_hypotheses: int = N_CUDA_THREADS,
     ):
         """
         Initialize the RANSAC parameters.
