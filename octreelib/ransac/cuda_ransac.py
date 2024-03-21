@@ -15,7 +15,7 @@ from octreelib.ransac.util import (
 __all__ = ["CudaRansac"]
 
 
-N_CUDA_THREADS = 1024
+CUDA_THREADS = 1024
 
 
 class CudaRansac:
@@ -27,7 +27,7 @@ class CudaRansac:
         self,
         max_n_blocks: int,
         threshold: float = 0.01,
-        n_hypotheses: int = N_CUDA_THREADS,
+        n_hypotheses: int = CUDA_THREADS,
     ):
         """
         Initialize the RANSAC parameters.
@@ -37,10 +37,10 @@ class CudaRansac:
         """
 
         self.__threshold: float = threshold
-        self.__n_threads_per_block = min(n_hypotheses, N_CUDA_THREADS)
+        self.__threads_per_block = min(n_hypotheses, CUDA_THREADS)
         # create random number generator states
         self.__rng_states = create_xoroshiro128p_states(
-            self.__n_threads_per_block * max_n_blocks, seed=0
+            self.__threads_per_block * max_n_blocks, seed=0
         )
 
     def evaluate(
@@ -76,7 +76,7 @@ class CudaRansac:
         mask_mutex = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
 
         # call the kernel
-        self.ransac_kernel[n_blocks, self.__n_threads_per_block](
+        self.ransac_kernel[n_blocks, self.__threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
