@@ -123,26 +123,35 @@ class Grid(GridBase):
 
     def map_leaf_points_cuda_ransac(
         self,
-        n_poses_per_batch: int = 1,
+        poses_per_batch: int = 1,
         threshold: float = 0.01,
         n_hypotheses: int = 1024,
     ):
         """
         transform point cloud in the node using the function
-        :param n_poses_per_batch: Number of poses per batch.
+        :param poses_per_batch: Number of poses per batch.
         :param threshold: Distance threshold.
         :param n_hypotheses: Number of RANSAC iterations (<= 1024).
         """
+        if threshold <= 0:
+            raise ValueError("Threshold must be positive")
+        if n_hypotheses < 1:
+            raise ValueError("Number of RANSAC hypotheses must be positive")
+        if n_hypotheses > 1024:
+            raise ValueError(
+                "Number of RANSAC hypotheses must be <= 1024 "
+                "because of the CUDA thread limit."
+            )
 
         # processing is done in batches to avoid running out of memory
         batches = [
             list(
                 range(
                     i,
-                    min(i + n_poses_per_batch, len(self.__pose_voxel_coordinates)),
+                    min(i + poses_per_batch, len(self.__pose_voxel_coordinates)),
                 )
             )
-            for i in range(0, len(self.__pose_voxel_coordinates), n_poses_per_batch)
+            for i in range(0, len(self.__pose_voxel_coordinates), poses_per_batch)
         ]
 
         # find the maximum number of leaf voxels across all batches

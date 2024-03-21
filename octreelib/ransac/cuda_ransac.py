@@ -92,20 +92,11 @@ class CudaRansac:
         :param n_hypotheses: Number of RANSAC hypotheses. (<= 1024)
         :param max_n_blocks: Maximum number of blocks.
         """
-        if threshold <= 0:
-            raise ValueError("Threshold must be positive")
-        if n_hypotheses < 1:
-            raise ValueError("Number of RANSAC hypotheses must be positive")
-        if n_hypotheses > 1024:
-            raise ValueError(
-                "Number of RANSAC hypotheses must be <= 1024 "
-                "because of the CUDA thread limit."
-            )
 
         self.__threshold: float = threshold
-        # create random number generator states
         self.__n_threads_per_block = min(n_hypotheses, N_CUDA_THREADS)
-        self.rng_states = create_xoroshiro128p_states(
+        # create random number generator states
+        self.__rng_states = create_xoroshiro128p_states(
             self.__n_threads_per_block * max_n_blocks, seed=0
         )
 
@@ -147,7 +138,7 @@ class CudaRansac:
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__threshold,
-            self.rng_states,
+            self.__rng_states,
             result_mask_cuda,
             max_n_inliers_cuda,
             mask_mutex,
