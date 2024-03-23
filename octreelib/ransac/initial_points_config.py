@@ -6,4 +6,4 @@ It is used by functions inside both the RANSAC class and the util module
 and because of that it is placed in a separate file.
 """
 
-N_INITIAL_POINTS = 6
+INITIAL_POINTS_NUMBER = 6

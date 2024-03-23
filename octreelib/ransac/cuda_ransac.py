@@ -5,7 +5,7 @@ from numba import cuda
 from numba.cuda.random import create_xoroshiro128p_states
 
 from octreelib.internal import PointCloud
-from octreelib.ransac.initial_points_config import N_INITIAL_POINTS
+from octreelib.ransac.initial_points_config import INITIAL_POINTS_NUMBER
 from octreelib.ransac.util import (
     generate_random_indices,
     get_plane_from_points,
@@ -107,20 +107,20 @@ class CudaRansac:
     ):
         thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
-        if block_sizes[block_id] < N_INITIAL_POINTS:
+        if block_sizes[block_id] < INITIAL_POINTS_NUMBER:
             return
 
         # select random points as inliers
         initial_point_indices = cuda.local.array(
-            shape=N_INITIAL_POINTS, dtype=nb.size_t
+            shape=INITIAL_POINTS_NUMBER, dtype=nb.size_t
         )
         initial_point_indices = generate_random_indices(
             initial_point_indices,
             rng_states,
             block_sizes[block_id],
-            N_INITIAL_POINTS,
+            INITIAL_POINTS_NUMBER,
         )
-        for i in range(N_INITIAL_POINTS):
+        for i in range(INITIAL_POINTS_NUMBER):
             initial_point_indices[i] = (
                 block_start_indices[block_id] + initial_point_indices[i]
             )

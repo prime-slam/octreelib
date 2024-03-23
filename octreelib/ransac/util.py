@@ -10,7 +10,7 @@ import numba as nb
 from numba import cuda
 from numba.cuda.random import xoroshiro128p_uniform_float32
 
-from octreelib.ransac.initial_points_config import N_INITIAL_POINTS
+from octreelib.ransac.initial_points_config import INITIAL_POINTS_NUMBER
 
 
 @cuda.jit(
@@ -100,9 +100,9 @@ def get_plane_from_points(points, initial_point_indices):
         centroid_y += points[idx][1]
         centroid_z += points[idx][2]
 
-    centroid_x /= N_INITIAL_POINTS
-    centroid_y /= N_INITIAL_POINTS
-    centroid_z /= N_INITIAL_POINTS
+    centroid_x /= INITIAL_POINTS_NUMBER
+    centroid_y /= INITIAL_POINTS_NUMBER
+    centroid_z /= INITIAL_POINTS_NUMBER
 
     xx, xy, xz, yy, yz, zz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
