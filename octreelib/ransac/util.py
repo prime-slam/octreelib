@@ -10,7 +10,8 @@ import numba as nb
 from numba import cuda
 from numba.cuda.random import xoroshiro128p_uniform_float32
 
-from octreelib.ransac.initial_points_config import INITIAL_POINTS_NUMBER
+# This constant configures the number of initial points to be used in the RANSAC algorithm.
+INITIAL_POINTS_NUMBER = 6
 
 
 @cuda.jit(

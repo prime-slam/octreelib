@@ -5,11 +5,11 @@ from numba import cuda
 from numba.cuda.random import create_xoroshiro128p_states
 
 from octreelib.internal import PointCloud
-from octreelib.ransac.initial_points_config import INITIAL_POINTS_NUMBER
 from octreelib.ransac.util import (
     generate_random_indices,
     get_plane_from_points,
     measure_distance,
+    INITIAL_POINTS_NUMBER,
 )
 
 __all__ = ["CudaRansac"]
