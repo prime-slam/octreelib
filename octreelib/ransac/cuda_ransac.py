@@ -54,7 +54,7 @@ class CudaRansac:
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
         """
 
-        blocks_numberf = len(block_sizes)
+        blocks_number = len(block_sizes)
 
         # create result mask and copy it to the device
         result_mask_cuda = cuda.to_device(np.zeros((len(point_cloud)), dtype=np.bool_))
@@ -76,7 +76,7 @@ class CudaRansac:
         mask_mutex = cuda.to_device(np.zeros(blocks_number, dtype=np.int32))
 
         # call the kernel
-        self.ransac_kernel[blocks_number, self.__threads_per_block](
+        self.__ransac_kernel[blocks_number, self.__threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
@@ -93,7 +93,7 @@ class CudaRansac:
 
     @staticmethod
     @cuda.jit
-    def ransac_kernel(
+    def __ransac_kernel(
         point_cloud: PointCloud,
         block_sizes: npt.NDArray,
         block_start_indices: npt.NDArray,
