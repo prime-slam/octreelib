@@ -2,6 +2,8 @@
 These functions are auxiliary functions for the RANSAC algorithm.
 They cannot be defined inside the `CudaRansac` class because
 `CudaRansac.__ransac_kernel` would not be able to access them.
+This file also contains the `INITIAL_POINTS_NUMBER` constant which
+can be used to configure the number of initial points to be used in the RANSAC algorithm.
 """
 
 import math
