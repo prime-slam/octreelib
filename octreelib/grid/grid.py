@@ -123,7 +123,7 @@ class Grid(GridBase):
 
     def map_leaf_points_cuda_ransac(
         self,
-        poses_per_batch: int = 1,
+        poses_per_batch: int = 10,
         threshold: float = 0.01,
         hypotheses_number: int = 1024,
     ):

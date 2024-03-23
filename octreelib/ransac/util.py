@@ -41,7 +41,7 @@ def generate_random_int(rng_states, lower_bound, upper_bound):
     """
     thread_id = cuda.grid(1)
     x = xoroshiro128p_uniform_float32(rng_states, thread_id)
-    return (nb.int32)(x * (upper_bound - lower_bound) + lower_bound)
+    return nb.int32(x * (upper_bound - lower_bound) + lower_bound)
 
 
 @cuda.jit(device=True, inline=True)
