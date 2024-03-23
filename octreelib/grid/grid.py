@@ -125,19 +125,19 @@ class Grid(GridBase):
         self,
         poses_per_batch: int = 1,
         threshold: float = 0.01,
-        n_hypotheses: int = 1024,
+        hypotheses_number: int = 1024,
     ):
         """
         transform point cloud in the node using the function
         :param poses_per_batch: Number of poses per batch.
         :param threshold: Distance threshold.
-        :param n_hypotheses: Number of RANSAC iterations (<= 1024).
+        :param hypotheses_number: Number of RANSAC iterations (<= 1024).
         """
         if threshold <= 0:
             raise ValueError("Threshold must be positive")
-        if n_hypotheses < 1:
+        if hypotheses_number < 1:
             raise ValueError("Number of RANSAC hypotheses must be positive")
-        if n_hypotheses > 1024:
+        if hypotheses_number > 1024:
             raise ValueError(
                 "Number of RANSAC hypotheses must be <= 1024 "
                 "because of the CUDA thread limit."
@@ -163,8 +163,8 @@ class Grid(GridBase):
             ]
         )
         ransac = CudaRansac(
-            max_n_blocks=max_leaf_voxels,
-            n_hypotheses=n_hypotheses,
+            max_blocks_number=max_leaf_voxels,
+            hypotheses_number=hypotheses_number,
             threshold=threshold,
         )
 
@@ -212,10 +212,10 @@ class Grid(GridBase):
                 point_start_index = 0
                 for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]:
                     octree = self.__octrees[voxel_coordinates]
-                    n_points = octree.n_points(pose_number)
-                    octree_mask = mask[point_start_index : point_start_index + n_points]
+                    points_number = octree.n_points(pose_number)
+                    octree_mask = mask[point_start_index : point_start_index + points_number]
                     octree.apply_mask(octree_mask, pose_number)
-                    point_start_index += n_points
+                    point_start_index += points_number
 
     def get_leaf_points(self, pose_number: int, non_empty: bool = True) -> List[Voxel]:
         """

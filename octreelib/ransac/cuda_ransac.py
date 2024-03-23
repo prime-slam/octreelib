@@ -25,22 +25,22 @@ class CudaRansac:
 
     def __init__(
         self,
-        max_n_blocks: int,
+        max_blocks_number: int,
         threshold: float = 0.01,
-        n_hypotheses: int = CUDA_THREADS,
+        hypotheses_number: int = CUDA_THREADS,
     ):
         """
         Initialize the RANSAC parameters.
         :param threshold: Distance threshold.
-        :param n_hypotheses: Number of RANSAC hypotheses. (<= 1024)
-        :param max_n_blocks: Maximum number of blocks.
+        :param hypotheses_number: Number of RANSAC hypotheses. (<= 1024)
+        :param max_blocks_number: Maximum number of blocks.
         """
 
         self.__threshold: float = threshold
-        self.__threads_per_block = min(n_hypotheses, CUDA_THREADS)
+        self.__threads_per_block = min(hypotheses_number, CUDA_THREADS)
         # create random number generator states
         self.__rng_states = create_xoroshiro128p_states(
-            self.__threads_per_block * max_n_blocks, seed=0
+            self.__threads_per_block * max_blocks_number, seed=0
         )
 
     def evaluate(
@@ -54,13 +54,13 @@ class CudaRansac:
         :param block_sizes: Array of block sizes (should equal number of leaf voxels).
         """
 
-        n_blocks = len(block_sizes)
+        blocks_numberf = len(block_sizes)
 
         # create result mask and copy it to the device
         result_mask_cuda = cuda.to_device(np.zeros((len(point_cloud)), dtype=np.bool_))
 
         # create arrays to store the maximum number of inliers and the best mask indices
-        max_n_inliers_cuda = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
+        max_inliers_number_cuda = cuda.to_device(np.zeros(blocks_number, dtype=np.int32))
 
         # copy point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)
@@ -73,17 +73,17 @@ class CudaRansac:
         )
 
         # this mutex is needed to make sure that only one thread writes to the mask
-        mask_mutex = cuda.to_device(np.zeros(n_blocks, dtype=np.int32))
+        mask_mutex = cuda.to_device(np.zeros(blocks_number, dtype=np.int32))
 
         # call the kernel
-        self.ransac_kernel[n_blocks, self.__threads_per_block](
+        self.ransac_kernel[blocks_number, self.__threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__threshold,
             self.__rng_states,
             result_mask_cuda,
-            max_n_inliers_cuda,
+            max_inliers_number_cuda,
             mask_mutex,
         )
 
@@ -100,7 +100,7 @@ class CudaRansac:
         threshold: float,
         rng_states,
         result_mask: npt.NDArray,
-        max_n_inliers: npt.NDArray,
+        max_inliers_number: npt.NDArray,
         mask_mutex: npt.NDArray,
     ):
         thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
@@ -130,20 +130,20 @@ class CudaRansac:
         )
 
         # for each point in the block check if it is an inlier
-        n_inliers_local = 0
+        inliers_number_local = 0
         for i in range(block_sizes[block_id]):
             point = point_cloud[block_start_indices[block_id] + i]
             distance = measure_distance(plane, point)
             if distance < threshold:
-                n_inliers_local += 1
+                inliers_number_local += 1
 
         # replace the maximum number of inliers if the current number is greater
-        cuda.atomic.max(max_n_inliers, block_id, n_inliers_local)
+        cuda.atomic.max(max_inliers_number, block_id, inliers_number_local)
         cuda.syncthreads()
         # set the best mask index for this block
         # if this thread has the maximum number of inliers
         if (
-            n_inliers_local == max_n_inliers[block_id]
+            inliers_number_local == max_inliers_number[block_id]
             and cuda.atomic.cas(mask_mutex, block_id, 0, 1) == 0
         ):
             for i in range(block_sizes[block_id]):
