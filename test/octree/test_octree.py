@@ -7,7 +7,8 @@ __all__ = ["test_octree", "test_octree_node"]
 
 
 def test_octree_node():
-    node = OctreeNode(np.array([0, 0, 0]), np.float_(10))
+    cached_leaves = []
+    node = OctreeNode(np.array([0, 0, 0]), np.float_(10), cached_leaves)
 
     point_cloud = np.array(
         [
@@ -27,6 +28,7 @@ def test_octree_node():
     assert node.n_points == 5
     node.filter([lambda points: len(points) >= 2])
     assert node.n_points == 4
+    assert len(cached_leaves) == 15
 
 
 def test_octree():

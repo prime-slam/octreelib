@@ -48,6 +48,8 @@ class OctreeNode(OctreeNodeBase):
         elif self._has_children:
             self._points = self.get_points()
             self._has_children = False
+            for child in self._children:
+                child._remove_from_cache()
             self._children = []
 
     def get_points(self) -> PointCloud:
@@ -132,6 +134,13 @@ class OctreeNode(OctreeNodeBase):
             else []
         )
 
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree node
+        :param mask: Mask to apply
+        """
+        self._points = self._points[mask]
+
     @property
     def n_leaves(self):
         """
@@ -171,13 +180,24 @@ class OctreeNode(OctreeNodeBase):
         """
         child_edge_length = self.edge_length / np.float_(2)
         children_corners_offsets = itertools.product([0, child_edge_length], repeat=3)
+        self._cached_leaves.remove(self)
         return [
             OctreeNode(
                 self.corner_min + offset,
                 child_edge_length,
+                self._cached_leaves,
             )
             for internal_position, offset in enumerate(children_corners_offsets)
         ]
+
+    def _remove_from_cache(self):
+        """
+        Remove the node and its children from the cached leaves.
+        """
+        self._cached_leaves.remove(self)
+        if self._has_children:
+            for child in self._children:
+                child._remove_from_cache()
 
 
 class Octree(OctreeBase, Generic[T]):
@@ -233,11 +253,25 @@ class Octree(OctreeBase, Generic[T]):
         """
         self._root.map_leaf_points(function)
 
-    def get_leaf_points(self) -> List[Voxel]:
+    def get_leaf_points(self, non_empty: bool = True) -> List[Voxel]:
         """
+        :param non_empty: If True, only non-empty leaf nodes are returned.
         :return: List of voxels where each voxel represents a leaf node with points.
         """
-        return self._root.get_leaf_points()
+        if non_empty:
+            return list(filter(lambda v: v.n_points != 0, self._cached_leaves))
+        return self._cached_leaves
+
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree
+        :param mask: Mask to apply
+        """
+        start_index = 0
+        for leaf in filter(lambda v: v.n_points != 0, self._cached_leaves):
+            points_number = leaf.n_points
+            leaf.apply_mask(mask[start_index : start_index + points_number])
+            start_index += points_number
 
     @property
     def n_points(self):

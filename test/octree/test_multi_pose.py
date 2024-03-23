@@ -172,14 +172,14 @@ def test_get_leaf_points(
 ):
     multi_pose, clouds = generated_multi_pose
     multi_pose.subdivide(subdivision_criteria, subdivision_pose_numbers)
-    leaves_0 = multi_pose.get_leaf_points(0)
-    leaves_1 = multi_pose.get_leaf_points(1)
-    assert [voxel.id for voxel in leaves_0] == [
+    leaves_0 = multi_pose.get_leaf_points(pose_number=0)
+    leaves_1 = multi_pose.get_leaf_points(pose_number=1)
+    assert {voxel.id for voxel in leaves_0} == {
         voxel.id for voxel in leaves_expected[0]
-    ]
-    assert [voxel.id for voxel in leaves_1] == [
+    }
+    assert {voxel.id for voxel in leaves_1} == {
         voxel.id for voxel in leaves_expected[1]
-    ]
+    }
 
 
 def test_n_points(generated_multi_pose):

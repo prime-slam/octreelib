@@ -33,11 +33,20 @@ class OctreeNodeBase(Voxel, ABC):
     and are not stored in the parent node.
     """
 
-    def __init__(self, corner_min: Point, edge_length: float):
+    def __init__(
+        self,
+        corner_min: Point,
+        edge_length: float,
+        octree_cached_leaves: List["OctreeNodeBase"],
+    ):
         super().__init__(corner_min, edge_length)
         self._points: np.empty((0, 3), dtype=float)
         self._children: Optional[List["OctreeNodeBase"]] = []
         self._has_children: bool = False
+        # `OctreeNodeBase_cached_leaves` references field `OctreeBase._cached_leaves`
+        # so that nodes can modify this field in the parent OctreeBase instance
+        self._cached_leaves = octree_cached_leaves
+        self._cached_leaves.append(self)
 
     @property
     @abstractmethod
@@ -111,6 +120,14 @@ class OctreeNodeBase(Voxel, ABC):
         """
         pass
 
+    @abstractmethod
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree node
+        :param mask: Mask to apply
+        """
+        self._points = self._points[mask]
+
 
 class OctreeBase(Voxel, ABC):
     """
@@ -131,7 +148,14 @@ class OctreeBase(Voxel, ABC):
     ):
         super().__init__(corner_min, edge_length)
         self._config = octree_config
-        self._root = self._node_type(self.corner_min, self.edge_length)
+
+        # cached leaves allow for fast retrieval of leaf nodes with points
+        # skipping the stage of finding them and returning through multiple
+        # layers of recursion
+        self._cached_leaves = []
+        self._root = self._node_type(
+            self.corner_min, self.edge_length, self._cached_leaves
+        )
 
     @property
     @abstractmethod
@@ -175,8 +199,9 @@ class OctreeBase(Voxel, ABC):
         pass
 
     @abstractmethod
-    def get_leaf_points(self) -> List[Voxel]:
+    def get_leaf_points(self, non_empty: bool) -> List[Voxel]:
         """
+        :param non_empty: If True, only non-empty leaf nodes are returned.
         :return: List of PointClouds where each PointCloud
         represents points in a separate leaf node
         """
@@ -208,3 +233,10 @@ class OctreeBase(Voxel, ABC):
     @abstractmethod
     def insert_points(self, points: PointCloud):
         pass
+
+    @abstractmethod
+    def apply_mask(self, mask: np.ndarray):
+        """
+        Apply mask to the point cloud in the octree
+        :param mask: Mask to apply
+        """

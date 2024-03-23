@@ -155,6 +155,21 @@ class GridBase(ABC, Generic[T]):
         pass
 
     @abstractmethod
+    def map_leaf_points_cuda_ransac(
+        self,
+        poses_per_batch: int = 1,
+        threshold: float = 0.01,
+        hypotheses_number: int = 1024,
+    ):
+        """
+        transform point cloud in the node using the function
+        :param poses_per_batch: Number of poses per batch.
+        :param threshold: Distance threshold.
+        :param hypotheses_number: Number of RANSAC iterations (<= 1024).
+        """
+        pass
+
+    @abstractmethod
     def get_leaf_points(self, pose_number: int) -> List[Voxel]:
         """
         :param pose_number: The desired pose number.

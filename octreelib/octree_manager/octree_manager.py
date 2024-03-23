@@ -79,7 +79,8 @@ class OctreeManager(VoxelBase):
             pose_numbers = self._octrees.keys()
 
         for pose_number in pose_numbers:
-            self._octrees[pose_number].map_leaf_points(function)
+            if pose_number in self._octrees:
+                self._octrees[pose_number].map_leaf_points(function)
 
     def filter(
         self,
@@ -97,17 +98,24 @@ class OctreeManager(VoxelBase):
         for pose_number in pose_numbers:
             self._octrees[pose_number].filter(filtering_criteria)
 
-    def get_leaf_points(self, pose_number: Optional[int] = None) -> List[Voxel]:
+    def get_leaf_points(
+        self, non_empty: bool = True, pose_number: Optional[int] = None
+    ) -> List[Voxel]:
         """
+        :param non_empty: If True, only non-empty leaf nodes are returned.
         :param pose_number: Desired pose number.
         :return: List of leaf voxels with points for this pose.
         """
         if pose_number is None:
             return sum(
-                [octree.get_leaf_points() for octree in self._octrees.values()], []
+                [
+                    octree.get_leaf_points(non_empty)
+                    for octree in self._octrees.values()
+                ],
+                [],
             )
         if pose_number in self._octrees:
-            return self._octrees[pose_number].get_leaf_points()
+            return self._octrees[pose_number].get_leaf_points(non_empty)
         return []
 
     def get_points(self, pose_number: Optional[int] = None) -> PointCloud:
@@ -161,3 +169,12 @@ class OctreeManager(VoxelBase):
             )
         self._octrees[pose_number].insert_points(points)
         self._octrees[pose_number].subdivide_as(self._scheme_octree)
+
+    def apply_mask(self, mask: np.ndarray, pose_number: int):
+        """
+        Apply mask to the point cloud in the octree
+        :param mask: Mask to apply
+        :param pose_number: Pose number
+        """
+        if pose_number in self._octrees:
+            self._octrees[pose_number].apply_mask(mask)

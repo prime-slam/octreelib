@@ -44,6 +44,8 @@ jobs:
       run: |
         pip install .
         pytest
+      env:
+        NUMBA_ENABLE_CUDASIM: 1
 
   publish-package:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
