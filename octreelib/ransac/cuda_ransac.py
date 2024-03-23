@@ -60,7 +60,9 @@ class CudaRansac:
         result_mask_cuda = cuda.to_device(np.zeros((len(point_cloud)), dtype=np.bool_))
 
         # create arrays to store the maximum number of inliers and the best mask indices
-        max_inliers_number_cuda = cuda.to_device(np.zeros(blocks_number, dtype=np.int32))
+        max_inliers_number_cuda = cuda.to_device(
+            np.zeros(blocks_number, dtype=np.int32)
+        )
 
         # copy point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)

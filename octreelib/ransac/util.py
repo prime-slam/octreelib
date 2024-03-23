@@ -1,3 +1,9 @@
+"""
+These functions are auxiliary functions for the RANSAC algorithm.
+They cannot be defined inside the RANSAC class because
+`CudaRansac.__ransac_kernel` would not be able to access them.
+"""
+
 import math
 import numba as nb
 

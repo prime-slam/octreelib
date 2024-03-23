@@ -213,7 +213,9 @@ class Grid(GridBase):
                 for voxel_coordinates in self.__pose_voxel_coordinates[pose_number]:
                     octree = self.__octrees[voxel_coordinates]
                     points_number = octree.n_points(pose_number)
-                    octree_mask = mask[point_start_index : point_start_index + points_number]
+                    octree_mask = mask[
+                        point_start_index : point_start_index + points_number
+                    ]
                     octree.apply_mask(octree_mask, pose_number)
                     point_start_index += points_number
 
