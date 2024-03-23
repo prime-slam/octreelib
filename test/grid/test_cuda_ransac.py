@@ -7,14 +7,14 @@ from octreelib.grid import Grid, GridConfig
 @pytest.fixture()
 def generated_grid_with_planar_clouds():
     def generate_planar_cloud(
-        n_points, plane_coefficients, voxel_corner, edge_length, sigma
+        points_number, plane_coefficients, voxel_corner, edge_length, sigma
     ):
         voxel_points = (
-            np.random.rand(n_points, 3) * np.array([edge_length - 6 * sigma] * 3)
+            np.random.rand(points_number, 3) * np.array([edge_length - 6 * sigma] * 3)
             + voxel_corner
             + 3 * sigma
         )
-        noise = np.random.normal(0, sigma, (n_points,))
+        noise = np.random.normal(0, sigma, (points_number,))
         plane_points_z = (
             -plane_coefficients[0] * voxel_points[:, 0]
             - plane_coefficients[1] * voxel_points[:, 1]
@@ -23,7 +23,7 @@ def generated_grid_with_planar_clouds():
         noisy_plane_points_z = plane_points_z + noise
         return np.column_stack((voxel_points[:, :2], noisy_plane_points_z))
 
-    n_points = 10
+    points_number = 10
     corner = np.array([0, 0, 0])
     edge_length = 5
     sigma = 0.1
@@ -33,7 +33,7 @@ def generated_grid_with_planar_clouds():
     grid.insert_points(
         0,
         generate_planar_cloud(
-            n_points=n_points,
+            points_number=points_number,
             plane_coefficients=(1, 2, 3, 0.5),
             voxel_corner=corner,
             edge_length=edge_length,
@@ -43,7 +43,7 @@ def generated_grid_with_planar_clouds():
     grid.insert_points(
         1,
         generate_planar_cloud(
-            n_points=n_points,
+            points_number=points_number,
             plane_coefficients=(-1, 2, 3, 0.5),
             voxel_corner=corner,
             edge_length=edge_length,

@@ -269,9 +269,9 @@ class Octree(OctreeBase, Generic[T]):
         """
         start_index = 0
         for leaf in filter(lambda v: v.n_points != 0, self._cached_leaves):
-            n_points = leaf.n_points
-            leaf.apply_mask(mask[start_index : start_index + n_points])
-            start_index += n_points
+            points_number = leaf.n_points
+            leaf.apply_mask(mask[start_index : start_index + points_number])
+            start_index += points_number
 
     @property
     def n_points(self):

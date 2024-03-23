@@ -45,32 +45,34 @@ def generate_random_int(rng_states, lower_bound, upper_bound):
 
 
 @cuda.jit(device=True, inline=True)
-def generate_random_indices(initial_point_indices, rng_states, block_size, n_points):
+def generate_random_indices(
+    initial_point_indices, rng_states, block_size, points_number
+):
     """
     Generate random points from the given block.
     :param initial_point_indices: Array to store the initial point indices.
     :param rng_states: Random number generator states.
     :param block_size: Size of the block.
-    :param n_points: Number of points to generate.
+    :param points_number: Number of points to generate.
     """
 
-    for i in range(n_points):
+    for i in range(points_number):
         initial_point_indices[i] = generate_random_int(rng_states, 0, block_size)
     return initial_point_indices
 
 
 @cuda.jit(device=True, inline=True)
 def generate_unique_random_indices(
-    initial_point_indices, rng_states, block_size, n_points
+    initial_point_indices, rng_states, block_size, points_number
 ):
     """
     Generate unique random points from the given block.
     :param initial_point_indices: Array to store the initial point indices.
     :param rng_states: Random number generator states.
     :param block_size: Size of the block.
-    :param n_points: Number of points to generate.
+    :param points_number: Number of points to generate.
     """
-    for ii in range(n_points):
+    for ii in range(points_number):
         initial_point_indices[ii] = generate_random_int(rng_states, 0, block_size)
         unique = False
         while not unique:
