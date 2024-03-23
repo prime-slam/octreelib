@@ -62,30 +62,6 @@ def generate_random_indices(
 
 
 @cuda.jit(device=True, inline=True)
-def generate_unique_random_indices(
-    initial_point_indices, rng_states, block_size, points_number
-):
-    """
-    Generate unique random points from the given block.
-    :param initial_point_indices: Array to store the initial point indices.
-    :param rng_states: Random number generator states.
-    :param block_size: Size of the block.
-    :param points_number: Number of points to generate.
-    """
-    for ii in range(points_number):
-        initial_point_indices[ii] = generate_random_int(rng_states, 0, block_size)
-        unique = False
-        while not unique:
-            unique = True
-            for jj in range(ii):
-                if initial_point_indices[ii] == initial_point_indices[jj]:
-                    unique = False
-            if not unique:
-                initial_point_indices[ii] = (initial_point_indices[ii] + 1) % block_size
-    return initial_point_indices
-
-
-@cuda.jit(device=True, inline=True)
 def get_plane_from_points(points, initial_point_indices):
     """
     Calculate the plane coefficients from the given points.
