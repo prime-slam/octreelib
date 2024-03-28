@@ -126,12 +126,14 @@ class Grid(GridBase):
         poses_per_batch: int = 10,
         threshold: float = 0.01,
         hypotheses_number: int = 1024,
+        initial_points_number: int = 6,
     ):
         """
         transform point cloud in the node using the function
         :param poses_per_batch: Number of poses per batch.
         :param threshold: Distance threshold.
         :param hypotheses_number: Number of RANSAC iterations (<= 1024).
+        :param initial_points_number: Number of initial points to use in RANSAC.
         """
         if threshold <= 0:
             raise ValueError("Threshold must be positive")
@@ -156,8 +158,9 @@ class Grid(GridBase):
 
         # this is needed to initialize the random number generators on the GPU
         ransac = CudaRansac(
-            hypotheses_number=hypotheses_number,
             threshold=threshold,
+            hypotheses_number=hypotheses_number,
+            initial_points_number=initial_points_number,
         )
 
         # process each batch
