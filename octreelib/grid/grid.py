@@ -154,16 +154,8 @@ class Grid(GridBase):
             for i in range(0, len(self.__pose_voxel_coordinates), poses_per_batch)
         ]
 
-        # find the maximum number of leaf voxels across all batches
         # this is needed to initialize the random number generators on the GPU
-        max_leaf_voxels = max(
-            [
-                sum([self.n_leaves(pose_number) for pose_number in batch_pose_numbers])
-                for batch_pose_numbers in batches
-            ]
-        )
         ransac = CudaRansac(
-            max_blocks_number=max_leaf_voxels,
             hypotheses_number=hypotheses_number,
             threshold=threshold,
         )

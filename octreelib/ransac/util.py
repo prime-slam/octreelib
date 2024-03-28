@@ -2,18 +2,11 @@
 These functions are auxiliary functions for the RANSAC algorithm.
 They cannot be defined inside the `CudaRansac` class because
 `CudaRansac.__ransac_kernel` would not be able to access them.
-This file also contains the `INITIAL_POINTS_NUMBER` constant which
-can be used to configure the number of initial points to be used in the RANSAC algorithm.
 """
 
 import math
-import numba as nb
 
 from numba import cuda
-from numba.cuda.random import xoroshiro128p_uniform_float32
-
-# This constant configures the number of initial points to be used in the RANSAC algorithm.
-INITIAL_POINTS_NUMBER = 6
 
 
 @cuda.jit(
@@ -35,36 +28,6 @@ def measure_distance(plane, point):
 
 
 @cuda.jit(device=True, inline=True)
-def generate_random_int(rng_states, lower_bound, upper_bound):
-    """
-    Generate a random number between a and b.
-    :param rng_states: Random number generator states.
-    :param lower_bound: Lower bound.
-    :param upper_bound: Upper bound.
-    """
-    thread_id = cuda.grid(1)
-    x = xoroshiro128p_uniform_float32(rng_states, thread_id)
-    return nb.int32(x * (upper_bound - lower_bound) + lower_bound)
-
-
-@cuda.jit(device=True, inline=True)
-def generate_random_indices(
-    initial_point_indices, rng_states, block_size, points_number
-):
-    """
-    Generate random points from the given block.
-    :param initial_point_indices: Array to store the initial point indices.
-    :param rng_states: Random number generator states.
-    :param block_size: Size of the block.
-    :param points_number: Number of points to generate.
-    """
-
-    for i in range(points_number):
-        initial_point_indices[i] = generate_random_int(rng_states, 0, block_size)
-    return initial_point_indices
-
-
-@cuda.jit(device=True, inline=True)
 def get_plane_from_points(points, initial_point_indices):
     """
     Calculate the plane coefficients from the given points.
@@ -79,9 +42,9 @@ def get_plane_from_points(points, initial_point_indices):
         centroid_y += points[idx][1]
         centroid_z += points[idx][2]
 
-    centroid_x /= INITIAL_POINTS_NUMBER
-    centroid_y /= INITIAL_POINTS_NUMBER
-    centroid_z /= INITIAL_POINTS_NUMBER
+    centroid_x /= initial_point_indices.shape[0]
+    centroid_y /= initial_point_indices.shape[0]
+    centroid_z /= initial_point_indices.shape[0]
 
     xx, xy, xz, yy, yz, zz = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
