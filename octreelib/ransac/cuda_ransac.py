@@ -135,19 +135,25 @@ class CudaRansac:
             # replace the maximum number of inliers if the current number is greater
             cuda.atomic.max(max_inliers_number, block_id, inliers_number_local)
             cuda.syncthreads()
-            # set the best mask index for this block
+
             # if this thread has the maximum number of inliers
+            # write this thread's plane to the shared memory
+            best_plane = cuda.shared.array(shape=4, dtype=nb.float32)
             if (
                 inliers_number_local == max_inliers_number[block_id]
                 and cuda.atomic.cas(mask_mutex, block_id, 0, 1) == 0
             ):
-                for i in range(block_sizes[block_id]):
-                    if (
-                        measure_distance(
-                            plane, point_cloud[block_start_indices[block_id] + i]
-                        )
-                        < threshold
-                    ):
-                        result_mask[block_start_indices[block_id] + i] = True
+                for i in range(4):
+                    best_plane[i] = plane[i]
+            cuda.syncthreads()
+
+            # parallelize mask computation among threads in the block
+            for i in range(
+                block_start_indices[block_id] + thread_id,
+                block_start_indices[block_id] + block_sizes[block_id],
+                CUDA_THREADS,
+            ):
+                if measure_distance(best_plane, point_cloud[i]) < threshold:
+                    result_mask[i] = True
 
         return kernel
