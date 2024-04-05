@@ -56,11 +56,6 @@ class CudaRansac:
         # create result mask and copy it to the device
         result_mask_cuda = cuda.to_device(np.zeros((len(point_cloud)), dtype=np.bool_))
 
-        # create arrays to store the maximum number of inliers and the best mask indices
-        max_inliers_number_cuda = cuda.to_device(
-            np.zeros(blocks_number, dtype=np.int32)
-        )
-
         # copy point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(point_cloud)
         block_sizes_cuda = cuda.to_device(block_sizes)
@@ -71,9 +66,6 @@ class CudaRansac:
             np.cumsum(np.concatenate(([0], block_sizes[:-1])))
         )
 
-        # this mutex is needed to make sure that only one thread writes to the mask
-        mask_mutex = cuda.to_device(np.zeros(blocks_number, dtype=np.int32))
-
         # call the kernel
         self.__kernel[blocks_number, self.__threads_per_block](
             point_cloud_cuda,
@@ -82,8 +74,6 @@ class CudaRansac:
             self.__random_hypotheses_cuda,
             self.__threshold,
             result_mask_cuda,
-            max_inliers_number_cuda,
-            mask_mutex,
         )
 
         # copy result mask back to the host
@@ -100,8 +90,6 @@ class CudaRansac:
             random_hypotheses: npt.NDArray,
             threshold: float,
             result_mask: npt.NDArray,
-            max_inliers_number: npt.NDArray,
-            mask_mutex: npt.NDArray,
         ):
             thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
@@ -132,22 +120,32 @@ class CudaRansac:
                 if distance < threshold:
                     inliers_number_local += 1
 
-            # replace the maximum number of inliers if the current number is greater
-            cuda.atomic.max(max_inliers_number, block_id, inliers_number_local)
+            # shared memory to store the best plane and the maximum number of inliers
+            # for all hypotheses
+            best_plane = cuda.shared.array(shape=4, dtype=nb.float32)
+            max_inliers_number = cuda.shared.array(shape=1, dtype=nb.int32)
+            # this mutex is needed to make sure that only one thread writes to the mask
+            mutex = cuda.shared.array(shape=1, dtype=nb.int32)
+            if thread_id == 0:
+                max_inliers_number[0] = 0
+                mutex[0] = 0
             cuda.syncthreads()
+
+            # replace the maximum number of inliers if the current number is greater
+            cuda.atomic.max(max_inliers_number, 0, inliers_number_local)
 
             # if this thread has the maximum number of inliers
             # write this thread's plane to the shared memory
-            best_plane = cuda.shared.array(shape=4, dtype=nb.float32)
+            cuda.syncthreads()
             if (
-                inliers_number_local == max_inliers_number[block_id]
-                and cuda.atomic.cas(mask_mutex, block_id, 0, 1) == 0
+                inliers_number_local == max_inliers_number[0]
+                and cuda.atomic.compare_and_swap(mutex, 0, 1) == 0
             ):
                 for i in range(4):
                     best_plane[i] = plane[i]
             cuda.syncthreads()
 
-            # parallelize mask computation among threads in the block
+            # parallelize final mask computation among threads in the block
             for i in range(
                 block_start_indices[block_id] + thread_id,
                 block_start_indices[block_id] + block_sizes[block_id],
