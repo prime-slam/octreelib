@@ -124,7 +124,7 @@ class CudaRansac:
             # for all hypotheses
             best_plane = cuda.shared.array(shape=4, dtype=nb.float32)
             max_inliers_number = cuda.shared.array(shape=1, dtype=nb.int32)
-            # this mutex is needed to make sure that only one thread writes to the mask
+            # this mutex is needed to make sure that only one thread writes the best plane
             mutex = cuda.shared.array(shape=1, dtype=nb.int32)
             if thread_id == 0:
                 max_inliers_number[0] = 0
