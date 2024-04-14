@@ -149,7 +149,7 @@ class CudaRansac:
             for i in range(
                 block_start_indices[block_id] + thread_id,
                 block_start_indices[block_id] + block_sizes[block_id],
-                CUDA_THREADS,
+                cuda.blockDim.x,
             ):
                 if measure_distance(best_plane, point_cloud[i]) < threshold:
                     result_mask[i] = True
