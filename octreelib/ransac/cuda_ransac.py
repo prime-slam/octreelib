@@ -66,12 +66,30 @@ class CudaRansac:
             np.cumsum(np.concatenate(([0], block_sizes[:-1])))
         )
 
+        planes_cuda = cuda.to_device(
+            np.zeros((blocks_number, self.__threads_per_block, 4), dtype=np.float32)
+        )
+
         # call the kernel
         self.__kernel[blocks_number, self.__threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
             block_start_indices_cuda,
             self.__random_hypotheses_cuda,
+            planes_cuda,
+        )
+        self.__find_best_plane[blocks_number, self.__threads_per_block](
+            point_cloud_cuda,
+            block_sizes_cuda,
+            block_start_indices_cuda,
+            self.__threshold,
+            planes_cuda,
+        )
+        self.__compute_final_mask[blocks_number, self.__threads_per_block](
+            point_cloud_cuda,
+            block_sizes_cuda,
+            block_start_indices_cuda,
+            planes_cuda,
             self.__threshold,
             result_mask_cuda,
         )
@@ -81,6 +99,68 @@ class CudaRansac:
         return result_mask
 
     @staticmethod
+    @cuda.jit
+    def __find_best_plane(
+        point_cloud: PointCloud,
+        block_sizes: npt.NDArray,
+        block_start_indices: npt.NDArray,
+        threshold: float,
+        planes: npt.NDArray,
+    ):
+        thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
+
+        # for each point in the block check if it is an inlier
+        inliers_number_local = 0
+        for i in range(block_sizes[block_id]):
+            point = point_cloud[block_start_indices[block_id] + i]
+            distance = measure_distance(planes[block_id][thread_id], point)
+            if distance < threshold:
+                inliers_number_local += 1
+
+        # shared memory to store the best plane and the maximum number of inliers
+        # for all hypotheses
+        max_inliers_number = cuda.shared.array(shape=1, dtype=nb.int32)
+        # this mutex is needed to make sure that only one thread writes the best plane
+        mutex = cuda.shared.array(shape=1, dtype=nb.int32)
+        if thread_id == 0:
+            max_inliers_number[0] = 0
+            mutex[0] = 0
+        cuda.syncthreads()
+
+        # replace the maximum number of inliers if the current number is greater
+        cuda.atomic.max(max_inliers_number, 0, inliers_number_local)
+
+        # if this thread has the maximum number of inliers
+        # write this thread's plane to the shared memory
+        cuda.syncthreads()
+        if (
+            inliers_number_local == max_inliers_number[0]
+            and cuda.atomic.compare_and_swap(mutex, 0, 1) == 0
+        ):
+            for i in range(4):
+                planes[block_id][0][i] = planes[block_id][thread_id][i]
+        cuda.syncthreads()
+
+    @staticmethod
+    @cuda.jit
+    def __compute_final_mask(
+        point_cloud: PointCloud,
+        block_sizes: npt.NDArray,
+        block_start_indices: npt.NDArray,
+        planes: npt.NDArray,
+        threshold: float,
+        result_mask: npt.NDArray,
+    ):
+        thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
+        for i in range(
+            block_start_indices[block_id] + thread_id,
+            block_start_indices[block_id] + block_sizes[block_id],
+            cuda.blockDim.x,
+        ):
+            if measure_distance(planes[block_id][0], point_cloud[i]) < threshold:
+                result_mask[i] = True
+
+    @staticmethod
     def __get_kernel(initial_points_number):
         @cuda.jit
         def kernel(
@@ -88,8 +168,7 @@ class CudaRansac:
             block_sizes: npt.NDArray,
             block_start_indices: npt.NDArray,
             random_hypotheses: npt.NDArray,
-            threshold: float,
-            result_mask: npt.NDArray,
+            planes: npt.NDArray,
         ):
             thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
@@ -107,51 +186,11 @@ class CudaRansac:
                 )
 
             # calculate the plane coefficients
-            plane = cuda.local.array(shape=4, dtype=nb.float32)
-            plane[0], plane[1], plane[2], plane[3] = get_plane_from_points(
-                point_cloud, initial_point_indices
-            )
-
-            # for each point in the block check if it is an inlier
-            inliers_number_local = 0
-            for i in range(block_sizes[block_id]):
-                point = point_cloud[block_start_indices[block_id] + i]
-                distance = measure_distance(plane, point)
-                if distance < threshold:
-                    inliers_number_local += 1
-
-            # shared memory to store the best plane and the maximum number of inliers
-            # for all hypotheses
-            best_plane = cuda.shared.array(shape=4, dtype=nb.float32)
-            max_inliers_number = cuda.shared.array(shape=1, dtype=nb.int32)
-            # this mutex is needed to make sure that only one thread writes the best plane
-            mutex = cuda.shared.array(shape=1, dtype=nb.int32)
-            if thread_id == 0:
-                max_inliers_number[0] = 0
-                mutex[0] = 0
-            cuda.syncthreads()
-
-            # replace the maximum number of inliers if the current number is greater
-            cuda.atomic.max(max_inliers_number, 0, inliers_number_local)
-
-            # if this thread has the maximum number of inliers
-            # write this thread's plane to the shared memory
-            cuda.syncthreads()
-            if (
-                inliers_number_local == max_inliers_number[0]
-                and cuda.atomic.compare_and_swap(mutex, 0, 1) == 0
-            ):
-                for i in range(4):
-                    best_plane[i] = plane[i]
-            cuda.syncthreads()
-
-            # parallelize final mask computation among threads in the block
-            for i in range(
-                block_start_indices[block_id] + thread_id,
-                block_start_indices[block_id] + block_sizes[block_id],
-                cuda.blockDim.x,
-            ):
-                if measure_distance(best_plane, point_cloud[i]) < threshold:
-                    result_mask[i] = True
+            (
+                planes[block_id][thread_id][0],
+                planes[block_id][thread_id][1],
+                planes[block_id][thread_id][2],
+                planes[block_id][thread_id][3],
+            ) = get_plane_from_points(point_cloud, initial_point_indices)
 
         return kernel
