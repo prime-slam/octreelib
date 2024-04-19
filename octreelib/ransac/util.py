@@ -19,11 +19,8 @@ def measure_distance(plane, point):
     :param plane: Plane coefficients.
     :param point: Point coordinates.
     """
-    return (
-        math.fabs(
-            plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3]
-        )
-        / (plane[0] ** 2 + plane[1] ** 2 + plane[2] ** 2) ** 0.5
+    return math.fabs(
+        plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3]
     )
 
 
