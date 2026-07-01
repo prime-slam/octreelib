@@ -22,6 +22,7 @@ python = "^3.9.0"
 numpy = "^1.26.0"
 k3d = "^2.16.0"
 numba = "^0.59.0"
+six = "^1.17.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^9.0.3"
