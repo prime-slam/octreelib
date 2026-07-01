@@ -36,7 +36,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Lint with black
-      uses: psf/black@24.4.0
+      uses: psf/black@26.3.0
       with:
         options: "--check --verbose --diff"
 
